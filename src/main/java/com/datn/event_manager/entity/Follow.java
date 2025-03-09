@@ -1,12 +1,10 @@
-package entity;
+package com.datn.event_manager.entity;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -27,21 +25,19 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE) 
 @Entity
-@Table(name = "favorite_event") 
-public class FavoriteEvent {
+@Table(name = "follow")
+public class Follow {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "favorite_id")
-    Long favoriteId;
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    LocalDateTime createdAt = LocalDateTime.now();
+    @Column(name = "follow_id")
+    Long followId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    User user;
+    @JoinColumn(name = "follower_id")
+    User follower;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "event_id")
-    Event event;
+    @JoinColumn(name = "following_id")
+    User following;
+
 }

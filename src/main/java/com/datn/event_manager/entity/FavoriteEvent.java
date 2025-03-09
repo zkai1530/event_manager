@@ -1,15 +1,18 @@
-package entity;
+package com.datn.event_manager.entity;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.ManyToMany;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -24,16 +27,22 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE) 
 @Entity
-@Table(name = "category") 
-public class Category {
+@Table(name = "favorite_event") 
+public class FavoriteEvent {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "category_id")
-    Long categoryId;
+    @Column(name = "favorite_id")
+    Long favoriteId;
 
-    @Column(name = "category_name", nullable = false)
-    String categoryName;
+    @Column(name = "created_at", nullable = false, updatable = false)
+    LocalDateTime createdAt = LocalDateTime.now();
 
-    @ManyToMany(mappedBy = "categories", fetch = FetchType.LAZY)
-    List<Event> events;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    User user;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "event_id")
+    Event event;
 }
+

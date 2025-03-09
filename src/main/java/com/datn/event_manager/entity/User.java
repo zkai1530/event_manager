@@ -1,4 +1,4 @@
-package entity;
+package com.datn.event_manager.entity;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -33,8 +33,9 @@ import lombok.experimental.FieldDefaults;
 @Table(name = "user")
 public class User {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    Long userId;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(columnDefinition = "CHAR(36)")
+    String userId;
 
     @Column(nullable = false, unique = true)
     String email;
@@ -84,8 +85,8 @@ public class User {
     List<Order> orders;
 
     public enum UserMode {
-        USER, 
-        EVENT_ORGANIZER 
+        USER,
+        EVENT_ORGANIZER
     }
-    
+
 }

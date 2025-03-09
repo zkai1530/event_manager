@@ -1,4 +1,4 @@
-package entity;
+package com.datn.event_manager.entity;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -25,19 +25,28 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE) 
 @Entity
-@Table(name = "ticket")
-public class Follow {
+@Table(name = "notification") 
+public class Notification {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "follow_id")
-    Long followId;
+    @Column(name = "notification_id")
+    Long notificationId;
+
+    @Column(name = "message", nullable = false)
+    String message;
+
+    @Column(name = "is_read", nullable = false)
+    Boolean isRead = false;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    LocalDateTime createdAt = LocalDateTime.now();
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "follower_id")
-    User follower;
+    @JoinColumn(name = "user_id")
+    User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "following_id")
-    User following;
-
+    @JoinColumn(name = "event_id", nullable = true)
+    Event event;
 }
+

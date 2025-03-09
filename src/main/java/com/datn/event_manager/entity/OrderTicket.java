@@ -1,4 +1,4 @@
-package entity;
+package com.datn.event_manager.entity;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -25,26 +25,24 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE) 
 @Entity
-@Table(name = "token") 
-public class Token {
+@Table(name = "order_ticket") 
+public class OrderTicket {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "token_id")
-    Long tokenId;
+    @Column(name = "order_ticket_id")
+    Long orderTicketId;
+
+    @Column(name = "quantity", nullable = false)
+    Integer quantity; // number of each ticket on order
+
+    @Column(name = "price_at_purchase", nullable = false)
+    Double priceAtPurchase;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
-    User user;
+    @JoinColumn(name = "order_id", nullable = false)
+    Order order;
 
-    @Column(name = "refresh_token", nullable = false)
-    String refreshToken;
-
-    @Column(name = "expires_at", nullable = false)
-    LocalDateTime expiresAt;
-
-    @Column(name = "revoked", nullable = false)
-    Boolean revoked = false; // Default: Token chưa bị thu hồi
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    LocalDateTime createdAt = LocalDateTime.now();
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "ticket_id", nullable = false)
+    Ticket ticket;
 }

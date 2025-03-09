@@ -1,8 +1,10 @@
-package entity;
+package com.datn.event_manager.entity;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -13,6 +15,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
@@ -28,32 +31,34 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE) 
 @Entity
-@Table(name = "payment") 
-public class Payment {
+@Table(name = "`order`")
+public class Order {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "payment_id")
-    Long paymentId;
+    @Column(name = "order_id")
+    Long orderId;
 
-    @Column(name = "payment_method", nullable = false)
-    String paymentMethod; // Paypal, Banking, ...
-
-    @Column(name = "transaction_id", nullable = false)
-    String transactionId; // Transaction ID from Payment Gateway
+    @Column(name = "total_price", nullable = false)
+    BigDecimal totalPrice;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
-    PaymentStatus status = PaymentStatus.PENDING; // PENDING, SUCCESS, FAILED
+    private OrderStatus status;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     LocalDateTime createdAt = LocalDateTime.now();
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id", nullable = false, unique = true)
-    Order order;
-    
-    // Enum for Payment Status
-    public enum PaymentStatus {
-        PENDING, SUCCESS, FAILED
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    User user;
+
+    @OneToOne(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    Payment payment;
+
+    @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    List<OrderTicket> orderTickets;
+
+    public enum OrderStatus {
+        PENDING, PAID, CANCELED
     }
 }

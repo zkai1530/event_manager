@@ -1,17 +1,15 @@
-package entity;
+package com.datn.event_manager.entity;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -26,16 +24,16 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE) 
 @Entity
-@Table(name = "role") 
-public class Role {
+@Table(name = "category") 
+public class Category {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "role_id")
-    Long roleId;
+    @Column(name = "category_id")
+    Long categoryId;
 
-    @Column(name = "role_name", nullable = false)
-    String roleName;
+    @Column(name = "category_name", nullable = false)
+    String categoryName;
 
-    @OneToMany(mappedBy = "role", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    List<User> users;
+    @ManyToMany(mappedBy = "categories", fetch = FetchType.LAZY)
+    List<Event> events;
 }

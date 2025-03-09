@@ -1,4 +1,4 @@
-package entity;
+package com.datn.event_manager.entity;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -50,3 +50,4 @@ public class EventSchedule {
     Event event;
 
 }
+

@@ -1,4 +1,4 @@
-package entity;
+package com.datn.event_manager.entity;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -73,3 +73,4 @@ public class Event {
     @OneToMany(mappedBy = "event", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     List<Ticket> tickets;
 }
+

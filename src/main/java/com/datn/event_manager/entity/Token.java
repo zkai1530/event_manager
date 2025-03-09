@@ -1,4 +1,4 @@
-package entity;
+package com.datn.event_manager.entity;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -25,27 +25,26 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE) 
 @Entity
-@Table(name = "notification") 
-public class Notification {
+@Table(name = "token") 
+public class Token {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "notification_id")
-    Long notificationId;
-
-    @Column(name = "message", nullable = false)
-    String message;
-
-    @Column(name = "is_read", nullable = false)
-    Boolean isRead = false;
-
-    @Column(name = "created_at", nullable = false, updatable = false)
-    LocalDateTime createdAt = LocalDateTime.now();
+    @Column(name = "token_id")
+    Long tokenId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     User user;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "event_id", nullable = true)
-    Event event;
+    @Column(name = "refresh_token", nullable = false)
+    String refreshToken;
+
+    @Column(name = "expires_at", nullable = false)
+    LocalDateTime expiresAt;
+
+    @Column(name = "revoked", nullable = false)
+    Boolean revoked = false; // Default: Token chưa bị thu hồi
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    LocalDateTime createdAt = LocalDateTime.now();
 }
