@@ -50,7 +50,7 @@ public class User {
     String location;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "current_mode")
     private UserMode currentMode = UserMode.USER;
 
     @ManyToOne(fetch = FetchType.LAZY)

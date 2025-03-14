@@ -1,6 +1,5 @@
 package com.datn.event_manager.entity;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 import jakarta.persistence.Column;
