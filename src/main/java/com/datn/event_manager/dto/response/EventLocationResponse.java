@@ -12,12 +12,9 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class UserResponse {
-    String email;
-    String name;
-    String phoneNumber;
-    String avatarUrl;
-    String location;
-    String currentMode;
-    String roleName;
+public class EventLocationResponse {
+    String city;
+    String address;
+    String postalCode;
+    String country;
 }

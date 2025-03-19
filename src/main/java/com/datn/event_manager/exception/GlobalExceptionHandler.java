@@ -1,6 +1,9 @@
 package com.datn.event_manager.exception;
 
+import java.nio.file.AccessDeniedException;
+
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authorization.AuthorizationDeniedException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
@@ -17,5 +20,11 @@ public class GlobalExceptionHandler {
     public ResponseEntity<APIResponse> handlingAppException(AppException e) {
         return ResponseEntity.status(e.getErrorCode().getHttpStatusCode())
                 .body(new APIResponse(e.getErrorCode().getMessage(), null));
+    }
+
+    @ExceptionHandler(value = AuthorizationDeniedException.class)
+    ResponseEntity<APIResponse> handleAccessDeniedException(AuthorizationDeniedException exception) {
+        return ResponseEntity.status(ErrorCode.UNAUTHORIZED.getHttpStatusCode())
+                .body(new APIResponse(ErrorCode.UNAUTHORIZED.getMessage(), null));
     }
 }

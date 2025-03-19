@@ -26,8 +26,8 @@ public class SecurityConfig {
     private final String[] PUBLIC_GET_ENDPOINTS = {
     };
     private final String[] PUBLIC_POST_ENDPOINTS = {
-            "/authenticate",
-            "/user"
+            "/user/signup",
+            "/auth/login",
     };
 
     @Value("${jwt.signerKey}")
@@ -43,8 +43,8 @@ public class SecurityConfig {
 
         httpSecurity.oauth2ResourceServer(oauth2 -> 
                 oauth2.jwt(jwtConfigurer -> jwtConfigurer.decoder(jwtDecoder())
-                    .jwtAuthenticationConverter(jwtAuthenticationConverter())
-                )
+                    .jwtAuthenticationConverter(jwtAuthenticationConverter()))
+                    .authenticationEntryPoint(new JwtAuthenticationEntryPoint())
         );
 
         httpSecurity.csrf(AbstractHttpConfigurer::disable);

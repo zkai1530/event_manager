@@ -6,6 +6,8 @@ import java.util.List;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -15,6 +17,7 @@ import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -22,6 +25,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import com.datn.event_manager.enums.EventType;
 
 @Data
 @Builder
@@ -38,10 +42,19 @@ public class Event {
     @Column(nullable = false)
     String name;
 
+    @Column(nullable = false)
+    String summary;
+
     String description;
     String imageUrl;
     int capacity;
-    String location;
+
+    @OneToOne(mappedBy = "event")
+    EventLocation eventLocation;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    EventType eventType;
 
     @Column(nullable = false)
     Boolean isPublished = false;
@@ -71,6 +84,6 @@ public class Event {
     List<Category> categories;
 
     @OneToMany(mappedBy = "event", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    List<Ticket> tickets;
+    List<FAQ> faqs;
 }
 

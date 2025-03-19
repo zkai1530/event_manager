@@ -4,12 +4,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.datn.event_manager.dto.request.AuthenticationRequest;
+import com.datn.event_manager.dto.request.UserUpdateRequest;
 import com.datn.event_manager.dto.response.APIResponse;
+import com.datn.event_manager.dto.response.Message;
 import com.datn.event_manager.service.User.UserService;
 
 import lombok.AccessLevel;
@@ -23,9 +26,9 @@ import lombok.experimental.FieldDefaults;
 public class UserController {
     UserService userService;
 
-    @PostMapping
+    @PostMapping("/signup")
     public ResponseEntity<APIResponse> createUser(@RequestBody AuthenticationRequest userRequest) {
-        return ResponseEntity.ok(new APIResponse("createUser", userService.createUser(userRequest)));
+        return ResponseEntity.ok(new APIResponse(Message.SIGNUP_SUCCESS, userService.createUser(userRequest)));
     }
 
     @GetMapping("/{userId}")
@@ -35,12 +38,16 @@ public class UserController {
 
     @GetMapping("/all")
     public ResponseEntity<APIResponse> getAllUsers() {
-        return ResponseEntity.ok(new APIResponse("getAllUsers", userService.getAllUsers()));
+        return ResponseEntity.ok(new APIResponse(Message.RESOURCE_FOUND, userService.getAllUsers()));
     }
 
-    @GetMapping("/getInfo")
+    @GetMapping("/me")
     public ResponseEntity<APIResponse> getUserInfo() {
-        return ResponseEntity.ok(new APIResponse("getUserInfo", userService.getUserInfo()));
+        return ResponseEntity.ok(new APIResponse(Message.RESOURCE_FOUND, userService.getUserInfo()));
     }
 
+    @PutMapping("/me")
+    public ResponseEntity<APIResponse> updateUserInfo(@RequestBody UserUpdateRequest request) {
+        return ResponseEntity.ok(new APIResponse(Message.SUCCESS_REQUEST, userService.updateUserInfo(request)));
+    }
 }

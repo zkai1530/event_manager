@@ -1,5 +1,9 @@
 package com.datn.event_manager.dto.response;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+
+import jakarta.persistence.Column;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,12 +16,9 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class UserResponse {
-    String email;
-    String name;
-    String phoneNumber;
-    String avatarUrl;
-    String location;
-    String currentMode;
-    String roleName;
+public class EventScheduleResponse {
+    Long scheduleId;
+    LocalDate scheduleDate;
+    LocalTime startTime;
+    LocalTime endTime;
 }
