@@ -9,5 +9,6 @@ public class Message {
     public static final String VALID_TOKEN = "Valid token!";
     public static final String SUCCESS_REQUEST = "Request was successful!";
     public static final String CREATE_EVENT_SUCCESS = "Create event was successfully!";
+    public static final String UPDATE_EVENT_SUCCESS = "Update event was successfully!";
 }
 

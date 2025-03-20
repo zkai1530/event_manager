@@ -64,7 +64,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .subject(user.getEmail())
                 .issuer("event_manager.com")
                 .issueTime(new Date())
-                .expirationTime(new Date(System.currentTimeMillis() + 2 * 60 * 1000))
+                .expirationTime(new Date(System.currentTimeMillis() + 60 * 60 * 1000))
                 .jwtID(UUID.randomUUID().toString())
                 .claim("scope", buildScope(user))
                 .build();

@@ -42,6 +42,6 @@ public class EventController {
 
     @PutMapping("/{eventId}")
     public ResponseEntity<APIResponse> updateEvent (@PathVariable Long eventId, @RequestBody EventRequest request) {
-        return ResponseEntity.ok(new APIResponse(Message.RESOURCE_FOUND, eventService.updateEvent(eventId, request)));
+        return ResponseEntity.ok(new APIResponse(Message.UPDATE_EVENT_SUCCESS, eventService.updateEvent(eventId, request)));
     }
 }

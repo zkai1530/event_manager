@@ -34,12 +34,6 @@ import lombok.extern.slf4j.Slf4j;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class EventServiceImpl implements EventService {
-
-    private final ApplicationRunner applicationRunner;
-
-    private final ApplicationInitConfig applicationInitConfig;
-
-    private final UserController userController;
     EventRepository eventRepository;
     EventLocationRepository eventLocationRepository;
     EventScheduleRepository eventScheduleRepository;
@@ -67,13 +61,16 @@ public class EventServiceImpl implements EventService {
         if (eventRequest.getEventLocationRequest() != null) {
             EventLocationRequest eventLocationRequest = eventRequest.getEventLocationRequest();
 
-            EventLocation location = EventLocation.builder()
-                    .event(event)
-                    .address(eventLocationRequest.getAddress())
-                    .city(eventLocationRequest.getCity())
-                    .country(eventLocationRequest.getCountry())
-                    .postalCode(eventLocationRequest.getPostalCode())
-                    .build();
+            EventLocation location = event.getEventLocation();
+
+            if (eventLocationRequest.getAddress() != null)
+                location.setAddress(eventLocationRequest.getAddress());
+            if (eventLocationRequest.getCity() != null)
+                location.setCity(eventLocationRequest.getCity());
+            if (eventLocationRequest.getCountry() != null)
+                location.setCountry(eventLocationRequest.getCountry());
+            if (eventLocationRequest.getPostalCode() != null)
+                location.setPostalCode(eventLocationRequest.getPostalCode());
 
             eventLocationRepository.save(location);
         }
@@ -134,6 +131,10 @@ public class EventServiceImpl implements EventService {
             throw new AppException(ErrorCode.UNAUTHORIZED);
         }
 
+        // EventType
+        EventType oldEventType = event.getEventType();
+        EventType newEventType = request.getEventType();
+
         // Event
         if (request.getName() != null)
             event.setName(request.getName());
@@ -168,8 +169,9 @@ public class EventServiceImpl implements EventService {
         }
 
         // Schedule
-        EventType oldEventType = event.getEventType();
-        EventType newEventType = request.getEventType();
+
+        log.info("newEventType: {}", newEventType);
+        log.info("oldEventType: {}", oldEventType);
 
         if (oldEventType != newEventType) {
             // Recurring -> Single
@@ -190,11 +192,20 @@ public class EventServiceImpl implements EventService {
             }
             // Single -> Recurring
             else {
-                eventScheduleRepository.deleteByEvent(event);
+                EventSchedule scheduleToDelete = event.getSchedules().get(0);
+                log.info("Deleting schedule ID: {}", scheduleToDelete.getScheduleId());
+
+                // delete schedule in event entity
+                event.getSchedules().remove(scheduleToDelete);
+
+                // delete schedule in DB
+                eventScheduleRepository.delete(scheduleToDelete);
             }
         }
         // Single -> Single => maybe change date or time
         else {
+            log.info("bang nhau ne");
+
             if (newEventType == EventType.SINGLE) {
                 if (request.getEventDate() == null || request.getStartTime() == null
                         || request.getEndTime() == null) {
@@ -229,7 +240,7 @@ public class EventServiceImpl implements EventService {
                             .answer(faqRequest.getAnswer())
                             .question(faqRequest.getQuestion())
                             .build();
-    
+
                     faqRepository.save(faq);
                 }
                 // update faqs
@@ -238,30 +249,29 @@ public class EventServiceImpl implements EventService {
                             .filter(f -> f.getId() == faqRequest.getId())
                             .findFirst()
                             .orElseThrow(() -> new AppException(ErrorCode.EVENT_NOT_FOUND));
-    
+
                     if (faqRequest.getAnswer() != null)
                         faq.setAnswer(faqRequest.getAnswer());
                     if (faqRequest.getQuestion() != null)
                         faq.setQuestion(faqRequest.getQuestion());
-    
+
                 }
             }
-    
+
             // delete faqs
             List<Long> faqRequestIds = faqRequests.stream()
                     .filter(faqRequest -> faqRequest.getId() != null)
                     .map(faqRequest -> faqRequest.getId())
                     .collect(Collectors.toList());
-    
+
             List<FAQ> faqsToDelete = faqs.stream()
                     .filter(faq -> !faqRequestIds.contains(faq.getId()))
                     .collect(Collectors.toList());
-    
+
             for (FAQ faq : faqsToDelete) {
                 faqRepository.delete(faq);
             }
         }
-        
 
         return eventMapper.toEventResponse(event);
     }
