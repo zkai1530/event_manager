@@ -73,13 +73,13 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse getUserInfo() {
-        User user = authenticationService.getUserFromUser();
+        User user = authenticationService.getUserFromToken();
         return userMapper.toUserResponse(user);
     }
 
     @Override
     public UserResponse updateUserInfo(UserUpdateRequest request) {
-        User user = authenticationService.getUserFromUser();
+        User user = authenticationService.getUserFromToken();
 
         user.setName(request.getName() != null ? request.getName() : user.getName());
         user.setPhoneNumber(request.getPhoneNumber() != null ? request.getPhoneNumber() : user.getPhoneNumber());

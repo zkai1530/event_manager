@@ -14,6 +14,8 @@ public enum ErrorCode {
     UNAUTHORIZED("Access Denied! (unauthorized)", HttpStatus.FORBIDDEN), // when token don't have permission
     UNAUTHENTICATED("Unauthenticated", HttpStatus.UNAUTHORIZED), // when token isn't existed
     EVENT_NOT_FOUND("Event not found!", HttpStatus.NOT_FOUND),
+    TICKET_NOT_FOUND("Ticket not found!", HttpStatus.NOT_FOUND),
+    INVALID_SALE_DATES("Invalod sale dates!", HttpStatus.NOT_FOUND),
     DATE_TIME_IS_NULL("Datetime is null!", HttpStatus.BAD_REQUEST);
 
     ErrorCode(String message, HttpStatusCode httpStatusCode) {

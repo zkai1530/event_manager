@@ -1,10 +1,8 @@
 package com.datn.event_manager.dto.response;
 
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.util.List;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
-import jakarta.persistence.Column;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -17,10 +15,12 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class EventScheduleResponse {
-    Long scheduleId;
-    LocalDate scheduleDate;
-    LocalTime startTime;
-    LocalTime endTime;
-    List<TicketResponse> ticketSchedules;
+public class TicketResponse {
+    Long id;
+    String name;
+    Integer sold;
+    BigDecimal price;
+    Integer availableQuantity;
+    LocalDateTime saleStart;
+    LocalDateTime saleEnd;
 }

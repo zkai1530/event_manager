@@ -7,7 +7,7 @@ import org.mapstruct.Mapper;
 import com.datn.event_manager.dto.response.EventResponse;
 import com.datn.event_manager.entity.Event;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = TicketMapper.class)
 public interface EventMapper {
     EventResponse toEventResponse(Event event);
 

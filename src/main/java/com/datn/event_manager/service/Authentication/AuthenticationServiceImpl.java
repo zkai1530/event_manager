@@ -93,7 +93,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public User getUserFromUser() {
+    public User getUserFromToken() {
         SecurityContext context = SecurityContextHolder.getContext();
         log.info(context.getAuthentication().getName());
         String email = context.getAuthentication().getName(); // subject in JWT

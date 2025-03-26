@@ -3,10 +3,7 @@ package com.datn.event_manager.service.Event;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Service;
-import com.datn.event_manager.configuration.ApplicationInitConfig;
-import com.datn.event_manager.controller.UserController;
 import com.datn.event_manager.dto.request.EventLocationRequest;
 import com.datn.event_manager.dto.request.EventRequest;
 import com.datn.event_manager.dto.request.FAQRequest;
@@ -43,7 +40,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public String createEvent(EventRequest eventRequest) {
-        User user = authenticationService.getUserFromUser();
+        User user = authenticationService.getUserFromToken();
         Event event = Event.builder()
                 .user(user)
                 .name(eventRequest.getName())
@@ -126,7 +123,7 @@ public class EventServiceImpl implements EventService {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new AppException(ErrorCode.EVENT_NOT_FOUND));
         // check user have permission ? (authorized?)
-        User user = authenticationService.getUserFromUser();
+        User user = authenticationService.getUserFromToken();
         if (user.getUserId() != event.getUser().getUserId()) {
             throw new AppException(ErrorCode.UNAUTHORIZED);
         }
@@ -269,6 +266,7 @@ public class EventServiceImpl implements EventService {
                     .collect(Collectors.toList());
 
             for (FAQ faq : faqsToDelete) {
+                event.getFaqs().remove(faq);
                 faqRepository.delete(faq);
             }
         }

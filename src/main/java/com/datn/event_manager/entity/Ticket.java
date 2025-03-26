@@ -45,9 +45,10 @@ public class Ticket {
     String description;
 
     @Column(nullable = false)
-    String availableQuantity; // the maximum quantity of tickets available for sale for this event
+    Integer availableQuantity; // the maximum quantity of tickets available for sale for this event
 
-    String sold; // the number of tickets sold for this event
+    @Column(nullable = false)
+    Integer sold; // the number of tickets sold for this event
 
     @Column
     LocalDateTime saleStart; // null means the ticket is available until the event starts
@@ -57,7 +58,7 @@ public class Ticket {
     @Column(nullable = false, updatable = false)
     LocalDateTime createdAt = LocalDateTime.now();
 
-    @OneToMany(mappedBy = "ticket", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "ticket", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     List<TicketSchedule> ticketSchedules;
 
     @OneToMany(mappedBy = "ticket", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
