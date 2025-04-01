@@ -11,10 +11,6 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.JoinTable;
-import jakarta.persistence.ManyToMany;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
@@ -64,12 +60,7 @@ public class Ticket {
     @OneToMany(mappedBy = "ticket", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     List<OrderTicket> orderTickets;
 
-    @ManyToMany
-    @JoinTable(
-        name = "ticket_discount",
-        joinColumns = @JoinColumn(name = "ticket_id"),
-        inverseJoinColumns = @JoinColumn(name = "discount_id")
-    )
-    List<Discount> discounts;
+    @OneToMany(mappedBy = "ticket", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    List<TicketDiscount> ticketDiscounts;
 }
 

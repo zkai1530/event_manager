@@ -2,6 +2,7 @@ package com.datn.event_manager.dto.response;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -23,4 +24,5 @@ public class TicketResponse {
     Integer availableQuantity;
     LocalDateTime saleStart;
     LocalDateTime saleEnd;
+    List<DiscountResponse> discounts;
 }

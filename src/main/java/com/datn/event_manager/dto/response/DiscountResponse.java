@@ -1,8 +1,7 @@
-package com.datn.event_manager.dto.request;
+package com.datn.event_manager.dto.response;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 
 import com.datn.event_manager.enums.DiscountType;
 
@@ -18,7 +17,8 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class DiscountRequest {
+public class DiscountResponse {
+    String discountId;
     String name;
     String promoCode;
     DiscountType discountType; // PERCENT or FIXED
@@ -26,5 +26,4 @@ public class DiscountRequest {
     Integer maxUses; 
     LocalDateTime discountStart; 
     LocalDateTime discountEnd;
-    List<Long> ticketIds;
 }

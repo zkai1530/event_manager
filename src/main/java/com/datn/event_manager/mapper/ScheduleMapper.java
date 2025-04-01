@@ -11,4 +11,5 @@ import com.datn.event_manager.entity.EventSchedule;
 public interface ScheduleMapper {
     
     List<EventScheduleResponse> toEventScheduleResponse(List<EventSchedule> eventSchedules);
+    EventScheduleResponse toEventScheduleResponse(EventSchedule eventSchedules);
 }

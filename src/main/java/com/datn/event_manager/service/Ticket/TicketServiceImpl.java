@@ -146,10 +146,19 @@ public class TicketServiceImpl implements TicketService {
         // todo: take current schedule. Example: 1, 2
         List<TicketSchedule> currentTicketSchedules = ticket.getTicketSchedules();
 
+        Set<Long> currentScheduleIds = currentTicketSchedules.stream()
+            .map(td -> td.getSchedule().getScheduleId())
+            .collect(Collectors.toSet());
+
         // todo: take ids of schedules in request. Example: 2, 3
         Set<Long> requestScheduleIds = schedulesRequest.stream()
                 .map(EventSchedule::getScheduleId)
                 .collect(Collectors.toSet());
+
+        // todo: return if ticketIds no have change
+        if (currentScheduleIds.equals(requestScheduleIds)) {
+            return; 
+        }
         
         // todo: remove schedules that are not in request. Example: 1
         currentTicketSchedules.removeIf(ticketSchedule -> {
@@ -160,6 +169,7 @@ public class TicketServiceImpl implements TicketService {
         // todo: add new schedules that are not in current. Example: 3
         for (EventSchedule schedule : schedulesRequest) {
             Long scheduleId = schedule.getScheduleId();
+            // check if exist (example: 2) => no change
             boolean isScheduleExist = currentTicketSchedules.stream()
                     .anyMatch(currentTicketSchedule -> currentTicketSchedule.getSchedule().getScheduleId().equals(scheduleId));
 
@@ -193,20 +203,10 @@ public class TicketServiceImpl implements TicketService {
 
         if (!event.getUser().getUserId().equals(user.getUserId()))
             throw new AppException(ErrorCode.UNAUTHORIZED);
+        
+        List<Ticket> tickets = ticketRepository.findTicketsByEventId(eventId);
 
-        // get schedules by event id
-        List<EventSchedule> schedules = scheduleRepository.findAllByEvent(event);
-
-        // get tickets by schedules
-        List<TicketSchedule> ticketSchedules = ticketScheduleRepository.findAllByScheduleIn(schedules);
-
-        Set<Ticket> tickets = ticketSchedules.stream()
-                .map(ticketSchedule -> ticketSchedule.getTicket())
-                .collect(Collectors.toSet()); // set to remove duplicate tickets
-
-        List<Ticket> ticketList = new ArrayList<>(tickets);
-
-        return ticketMapper.toTicketResponseList(ticketList);
+        return ticketMapper.toTicketResponseList(tickets);
     }
 
     @Override

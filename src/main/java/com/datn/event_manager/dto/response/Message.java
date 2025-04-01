@@ -16,5 +16,8 @@ public class Message {
     public static final String CREATE_SCHEDULE_SUCCESS = "Create schedule was successfully!";
     public static final String UPDATE_SCHEDULE_SUCCESS = "Update schedule was successfully!";
     public static final String DELETE_SCHEDULE_SUCCESS = "Delete schedule was successfully!";
+    public static final String CREATE_PROMOTION_SUCCESS = "Create promotion was successfully!";
+    public static final String UPDATE_PROMOTION_SUCCESS = "Update promotion was successfully!";
+    public static final String DELETE_PROMOTION_SUCCESS = "Delete promotion was successfully!";
 }
 

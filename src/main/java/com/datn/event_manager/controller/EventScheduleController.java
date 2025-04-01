@@ -29,13 +29,18 @@ public class EventScheduleController {
 
     @GetMapping("/event/{eventId}")
     public ResponseEntity<APIResponse> getAllSchedules(@PathVariable Long eventId) {
-        return ResponseEntity.ok(new APIResponse(Message.RESOURCE_FOUND, scheduleService.getAllSchedules(eventId)));
+        return ResponseEntity.ok(new APIResponse(Message.RESOURCE_FOUND, scheduleService.getAllSchedulesByEventId(eventId)));
     }
     
     @PostMapping("/event/{eventId}")
     public ResponseEntity<APIResponse> createSchedules(@PathVariable Long eventId, @RequestBody ScheduleRequest request) {
         scheduleService.createSchedules(eventId, request);
         return ResponseEntity.ok(new APIResponse(Message.CREATE_SCHEDULE_SUCCESS, null));
+    }
+
+    @GetMapping("/{scheduleId}")
+    public ResponseEntity<APIResponse> getScheduleById(@PathVariable Long scheduleId) {
+        return ResponseEntity.ok(new APIResponse(Message.RESOURCE_FOUND, scheduleService.getScheduleById(scheduleId)));
     }
 
     @PutMapping("/{scheduleId}")

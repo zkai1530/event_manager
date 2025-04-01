@@ -1,7 +1,5 @@
 package com.datn.event_manager.exception;
 
-import java.security.Permission;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 
@@ -16,6 +14,7 @@ public enum ErrorCode {
     EVENT_NOT_FOUND("Event not found!", HttpStatus.NOT_FOUND),
     TICKET_NOT_FOUND("Ticket not found!", HttpStatus.NOT_FOUND),
     SCHEDULE_NOT_FOUND("Schedule not found!", HttpStatus.NOT_FOUND),
+    DISCOUNT_NOT_FOUND("Discount not found!", HttpStatus.NOT_FOUND),
     INVALID_SALE_DATES("Invalid sale dates!", HttpStatus.NOT_FOUND),
     DATE_TIME_IS_NULL("Datetime is null!", HttpStatus.BAD_REQUEST),
     CONFLICT_SCHEDULE("Schedule conflict detected!", HttpStatus.CONFLICT),

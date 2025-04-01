@@ -75,7 +75,7 @@ public class ScheduleServiceImpl implements ScheduleService {
     }
 
     @Override
-    public List<EventScheduleResponse> getAllSchedules(Long eventId) {
+    public List<EventScheduleResponse> getAllSchedulesByEventId(Long eventId) {
         User user = authenticationService.getUserFromToken();
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new AppException(ErrorCode.EVENT_NOT_FOUND));
@@ -88,6 +88,20 @@ public class ScheduleServiceImpl implements ScheduleService {
         List<EventSchedule> schedules = scheduleRepository.findAllByEvent(event);
 
         return scheduleMapper.toEventScheduleResponse(schedules);
+    }
+
+    @Override
+    public EventScheduleResponse getScheduleById(Long scheduleId) {
+        User user = authenticationService.getUserFromToken();
+        EventSchedule schedule = scheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new AppException(ErrorCode.SCHEDULE_NOT_FOUND));
+
+        // check if user is the owner of the event
+        if (!schedule.getEvent().getUser().getUserId().equals(user.getUserId())) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
+        return scheduleMapper.toEventScheduleResponse(schedule);
     }
 
     @Override

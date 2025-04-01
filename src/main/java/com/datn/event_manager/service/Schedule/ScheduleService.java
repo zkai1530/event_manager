@@ -7,7 +7,9 @@ import com.datn.event_manager.dto.request.ScheduleRequest;
 import com.datn.event_manager.dto.response.EventScheduleResponse;
 
 public interface ScheduleService {
-    List<EventScheduleResponse> getAllSchedules(Long eventId);
+    List<EventScheduleResponse> getAllSchedulesByEventId(Long eventId);
+
+    EventScheduleResponse getScheduleById(Long scheduleId);
 
     void createSchedules(Long eventId, ScheduleRequest request);
 

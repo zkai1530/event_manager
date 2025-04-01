@@ -6,6 +6,7 @@ import java.util.List;
 
 import com.datn.event_manager.enums.DiscountType;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -15,6 +16,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -42,8 +44,8 @@ public class Discount {
     @Column(name = "promo_code")
     String promoCode; // code or no code(discount)
 
-    @Column(name = "discount_type", nullable = false)
     @Enumerated(EnumType.STRING)
+    @Column(name = "discount_type", nullable = false)
     DiscountType discountType; // percent or fixed
 
     @Column(name = "discount_value", nullable = false)
@@ -61,6 +63,6 @@ public class Discount {
     @Column(nullable = false, updatable = false)
     LocalDateTime createdAt = LocalDateTime.now();
 
-    @ManyToMany(mappedBy = "discounts", fetch = FetchType.LAZY)
-    List<Ticket> tickets;
+    @OneToMany(mappedBy = "discount", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    List<TicketDiscount> ticketDiscounts;
 }
