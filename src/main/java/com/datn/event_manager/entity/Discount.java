@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.datn.event_manager.enums.DiscountType;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -61,8 +63,4 @@ public class Discount {
 
     @ManyToMany(mappedBy = "discounts", fetch = FetchType.LAZY)
     List<Ticket> tickets;
-
-    public enum DiscountType {
-        PERCENT, FIXED
-    }
 }

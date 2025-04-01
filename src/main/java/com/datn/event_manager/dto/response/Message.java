@@ -12,6 +12,9 @@ public class Message {
     public static final String UPDATE_EVENT_SUCCESS = "Update event was successfully!";
     public static final String CREATE_TICKET_SUCCESS = "Create ticket was successfully!";
     public static final String UPDATE_TICKET_SUCCESS = "Update ticket was successfully!";
-    public static final String DELETE_TICKET_SUCCESS = "Update ticket was successfully!";
+    public static final String DELETE_TICKET_SUCCESS = "Delete ticket was successfully!";
+    public static final String CREATE_SCHEDULE_SUCCESS = "Create schedule was successfully!";
+    public static final String UPDATE_SCHEDULE_SUCCESS = "Update schedule was successfully!";
+    public static final String DELETE_SCHEDULE_SUCCESS = "Delete schedule was successfully!";
 }
 

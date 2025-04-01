@@ -84,16 +84,16 @@ public class TicketServiceImpl implements TicketService {
     public void updateTicket(Long ticketId, TicketRequest request) {
         User user = authenticationService.getUserFromToken();
 
-        List<EventSchedule> schedules = scheduleRepository.findAllById(request.getScheduleIds());
+        List<EventSchedule> schedulesRequest = scheduleRepository.findAllById(request.getScheduleIds());
 
-        log.info(schedules.stream().map(schedule -> schedule.getScheduleId()).toList().toString());
+        log.info(schedulesRequest.stream().map(schedule -> schedule.getScheduleId()).toList().toString());
 
-        if (schedules.size() != request.getScheduleIds().size()) {
+        if (schedulesRequest.size() != request.getScheduleIds().size()) {
             throw new IllegalArgumentException("One or many schedules invalid!");
         }
 
         // Check if the user is the owner of the event
-        for (EventSchedule schedule : schedules) {
+        for (EventSchedule schedule : schedulesRequest) {
             String eventOwnerId = schedule.getEvent().getUser().getUserId();
 
             if (!eventOwnerId.equals(user.getUserId())) {
@@ -130,16 +130,48 @@ public class TicketServiceImpl implements TicketService {
             ticket.setSaleEnd(request.getSaleEnd());
 
         // update scheduleIds
-        ticketScheduleRepository.deleteByTicket(ticket); // delete old schedules
+        
+        // * ticket.getTicketSchedules().clear(); // clear existing schedules
+       
+        // * List<TicketSchedule> ticketSchedules = schedules.stream()
+                // * .map(schedule -> TicketSchedule.builder()
+                        // * .ticket(ticket)
+                        // * .schedule(schedule)
+                        // * .build())
+                // * .collect(Collectors.toList());
+      
+        // * ticket.getTicketSchedules().addAll(ticketSchedules); // add new schedules
+        // * ticketRepository.save(ticket);
 
-        List<TicketSchedule> ticketSchedules = schedules.stream()
-                .map(schedule -> TicketSchedule.builder()
+        // todo: take current schedule. Example: 1, 2
+        List<TicketSchedule> currentTicketSchedules = ticket.getTicketSchedules();
+
+        // todo: take ids of schedules in request. Example: 2, 3
+        Set<Long> requestScheduleIds = schedulesRequest.stream()
+                .map(EventSchedule::getScheduleId)
+                .collect(Collectors.toSet());
+        
+        // todo: remove schedules that are not in request. Example: 1
+        currentTicketSchedules.removeIf(ticketSchedule -> {
+            Long scheduleId = ticketSchedule.getSchedule().getScheduleId();
+            return !requestScheduleIds.contains(scheduleId);
+        });
+
+        // todo: add new schedules that are not in current. Example: 3
+        for (EventSchedule schedule : schedulesRequest) {
+            Long scheduleId = schedule.getScheduleId();
+            boolean isScheduleExist = currentTicketSchedules.stream()
+                    .anyMatch(currentTicketSchedule -> currentTicketSchedule.getSchedule().getScheduleId().equals(scheduleId));
+
+            if (!isScheduleExist) {
+                TicketSchedule ticketSchedule = TicketSchedule.builder()
                         .ticket(ticket)
                         .schedule(schedule)
-                        .build())
-                .collect(Collectors.toList());
-
-        ticket.setTicketSchedules(ticketSchedules);
+                        .build();
+                currentTicketSchedules.add(ticketSchedule);
+            }
+        }
+        ticket.setTicketSchedules(currentTicketSchedules);
         ticketRepository.save(ticket);
     }
 

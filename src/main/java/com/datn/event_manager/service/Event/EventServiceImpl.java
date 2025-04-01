@@ -79,6 +79,10 @@ public class EventServiceImpl implements EventService {
                 throw new AppException(ErrorCode.DATE_TIME_IS_NULL);
             }
 
+            if (!eventRequest.getEndTime().isAfter(eventRequest.getStartTime())) {
+                throw new IllegalArgumentException("End time must be after start time.");
+            }
+
             EventSchedule eventSchedule = EventSchedule.builder()
                     .event(event)
                     .scheduleDate(eventRequest.getEventDate())
@@ -177,6 +181,14 @@ public class EventServiceImpl implements EventService {
                         || request.getEndTime() == null) {
                     throw new AppException(ErrorCode.DATE_TIME_IS_NULL);
                 }
+
+                List<EventSchedule> scheduleToDelete = event.getSchedules();
+
+                // delete schedule in event entity
+                event.getSchedules().removeAll(scheduleToDelete);
+
+                // delete schedule in DB
+                eventScheduleRepository.deleteAll(scheduleToDelete);
 
                 EventSchedule eventSchedule = EventSchedule.builder()
                         .event(event)
