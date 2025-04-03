@@ -1,0 +1,13 @@
+
+
+@import "tailwindcss";
+
+@theme {
+  --font-main: "Noto Sans", sans-serif;
+  --font-logo: "Balsamiq Sans", sans-serif;
+  --color-main: #00ACC1;
+  --color-secondary: #B2EBF2;
+  --color-emphasis: #FF7043;
+  /* --text-abc: 10rem; fontsize */
+  /* --breakpoint-abc: 300px; width >= 300px */
+}
