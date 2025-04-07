@@ -6,7 +6,7 @@ import { Routes, Route } from "react-router-dom";
 const PublicRoutes = () => {
   return (
     <Routes>
-      <Route path="/" element={<Header />}/>
+      <Route path="/" element={<Header />} />
     </Routes>
   );
 };

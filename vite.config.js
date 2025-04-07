@@ -15,6 +15,7 @@ export default defineConfig({
       components: path.resolve(__dirname, "src/components"), // Sử dụng __dirname đã định nghĩa
       pages: path.resolve(__dirname, "src/pages"),
       services: path.resolve(__dirname, "src/services"),
+      layout: path.resolve(__dirname, "src/layout"),
     },
   },
 });
