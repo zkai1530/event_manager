@@ -1,7 +1,5 @@
-import { MdMenuOpen } from "react-icons/md";
 import { IoHomeOutline } from "react-icons/io5";
-import { FaProductHunt } from "react-icons/fa";
-import { FaUserCircle } from "react-icons/fa";
+import { SiEventbrite } from "react-icons/si";
 import { TbReportSearch } from "react-icons/tb";
 import { IoLogoBuffer } from "react-icons/io";
 import { CiSettings } from "react-icons/ci";
@@ -14,7 +12,7 @@ const menuItems = [
     label: "Home",
   },
   {
-    icons: <FaProductHunt size={25} />,
+    icons: <SiEventbrite size={25} />,
     label: "Events",
   },
   {

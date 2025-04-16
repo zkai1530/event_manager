@@ -1,25 +1,33 @@
-import { useRef, useState } from "react";
-import {
-  FaSearch,
-  FaMapMarkerAlt,
-  FaPlus,
-  FaRegHeart,
-} from "react-icons/fa";
+import { useAuth } from "context/AuthContext";
+import { useEffect, useRef, useState } from "react";
+import { FaSearch, FaMapMarkerAlt, FaPlus, FaRegHeart } from "react-icons/fa";
 import { GrNotification } from "react-icons/gr";
 import { Link } from "react-router-dom";
+import { getUserInfo } from "services/user/userService";
 
 const Header = () => {
+  const token = localStorage.getItem("token");
+  const [avatar, setAvatar] = useState();
   const [searchQuery, setSearchQuery] = useState("");
   const [location, setLocation] = useState("Hồ Chí Minh city");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const userInfoRef = useRef(null);
 
+  useEffect(() => {
+    if (!avatar && token) {
+      getUserInfo(token)
+        .then((data) => setAvatar(data.avatarUrl))
+        .catch((error) => console.error("getUserInfo", error));
+    }
+  }, [token]);
+  console.log(avatar);
+
   const toggleDropdown = () => {
     setDropdownOpen((prev) => !prev);
-  };
+  };  
 
   const dropdownItems = [
-    { id: 1, label: "Manage my events", link: "/organizations/events" },
+    { id: 1, label: "Manage my events", link: "/manage/event/create" },
     { id: 2, label: "Settings", link: "/settings" },
     { id: 3, label: "Logout", link: "/logout" },
   ];
@@ -30,7 +38,7 @@ const Header = () => {
         {/* Logo and Search */}
         <div className="flex min-w-0 flex-1 items-center gap-4">
           {/* Logo */}
-          <div className="flex w-fit items-center cursor-pointer">
+          <div className="flex w-fit cursor-pointer items-center">
             <h1 className="font-logo from-main to-emphasis bg-gradient-to-r bg-clip-text text-[22px] font-bold text-transparent md:text-[26px]">
               Eventify
             </h1>
@@ -71,14 +79,14 @@ const Header = () => {
           {/* Create Event Button */}
           <button className="bg-main hover:bg-main-bold flex cursor-pointer items-center space-x-2 rounded-full px-2 py-2 text-white lg:px-4">
             <FaPlus />
-            <span className="text-sm md:text-base">Create Event</span>
+            <span className="text-sm md:text-base">Tạo sự kiện</span>
           </button>
 
           {/* Likes Link */}
           <a href="#" className="hover:text-primary flex flex-col items-center">
             <FaRegHeart size={18} className="text-gray-800" />
             <span className="text-[10px] font-semibold text-gray-500 sm:text-xs">
-              Likes
+              Yêu thích
             </span>
           </a>
 
@@ -86,7 +94,7 @@ const Header = () => {
           <a href="#" className="hover:text-primary flex flex-col items-center">
             <GrNotification size={18} className="text-gray-800" />
             <span className="text-[10px] font-semibold text-gray-500 sm:text-xs">
-              Notification
+              Thông báo
             </span>
           </a>
 
@@ -96,10 +104,15 @@ const Header = () => {
             onClick={toggleDropdown}
             ref={userInfoRef}
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-300">
-              <span className="text-white">K</span>
+            <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-gray-300">
+              <img
+                src={avatar}
+                alt="User Avatar"
+                className="h-full w-full object-cover"
+              />
             </div>
-            <span className="text-textDark hidden lg:block">zkai@lgk.com</span>
+
+            <span className="text-textDark hidden lg:block">Tài khoản</span>
 
             {dropdownOpen && (
               <div className="absolute top-full right-0 z-10 mt-2 w-48 rounded-md border border-gray-200 bg-white shadow-lg">

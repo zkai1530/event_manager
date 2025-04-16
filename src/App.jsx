@@ -5,6 +5,7 @@ import PrivateRoutes from "./routes/PrivateRoutes";
 import UserRoutes from "./routes/UserRoutes";
 import AdminRoutes from "./routes/AdminRoutes";
 import OrganizerRoutes from "./routes/OrganizerRoutes";
+import ManageEventRoutes from "./routes/ManageEventRoutes";
 
 function App() {
 
@@ -19,6 +20,7 @@ function App() {
           <Route element={<PrivateRoutes />}>
             <Route path="/user/*" element={<UserRoutes />} />
             <Route path="/organizations/*" element={<OrganizerRoutes />} />
+            <Route path="/manage/event/*" element={<ManageEventRoutes />} />
             <Route path="/admin/*" element={<AdminRoutes />} />
           </Route>
         </Routes>

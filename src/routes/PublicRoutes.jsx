@@ -1,12 +1,20 @@
-
-import Header from "components/layout/Header";
+import UserLayout from "layout/UserLayout";
+import Callback from "pages/auth/Callback";
+import Login from "pages/auth/Login";
+import Home from "pages/users/browser_event/Home";
 import { Routes, Route } from "react-router-dom";
-
 
 const PublicRoutes = () => {
   return (
     <Routes>
-      <Route path="/" element={<Header />} />
+      {/* route don't have layout */}
+      <Route path="/login" element={<Login />} />
+      <Route path="/callback" element={<Callback />} />
+
+      {/* route have layout */}
+      <Route element={<UserLayout />}>
+        <Route path="/" element={<Home />} />
+      </Route>
     </Routes>
   );
 };

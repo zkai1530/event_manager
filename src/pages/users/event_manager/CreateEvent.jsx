@@ -12,8 +12,14 @@ import { IoInformationCircleOutline } from "react-icons/io5";
 import { ImBin } from "react-icons/im";
 import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
+import EventStepper from "components/layout/EventStepper";
+import { useNavigate } from "react-router-dom";
+import { createEvent } from "services/user/eventService";
+import Loading from "components/UI/Loading";
 
 const CreateEvent = () => {
+  const token = localStorage.getItem("token");
+  const [isLoading, setIsLoading] = useState(false);
   const [eventType, setEventType] = useState("singleEvent");
   var toolbarOptions = [
     ["bold", "italic", "underline", "strike"],
@@ -63,26 +69,35 @@ const CreateEvent = () => {
     name: "faqs", // Đặt tên cho mảng field trong form data
   });
 
-  const onSubmit = (data) => {
-    const eventLocationRequest = {
-      address: data.address,
-      city: data.city,
-      country: data.country,
-      postalCode: data.postalCode,
-    };
+  const onSubmit = async (data) => {
+    const { address, city, country, postalCode, ...rest } = data;
 
-    // Tạo requestData mà không bao gồm các trường dư
-    const { address, city, country, postalCode, ...otherData } = data;
+    // Kiểm tra xem date, startTime, endTime có đều rỗng hay không
+    const isEmptyTime =
+      !getValues("eventDate") &&
+      !getValues("startTime") &&
+      !getValues("endTime");
 
-    // Kết hợp các dữ liệu còn lại với eventLocationRequest
     const requestData = {
-      ...otherData,
-      eventLocationRequest: eventLocationRequest,
+      ...rest,
+      eventLocationRequest: { address, city, country, postalCode },
+      imageUrl: "https://example.com/event-image.jpg",
+      capacity: 500,
+      eventType: isEmptyTime ? "RECURRING" : "SINGLE",
     };
-    // Gửi requestData lên backend
-    console.log("dữ liêu form", JSON.stringify(requestData)); // Để kiểm tra dữ liệu trước khi gửi
+
+    try {
+      setIsLoading(true);
+      const eventId = await createEvent(requestData, token);
+      console.log(eventId);
+      // data is eventId
+      navigate(`/manage/event/${eventId}/schedules`);
+    } catch (error) {
+      console.error("Tạo sự kiện thất bại", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
-  console.log(getValues("description"));
 
   const [isExpanded, setIsExpanded] = useState({
     title: false,
@@ -174,87 +189,16 @@ const CreateEvent = () => {
   };
 
   console.log("a", isExpanded);
-
-  const sidebarRef = useRef(null);
-
-  useEffect(() => {
-    const sidebarElement = sidebarRef.current;
-    if (!sidebarElement) return;
-
-    const handleMouseEnter = () => {
-      sidebarElement.style.overflowY = "auto";
-    };
-    const handleMouseLeave = () => {
-      sidebarElement.style.overflowY = "hidden";
-    };
-
-    sidebarElement.addEventListener("mouseenter", handleMouseEnter);
-    sidebarElement.addEventListener("mouseleave", handleMouseLeave);
-
-    return () => {
-      sidebarElement.removeEventListener("mouseenter", handleMouseEnter);
-      sidebarElement.removeEventListener("mouseleave", handleMouseLeave);
-    };
-  }, []);
+  const navigate = useNavigate();
+  const handleCreateFakeEvent = () => {
+    // Giả lập tạo thành công event và có eventId = 123
+    const fakeEventId = "123";
+    navigate(`/manage/event/${fakeEventId}/tickets`);
+  };
 
   return (
-    <div className="flex min-h-screen">
-      <div
-        ref={sidebarRef}
-        className="h-screen w-1/4 overflow-y-hidden bg-white p-4"
-      >
-        <div className="mb-4 flex items-center">
-          <span className="mr-2 text-blue-500">←</span>
-          <span className="text-blue-500">Back to events</span>
-        </div>
-        <div className="mb-4 rounded-lg bg-white p-4 shadow-sm">
-          <img
-            alt="Event banner"
-            className="h-20 w-full rounded-t-lg object-cover"
-            height="50"
-            src="https://storage.googleapis.com/a1aa/image/ABDP3ZpXOIbnAYbgJb8Vs2arxs3rOzoQvFD-uhwe_c8.jpg"
-            width="100"
-          />
-          <h2 className="mt-2 text-xl font-semibold">FB are trend</h2>
-          <div className="mt-2 flex items-center">
-            <button className="rounded-lg bg-gray-200 px-3 py-1 text-gray-700">
-              Draft ▼
-            </button>
-            <a className="ml-4 text-blue-600" href="#">
-              Preview ↗
-            </a>
-          </div>
-        </div>
-        <h3 className="mb-2 text-lg font-semibold">Steps</h3>
-        <ul className="space-y-4">
-          <li className="flex items-center">
-            <span className="mr-2 flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 text-sm text-white">
-              1
-            </span>
-            Build event page
-          </li>
-          <li className="flex items-center">
-            <span className="mr-2 flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 text-sm text-white">
-              2
-            </span>
-            Manage dates and times
-          </li>
-          <li className="flex items-center">
-            <span className="mr-2 flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 text-sm text-white">
-              3
-            </span>
-            Add tickets
-          </li>
-          <li className="flex items-center">
-            <span className="mr-2 flex h-6 w-6 items-center justify-center rounded-full bg-gray-300 text-sm text-gray-600">
-              4
-            </span>
-            Publish
-          </li>
-        </ul>
-      </div>
-
-      <div className="w-3/4 overflow-y-auto px-25 py-8">
+    <div className="flex min-h-screen px-25">
+      <div className="">
         {/* Title section */}
         <div
           data-field="title"
@@ -267,7 +211,6 @@ const CreateEvent = () => {
           }}
           onBlur={(e) => {
             handleBlur("title", e);
-            // Cập nhật giá trị vào form khi mất focus (không cần sự kiện handlleSubmit của RHF)
             setValue("name", getValues("name"));
             setValue("summary", getValues("summary"));
           }}
@@ -348,9 +291,7 @@ const CreateEvent = () => {
               getValues("summary") &&
               !isExpanded.title && (
                 <div className="-mt-2">
-                  <h2 className="text-2xl font-bold">
-                    {getValues("name")}
-                  </h2>
+                  <h2 className="text-2xl font-bold">{getValues("name")}</h2>
                   <p>{getValues("summary")}</p>
                 </div>
               )}
@@ -633,12 +574,17 @@ const CreateEvent = () => {
                   Date and time
                 </h3>
                 <div className="flex space-x-3">
-                  {/* date and time input */}
+                  {/* date input */}
                   <div className="flex w-1/2 flex-col">
                     <input
-                      type="text"
+                      type="date"
                       {...register("eventDate", {
                         required: "Schedule date is required",
+                        validate: {
+                          isFuture: (value) =>
+                            value > new Date().toISOString().split("T")[0] ||
+                            "Event date must be after today",
+                        },
                       })}
                       className={`mb-2 w-full rounded-lg border border-gray-500 px-4 py-2 outline-none ${errors.eventDate ? "border-2 border-red-500" : "focus:ring-main focus:border-none focus:ring-2"}`}
                       placeholder="Date"
@@ -658,7 +604,7 @@ const CreateEvent = () => {
                   {/* starttime input */}
                   <div className="flex w-1/4 flex-col">
                     <input
-                      type="text"
+                      type="time"
                       {...register("startTime", {
                         required: "Start time is required",
                       })}
@@ -680,9 +626,15 @@ const CreateEvent = () => {
                   {/* endtime input */}
                   <div className="flex w-1/4 flex-col">
                     <input
-                      type="text"
+                      type="time"
                       {...register("endTime", {
                         required: "End time is required",
+                        validate: {
+                          afterStart: (value) =>
+                            !getValues("startTime") ||
+                            value > getValues("startTime") ||
+                            "End time must be after start time",
+                        },
                       })}
                       className={`mb-2 w-full rounded-lg border border-gray-500 px-4 py-2 outline-none ${errors.endTime ? "border-2 border-red-500" : "focus:ring-main focus:border-none focus:ring-2"}`}
                       placeholder="End time"
@@ -932,6 +884,13 @@ const CreateEvent = () => {
         <button type="button" onClick={handleSubmit(onSubmit)}>
           click me
         </button>
+        <button
+          onClick={handleCreateFakeEvent}
+          className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+        >
+          Tạo sự kiện & sang bước 2
+        </button>
+        <Loading isLoading={isLoading} />
       </div>
     </div>
   );

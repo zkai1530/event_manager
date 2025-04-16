@@ -11,6 +11,7 @@
   --color-main-light: #d9fffb;
   --color-main-semilight: #b2fff7;
   --color-secondary: #ffc966;
+  --color-secondary-light: #ffe89d;
   --color-emphasis: #FF7F50;
   /* --text-abc: 10rem; fontsize */
   /* --breakpoint-abc: 300px; width >= 300px */
@@ -22,4 +23,9 @@
 
 /* h1 {
   font-size: theme(fontSize.4xl);
+} */
+
+/* .container {
+  padding-left: 1rem;
+  padding-right: 1rem;
 } */

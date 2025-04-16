@@ -3,19 +3,22 @@ import OrganizerHeader from "components/layout/OrganizerHeader";
 import OrganizerSidebar from "components/layout/OrganizerSidebar";
 import { Outlet } from "react-router-dom";
 
-const OrganizerLayout = () => {
+const ManageEventLayout = () => {
   return (
     <div>
-      <div className="fixed top-0 right-0 left-0 z-50">
+      <div className="fixed top-0 right-0 left-0 z-100">
         <OrganizerHeader />
       </div>
       <div className="flex pt-[4.063rem]">
-        <div className="fixed left-0 h-screen w-13">
+        <div className="fixed left-0 h-screen w-13 z-[100]">
           <OrganizerSidebar />
         </div>
-        <div className="container mx-auto ml-13 flex-1">
+        <div className="z-[50] container mx-auto ml-13 flex-1">
           <main>
-            <Outlet />
+            <EventStepper />
+            <div className="ml-[25%] w-3/4 overflow-y-auto py-8">
+              <Outlet />
+            </div>
           </main>
         </div>
       </div>
@@ -23,4 +26,4 @@ const OrganizerLayout = () => {
   );
 };
 
-export default OrganizerLayout;
+export default ManageEventLayout;
