@@ -30,7 +30,7 @@ public class EventController {
         return ResponseEntity.ok(new APIResponse(Message.CREATE_EVENT_SUCCESS, eventService.createEvent(eventRequest)));
     }
 
-    @GetMapping
+    @GetMapping("/all")
     public ResponseEntity<APIResponse> getAllEvents () {
         return ResponseEntity.ok(new APIResponse(Message.CREATE_EVENT_SUCCESS, eventService.getAllEvents()));
     }
@@ -43,5 +43,10 @@ public class EventController {
     @PutMapping("/{eventId}")
     public ResponseEntity<APIResponse> updateEvent (@PathVariable Long eventId, @RequestBody EventRequest request) {
         return ResponseEntity.ok(new APIResponse(Message.UPDATE_EVENT_SUCCESS, eventService.updateEvent(eventId, request)));
+    }
+
+    @GetMapping
+    public ResponseEntity<APIResponse> getEventByUser () {
+        return ResponseEntity.ok(new APIResponse(Message.RESOURCE_FOUND, eventService.getEventsByUser()));
     }
 }

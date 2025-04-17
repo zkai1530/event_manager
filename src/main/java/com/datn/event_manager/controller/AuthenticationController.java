@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.datn.event_manager.dto.request.AuthenticationRequest;
@@ -33,5 +34,10 @@ public class AuthenticationController {
     public ResponseEntity<APIResponse> logout (@RequestBody LogoutRequest request) {
         authenticationService.logout(request);
         return ResponseEntity.ok(new APIResponse(Message.LOGOUT_SUCCESS, null));
+    }
+
+    @PostMapping("/google")
+    public ResponseEntity<APIResponse> loginWithGoogle(@RequestParam("code") String code) {
+        return ResponseEntity.ok(new APIResponse("Login success", authenticationService.loginWithGoogle(code)));
     }
 }

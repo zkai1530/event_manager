@@ -40,12 +40,14 @@ public class User {
     @Column(nullable = false, unique = true)
     String email;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     String password;
 
     String name;
     @Column(length = 10)
     String phoneNumber;
+
+    @Column(columnDefinition = "TEXT")
     String avatarUrl;
     String location;
 

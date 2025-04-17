@@ -1,12 +1,16 @@
 package com.datn.event_manager.service.Event;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
+import com.datn.event_manager.controller.TicketController;
 import com.datn.event_manager.dto.request.EventLocationRequest;
 import com.datn.event_manager.dto.request.EventRequest;
 import com.datn.event_manager.dto.request.FAQRequest;
+import com.datn.event_manager.dto.response.EventByUserResponse;
 import com.datn.event_manager.dto.response.EventResponse;
 import com.datn.event_manager.entity.Event;
 import com.datn.event_manager.entity.EventLocation;
@@ -58,7 +62,8 @@ public class EventServiceImpl implements EventService {
         if (eventRequest.getEventLocationRequest() != null) {
             EventLocationRequest eventLocationRequest = eventRequest.getEventLocationRequest();
 
-            EventLocation location = event.getEventLocation();
+            EventLocation location = new EventLocation();
+            location.setEvent(event);
 
             if (eventLocationRequest.getAddress() != null)
                 location.setAddress(eventLocationRequest.getAddress());
@@ -105,7 +110,7 @@ public class EventServiceImpl implements EventService {
 
             faqRepository.saveAll(faqs);
         }
-        return "ok me";
+        return event.getEventId().toString();
     }
 
     @Override
@@ -284,6 +289,36 @@ public class EventServiceImpl implements EventService {
         }
 
         return eventMapper.toEventResponse(event);
+    }
+
+    @Override
+    public List<EventByUserResponse> getEventsByUser() {
+        User user = authenticationService.getUserFromToken();
+        List<Event> events = eventRepository.findAllByUser(user);
+
+        if (events == null || events.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<EventByUserResponse> responseList = eventMapper.toEventByUserResponseList(events);
+        for (EventByUserResponse response : responseList) {
+            Integer totalTicketsSold = eventRepository.getTotalTicketsSold(response.getEventId());
+            response.setTotalTicketsSold(totalTicketsSold);
+        }
+
+        return responseList;
+    }
+
+    @Override
+    public EventByUserResponse getEventByUser() {
+        User user = authenticationService.getUserFromToken();
+        Event event = eventRepository.findByUser(user);
+        if (event == null) return null;
+        int totalTicketsSold = eventRepository.getTotalTicketsSold(event.getEventId());
+        
+        EventByUserResponse eventByUserResponse = eventMapper.toEventByUserResponse(event);
+        eventByUserResponse.setTotalTicketsSold(totalTicketsSold);
+        return eventByUserResponse;
     }
 
 }
