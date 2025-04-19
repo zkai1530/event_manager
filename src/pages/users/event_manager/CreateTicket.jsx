@@ -1,11 +1,15 @@
 import ScheduleModal from "components/modal/ScheduleModal";
 import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
-import { Link } from "react-router-dom";
+import { IoEllipsisVertical, IoTicketOutline } from "react-icons/io5";
+import { getEventInfoById } from "services/user/eventService";
+import { createTicket, updateTicket } from "services/user/ticketService";
+import { formatDateTime } from "utils/formatSchedule";
 import { useEventRoute } from "utils/useEventRoute";
 
 const CreateTicket = () => {
   const { eventId, section } = useEventRoute();
+  const token = localStorage.getItem("token");
 
   const [isOpen, setIsOpen] = useState(false);
   const panelRef = useRef(null);
@@ -28,14 +32,140 @@ const CreateTicket = () => {
     setSelectedOption(e.target.value);
   };
 
-  const onSubmit = (data) => {
-    const dataWithSchedule = {
+  const onSubmit = async (data) => {
+    const currentTicket = tickets.find((ticket) => ticket.id === data.id);
+    const requestData = {
       ...data,
-      scheduleIds: scheduleIds,
+      scheduleIds:
+        eventType === "single"
+          ? tickets[0]?.schedules.map((s) => s.scheduleId) || []
+          : selectedOption === "all" && currentTicket
+            ? currentTicket.schedules.map((schedule) => schedule.scheduleId)
+            : scheduleIds,
     };
 
-    console.log("Dữ liệu gửi đi:", dataWithSchedule);
+    console.log("Dữ liệu gửi đi:", requestData);
+
+    try {
+      setIsLoading(true);
+      if (requestData.id) {
+        await updateTicket(requestData.id, requestData, token);
+      } else {
+        console.log(requestData);
+        const eventId = await createTicket(requestData, token);
+        console.log(eventId);
+      }
+    } catch (error) {
+      console.error("Create/Update ticket error", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  const [isReady, setIsReady] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [tickets, setTickets] = useState([]);
+
+  const handleTicketSelect = (ticket) => {
+    setValue("id", ticket.id);
+    setValue("name", ticket.name);
+    setValue("description", ticket.description);
+    setValue("price", ticket.price.toString());
+    setValue("availableQuantity", ticket.availableQuantity.toString());
+
+   const formatDateTime = (dateTime) => {
+     const date = new Date(dateTime);
+     const year = date.getFullYear();
+     const month = String(date.getMonth() + 1).padStart(2, "0");
+     const day = String(date.getDate()).padStart(2, "0");
+     const hours = String(date.getHours()).padStart(2, "0");
+     const minutes = String(date.getMinutes()).padStart(2, "0");
+     return `${year}-${month}-${day}T${hours}:${minutes}`;
+   };
+   setValue("saleStart", formatDateTime(ticket.saleStart)); // Sửa tên trường
+   setValue("saleEnd", formatDateTime(ticket.saleEnd));
+
+    setScheduleIds(ticket.scheduleIds || []);
+    // setSelectedOption(
+    //   eventType === "single" || ticket.scheduleIds?.length === 0
+    //     ? "all"
+    //     : "certain",
+    // );
+    setSelectedOption(
+      eventType === "SINGLE" ||
+        ticket.scheduleIds?.length === 0 ||
+        (ticket.scheduleIds?.length === ticket.schedules.length &&
+          ticket.scheduleIds?.every((id) =>
+            ticket.schedules.some((schedule) => schedule.scheduleId === id),
+          ) &&
+          ticket.schedules.every((schedule) =>
+            ticket.scheduleIds?.includes(schedule.scheduleId),
+          ))
+        ? "all"
+        : "certain",
+    );
+  };
+
+  const [eventType, setEventType] = useState("SINGLE");
+  useEffect(() => {
+    setIsLoading(true);
+    getEventInfoById(eventId, token)
+      .then((data) => {
+        console.log("tui ne", data);
+        if (!data.schedules || data.schedules.length === 0) {
+          setIsReady(false);
+          setIsLoading(false);
+          return;
+        }
+
+        // Lấy tất cả schedules từ API
+        const allSchedules = data.schedules.map((schedule) => ({
+          scheduleId: schedule.scheduleId,
+          scheduleDate: schedule.scheduleDate,
+          startTime: schedule.startTime,
+          endTime: schedule.endTime,
+        }));
+
+        // Gộp tickets và gán scheduleIds
+        const mergedTickets = data.schedules.reduce((acc, schedule) => {
+          schedule.ticketSchedules.forEach((ticket) => {
+            const existingTicket = acc.find((t) => t.id === ticket.id);
+
+            if (existingTicket) {
+              if (data.eventType !== "SINGLE") {
+                existingTicket.scheduleIds.push(schedule.scheduleId);
+              }
+            } else {
+              acc.push({
+                id: ticket.id,
+                name: ticket.name,
+                description: ticket.description,
+                sold: ticket.sold,
+                price: ticket.price,
+                availableQuantity: ticket.availableQuantity,
+                saleStart: ticket.saleStart,
+                saleEnd: ticket.saleEnd,
+                schedules: [...allSchedules],
+                scheduleIds: [schedule.scheduleId],
+              });
+            }
+          });
+          return acc;
+        }, []);
+
+        console.log("merge", mergedTickets);
+        setTickets(mergedTickets);
+        setEventType(data.eventType);
+        setIsReady(true);
+      })
+      .catch((err) => {
+        console.log("getEventInfoById", err);
+        setIsReady(false);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, [eventId, setValue, setEventType, token]);
 
   // Click outside for close create ticket form
   useEffect(() => {
@@ -61,32 +191,77 @@ const CreateTicket = () => {
 
   return (
     <div className="px-2">
-      <div className="mb-8 flex justify-between">
-        <h2 className="py-1 text-3xl font-bold">Vé sự kiện</h2>
+      <div className="text-right">
         <button
-          onClick={() => setIsOpen(true)}
-          className={`rounded-lg bg-blue-600 px-4 py-2 text-xl font-medium text-white transition-colors hover:bg-blue-700 ${section === "promotions" && "hidden"}`}
+          onClick={() => {
+            setValue("id", null);
+            setValue("name", "");
+            setValue("description", "");
+            setValue("price", "");
+            setValue("availableQuantity", "");
+            // setValue("saleStart", "");
+            setValue("saleEnd", "");
+            setScheduleIds(
+              eventType === "single"
+                ? tickets[0]?.schedules.map((s) => s.scheduleId) || []
+                : [],
+            );
+            setSelectedOption("all");
+            setIsOpen(true);
+          }}
+          className={`rounded-lg bg-blue-600 px-4 py-2 text-xl font-medium text-white transition-colors hover:bg-blue-700`}
         >
           Tạo vé mới
         </button>
       </div>
-      <div className="flex">
-        <div className="mb-2 items-center justify-center space-x-10">
-          <Link
-            to={`/manage/event/${eventId}/tickets`}
-            className={`h-full cursor-pointer pb-[10px] text-[17px] font-semibold text-gray-500 duration-100 ${section === "tickets" ? "border-main text-main-bold border-b-2" : "hover:text-black"}`}
+
+      <div className="max-w-2xl space-y-4 px-3 pt-2">
+        {tickets.map((ticket, index) => (
+          <div
+            key={index}
+            className="grid grid-cols-[1fr_auto_auto] items-start gap-4 rounded-xl border border-gray-200 bg-white p-4 shadow-xs"
           >
-            Thông tin vé
-          </Link>
-          <Link
-            to={`/manage/event/${eventId}/promotions`}
-            className={`h-full cursor-pointer pb-[10px] text-[17px] font-semibold text-gray-500 duration-100 ${section === "promotions" ? "border-main text-main-bold border-b-2" : "hover:text-black"}`}
-          >
-            Khuyến mãi
-          </Link>
-        </div>
+            {/* left */}
+            <div className="flex items-start gap-4">
+              {/* <div className="cursor-move pt-1 text-xl">≡</div> */}
+              <div>
+                <div className="mb-2 text-lg font-bold capitalize">
+                  {ticket.name}
+                </div>
+                <div className="flex items-center space-x-2">
+                  <IoTicketOutline />
+                  <p className="text-sm text-gray-500">
+                    Tổng cộng: {ticket.availableQuantity} vé
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* middle */}
+            <div className="text-right">
+              <div className="mb-2 text-lg font-bold">${ticket.price}</div>
+              <p className="text-sm text-green-600">
+                ● On Sale
+                <span className="ml-3 text-gray-500">
+                  Kết thúc mở bán vào
+                  <span> {formatDateTime(ticket.saleEnd)}</span>
+                </span>
+              </p>
+            </div>
+
+            {/* right */}
+            <div
+              onClick={() => {
+                handleTicketSelect(ticket);
+                setIsOpen(true);
+              }}
+              className="hover:text-main cursor-pointer pt-4 text-black"
+            >
+              <IoEllipsisVertical size={22} />
+            </div>
+          </div>
+        ))}
       </div>
-      <hr className="text-gray-300" />
 
       {/* create ticket form */}
       <div
@@ -205,55 +380,71 @@ const CreateTicket = () => {
             </div>
 
             {/* apply ticket to schedules */}
-            <div className="mt-1">
-              <p className="mb-2 text-sm font-medium">Áp dụng vé cho</p>
+            {eventType === "RECURRING" && (
+              <div className="mt-1">
+                <p className="mb-2 text-sm font-medium">Áp dụng vé cho</p>
 
-              <div className="mb-2 flex items-center">
-                <input
-                  type="radio"
-                  name="discount"
-                  className="mr-2"
-                  value="all"
-                  checked={selectedOption === "all"}
-                  onChange={handleOptionChange}
-                />
-                <span>Tất cả lịch trình</span>
-              </div>
-
-              <div className="mb-2 flex items-center justify-between">
-                <div className="flex items-center">
+                <div className="mb-2 flex items-center">
                   <input
                     type="radio"
                     name="discount"
                     className="mr-2"
-                    value="certain"
-                    checked={selectedOption === "certain"}
+                    value="all"
+                    checked={selectedOption === "all"}
                     onChange={handleOptionChange}
                   />
-                  <span>Chỉ một vài lịch trình</span>
+                  <span>Tất cả lịch trình</span>
                 </div>
 
-                {selectedOption === "certain" && (
-                  <button
-                    className="text-sm text-blue-600 hover:text-blue-800"
-                    onClick={() => setShowScheduleModal(true)}
-                  >
-                    Chọn lịch trình
-                  </button>
+                <div className="mb-2 flex items-center justify-between">
+                  <div className="flex items-center">
+                    <input
+                      type="radio"
+                      name="discount"
+                      className="mr-2"
+                      value="certain"
+                      checked={selectedOption === "certain"}
+                      onChange={handleOptionChange}
+                    />
+                    <span>Chỉ một vài lịch trình</span>
+                  </div>
+
+                  {selectedOption === "certain" && (
+                    <button
+                      className="text-sm text-blue-600 hover:text-blue-800"
+                      onClick={() => setShowScheduleModal(true)}
+                    >
+                      Chọn lịch trình
+                    </button>
+                  )}
+                </div>
+
+                {showScheduleModal && (
+                  <ScheduleModal
+                    closeModal={() => setShowScheduleModal(false)}
+                    onSchedulesSelected={(selectedIds) => {
+                      console.log("Đã chọn lịch trình:", selectedIds);
+                      setScheduleIds(selectedIds);
+                      setShowScheduleModal(false);
+                    }}
+                    schedules={
+                      getValues("id")
+                        ? tickets.find(
+                            (ticket) => ticket.id === getValues("id"),
+                          )?.schedules || []
+                        : [
+                            ...new Map(
+                              tickets
+                                .flatMap((ticket) => ticket.schedules)
+                                .map((s) => [s.scheduleId, s]),
+                            ).values(),
+                          ]
+                    }
+                    initialSelectedIds={scheduleIds}
+                  />
                 )}
               </div>
-
-              {showScheduleModal && (
-                <ScheduleModal
-                  closeModal={() => setShowScheduleModal(false)}
-                  onSchedulesSelected={(selectedIds) => {
-                    console.log("Đã chọn lịch trình:", selectedIds);
-                    setScheduleIds(selectedIds);
-                    setShowScheduleModal(false);
-                  }}
-                />
-              )}
-            </div>
+            )}
 
             {/* sales start and sales end */}
             <div className="flex space-x-3">
@@ -264,7 +455,7 @@ const CreateTicket = () => {
                 <input
                   type="datetime-local"
                   placeholder="Ngày bắt đầu"
-                  {...register("salesStart", {
+                  {...register("saleStart", {
                     required: "Ngày bán đầu là bắt buộc",
                     validate: (value) => {
                       const today = new Date();
@@ -284,12 +475,12 @@ const CreateTicket = () => {
                     );
                     return localTime.toISOString().slice(0, 16);
                   })()}
-                  className={`w-full rounded-lg border border-gray-500 px-4 py-2 text-sm outline-none ${errors.salesStart ? "border-2 border-red-500" : "focus:ring-main focus:border-none focus:ring-2"} `}
+                  className={`w-full rounded-lg border border-gray-500 px-4 py-2 text-sm outline-none ${errors.saleStart ? "border-2 border-red-500" : "focus:ring-main focus:border-none focus:ring-2"} `}
                 />
-                {errors.salesStart && (
+                {errors.saleStart && (
                   <p className="mt-1 text-sm text-red-500">
-                    {typeof errors.salesStart.message === "string"
-                      ? errors.salesStart.message
+                    {typeof errors.saleStart.message === "string"
+                      ? errors.saleStart.message
                       : "Error!"}
                   </p>
                 )}
@@ -302,10 +493,10 @@ const CreateTicket = () => {
                 <input
                   type="datetime-local"
                   placeholder="Ngày kết thúc"
-                  {...register("salesEnd", {
+                  {...register("saleEnd", {
                     required: "Ngày kết thúc là bắt buộc",
-                    validate: (value, { salesStart }) => {
-                      const startDate = new Date(salesStart);
+                    validate: (value, { saleStart }) => {
+                      const startDate = new Date(saleStart);
                       const endDate = new Date(value);
                       return (
                         endDate > startDate ||
@@ -313,12 +504,12 @@ const CreateTicket = () => {
                       );
                     },
                   })}
-                  className={`w-full rounded-lg border border-gray-500 px-4 py-2 outline-none ${errors.salesEnd ? "border-2 border-red-500" : "focus:ring-main focus:border-none focus:ring-2"} `}
+                  className={`w-full rounded-lg border border-gray-500 px-4 py-2 outline-none ${errors.saleEnd ? "border-2 border-red-500" : "focus:ring-main focus:border-none focus:ring-2"} `}
                 />
-                {errors.salesEnd && (
+                {errors.saleEnd && (
                   <p className="mt-1 text-sm text-red-500">
-                    {typeof errors.salesEnd.message === "string"
-                      ? errors.salesEnd.message
+                    {typeof errors.saleEnd.message === "string"
+                      ? errors.saleEnd.message
                       : "Error!"}
                   </p>
                 )}

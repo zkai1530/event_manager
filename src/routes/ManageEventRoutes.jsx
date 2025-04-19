@@ -1,8 +1,8 @@
 import ManageEventLayout from "layout/ManageEventLayout";
 import CreateEvent from "pages/users/event_manager/CreateEvent";
 import CreateSchedule from "pages/users/event_manager/CreateSchedule";
-import CreateTicket from "pages/users/event_manager/CreateTicket";
 import { Routes, Route } from "react-router-dom";
+import TicketManagement from "pages/users/event_manager/TicketManagement";
 
 const ManageEventRoutes = () => {
   return (
@@ -10,8 +10,8 @@ const ManageEventRoutes = () => {
       <Route path="/" element={<ManageEventLayout />}>
         <Route path="create" element={<CreateEvent />} />
         <Route path=":eventId/schedules" element={<CreateSchedule />} />
-        <Route path=":eventId/tickets" element={<CreateTicket />} />
-        <Route path=":eventId/promotions" element={<CreateTicket />} />
+        <Route path=":eventId/tickets" element={<TicketManagement />} />
+        <Route path=":eventId/promotions" element={<TicketManagement />} />
         <Route path=":eventId/details" element={<CreateEvent />} />
       </Route>
     </Routes>
@@ -19,3 +19,4 @@ const ManageEventRoutes = () => {
 };
 
 export default ManageEventRoutes;
+// ? /manage/event/

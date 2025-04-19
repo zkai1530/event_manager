@@ -2,54 +2,45 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import { IoCloseSharp } from "react-icons/io5";
 
-const ScheduleModal = ({ onSchedulesSelected, closeModal }) => {
+const ScheduleModal = ({
+  onSchedulesSelected,
+  closeModal,
+  schedules,
+  initialSelectedIds,
+}) => {
   const [selectAll, setSelectAll] = useState(false);
-  const [schedules, setSchedules] = useState([
-    {
-      id: 1,
-      date: "2025-04-15",
-      startTime: "09:00",
-      endTime: "11:00",
-      checked: false,
-    },
-    {
-      id: 2,
-      date: "2025-04-16",
-      startTime: "13:00",
-      endTime: "15:30",
-      checked: false,
-    },
-    {
-      id: 3,
-      date: "2025-04-17",
-      startTime: "18:00",
-      endTime: "20:00",
-      checked: false,
-    },
-  ]);
+  const [scheduleList, setScheduleList] = useState(
+    schedules.map((schedule) => ({
+      id: schedule.scheduleId,
+      date: schedule.scheduleDate,
+      startTime: schedule.startTime.slice(0, 5),
+      endTime: schedule.endTime.slice(0, 5),
+      checked: initialSelectedIds
+        ? initialSelectedIds.includes(schedule.scheduleId)
+        : false,
+    })),
+  );
 
   const handleSelectAll = () => {
     const newSelectAll = !selectAll;
     setSelectAll(newSelectAll);
-    setSchedules(
-      schedules.map((schedule) => ({ ...schedule, checked: newSelectAll })),
+    setScheduleList(
+      scheduleList.map((schedule) => ({ ...schedule, checked: newSelectAll })),
     );
   };
 
   const handleScheduleCheck = (id) => {
-    const updatedSchedules = schedules.map((schedule) =>
+    const updatedSchedules = scheduleList.map((schedule) =>
       schedule.id === id
         ? { ...schedule, checked: !schedule.checked }
         : schedule,
     );
-    setSchedules(updatedSchedules);
-
-    const allChecked = updatedSchedules.every((s) => s.checked);
-    setSelectAll(allChecked);
+    setScheduleList(updatedSchedules);
+    setSelectAll(updatedSchedules.every((s) => s.checked));
   };
 
   const handleDone = () => {
-    const selectedIds = schedules.filter((s) => s.checked).map((s) => s.id);
+    const selectedIds = scheduleList.filter((s) => s.checked).map((s) => s.id);
     onSchedulesSelected(selectedIds);
     closeModal();
   };
@@ -85,7 +76,7 @@ const ScheduleModal = ({ onSchedulesSelected, closeModal }) => {
           <div className="w-[30%]">Giờ kết thúc</div>
         </div>
 
-        {schedules.map((schedule) => (
+        {scheduleList.map((schedule) => (
           <div
             key={schedule.id}
             className="flex items-center justify-between border-b border-gray-200 py-2"

@@ -104,7 +104,7 @@ const EventStepper = () => {
               : `/manage/event/${eventId}/details`;
           } else {
             linkPath = isCreateMode
-              ? "/manage/event/create" // Trong mode tạo mới thì luôn giữ nguyên ở bước 1
+              ? "/manage/event/create"
               : `/manage/event/${eventId}/${step.link}`;
           }
 

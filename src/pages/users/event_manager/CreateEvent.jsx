@@ -13,9 +13,14 @@ import { ImBin } from "react-icons/im";
 import ReactQuill from "react-quill-new";
 import "react-quill-new/dist/quill.snow.css";
 import EventStepper from "components/layout/EventStepper";
-import { useNavigate } from "react-router-dom";
-import { createEvent } from "services/user/eventService";
+import { useNavigate, useParams } from "react-router-dom";
+import {
+  createEvent,
+  getEventInfoById,
+  updateEvent,
+} from "services/user/eventService";
 import Loading from "components/UI/Loading";
+import { formatSchedule } from "utils/formatSchedule";
 
 const CreateEvent = () => {
   const token = localStorage.getItem("token");
@@ -85,15 +90,20 @@ const CreateEvent = () => {
       capacity: 500,
       eventType: isEmptyTime ? "RECURRING" : "SINGLE",
     };
+    console.log("dữ liệu", requestData);
 
     try {
       setIsLoading(true);
-      const eventId = await createEvent(requestData, token);
-      console.log(eventId);
-      // data is eventId
-      navigate(`/manage/event/${eventId}/schedules`);
+      if (eventId) {
+        await updateEvent(eventId, requestData, token);
+      } else {
+        const eventId = await createEvent(requestData, token);
+        console.log(eventId);
+        // data is eventId
+        navigate(`/manage/event/${eventId}/schedules`);
+      }
     } catch (error) {
-      console.error("Tạo sự kiện thất bại", error);
+      console.error("Create/Update event error", error);
     } finally {
       setIsLoading(false);
     }
@@ -195,6 +205,59 @@ const CreateEvent = () => {
     const fakeEventId = "123";
     navigate(`/manage/event/${fakeEventId}/tickets`);
   };
+  const { eventId } = useParams();
+  const [haveTicket, setHaveTicket] = useState(true);
+  const [isReady, setIsReady] = useState(false);
+  useEffect(() => {
+    setIsLoading(true);
+    getEventInfoById(eventId, token)
+      .then((data) => {
+        console.log("tui ne", data);
+        if (!data) {
+          setIsReady(false);
+          return;
+        }
+
+        const fetchedData = {
+          name: data.name,
+          summary: data.summary,
+          country: data.eventLocation.country,
+          city: data.eventLocation.city,
+          address: data.eventLocation.address,
+          postalCode: data.eventLocation.postalCode,
+          description: data.description,
+          faqs: data.faqs,
+        };
+
+        if (data.eventType === "SINGLE") {
+          // console.log(data.schedule.scheduleDate)
+          setEventType("singleEvent");
+          fetchedData.eventDate = data.schedules[0].scheduleDate;
+          fetchedData.startTime = data.schedules[0].startTime;
+          fetchedData.endTime = data.schedules[0].endTime;
+        } else if (data.eventType === "RECURRING") {
+          setEventType("recurringEvent");
+        }
+
+        // Đổ dữ liệu vào form
+        Object.entries(fetchedData).forEach(([key, value]) => {
+          setValue(key, value);
+        });
+
+        setIsReady(true);
+      })
+      .catch((err) => {
+        console.log("getEventInfoById", err);
+        setIsReady(false);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, [eventId, setValue, setEventType, token]);
+
+  if (!isReady) {
+    return null; // Nếu không có eventId hợp lệ (không phải 123), không render form
+  }
 
   return (
     <div className="flex min-h-screen px-25">
@@ -514,17 +577,18 @@ const CreateEvent = () => {
                 {/* Single Event */}
                 <div className="w-1/2">
                   <input
-                    className="peer"
+                    className={`peer`}
                     value="singleEvent"
                     name="value-radio"
                     id="singleEvent"
                     type="radio"
                     checked={eventType === "singleEvent"}
                     onChange={handleChangeEventType}
+                    disabled={haveTicket && eventType === "recurringEvent"}
                   />
                   <label
                     htmlFor="singleEvent"
-                    className="peer-checked:ring-main-bold peer-checked:border-main-bold flex items-center space-x-3 border-2 border-gray-200 peer-checked:ring-1"
+                    className={`peer-checked:ring-main-bold peer-checked:border-main-bold flex items-center space-x-3 border-2 border-gray-200 peer-checked:ring-1 ${haveTicket && eventType === "recurringEvent" ? "!cursor-not-allowed opacity-60" : "cursor-pointer"}`}
                   >
                     <RiCalendarEventFill
                       size={25}
@@ -540,20 +604,32 @@ const CreateEvent = () => {
                 </div>
 
                 {/* Recurring Event */}
-                <div className="w-1/2">
+                <div className="group relative w-1/2">
                   <input
-                    className="peer"
+                    className={`peer`}
                     value="recurringEvent"
                     name="value-radio"
                     id="recurringEvent"
                     type="radio"
                     checked={eventType === "recurringEvent"}
                     onChange={handleChangeEventType}
+                    disabled={haveTicket && eventType === "singleEvent"}
                   />
                   <label
+                    // title={
+                    //   haveTicket && eventType === "singleEvent"
+                    //     ? "Đã có vé"
+                    //     : ""
+                    // }
                     htmlFor="recurringEvent"
-                    className="peer-checked:ring-main-bold peer-checked:border-main-bold flex items-center space-x-3 border-2 border-gray-200 peer-checked:ring-1"
+                    className={`peer-checked:ring-main-bold peer-checked:border-main-bold flex items-center space-x-3 border-2 border-gray-200 peer-checked:ring-1 ${haveTicket && eventType === "singleEvent" ? "!cursor-not-allowed" : "cursor-pointer"}`}
                   >
+                    {haveTicket && eventType === "singleEvent" && (
+                      <div className="absolute -top-12 left-1/2 z-10 hidden w-full max-w-full -translate-x-1/2 transform rounded bg-black px-2 py-1 text-xs break-words whitespace-normal text-white shadow-md group-hover:block">
+                        Đã có vé ưenr ưenro bưeu rbweb rưhe oihweoi rhwei hrwieh
+                        riowehr ưerg i
+                      </div>
+                    )}
                     <FaRegCalendarAlt size={25} className="text-main-bold" />
                     <div className="flex flex-col">
                       <span className="text-gray-900">Recurring Event</span>
@@ -663,7 +739,17 @@ const CreateEvent = () => {
             !isExpanded.datetime ? (
               <div className="flex items-center space-x-3">
                 <RiCalendarScheduleLine size={22} className="text-main-bold" />
-                <p>{`${getValues("eventDate")}, ${getValues("startTime")}, ${getValues("endTime")}`}</p>
+                {(() => {
+                  const scheduleItem = {
+                    scheduleDate: getValues("eventDate"),
+                    startTime: getValues("startTime"),
+                    endTime: getValues("endTime"),
+                  };
+                  const formattedSchedule = formatSchedule(scheduleItem);
+                  return (
+                    <p>{`${formattedSchedule.dayOfWeek}, ${formattedSchedule.formattedDate}, ${formattedSchedule.formattedStartTime} - ${formattedSchedule.formattedEndTime}`}</p>
+                  );
+                })()}
               </div>
             ) : (
               eventType === "recurringEvent" && (
@@ -880,16 +966,31 @@ const CreateEvent = () => {
             )}
           </div>
         </div>
-
-        <button type="button" onClick={handleSubmit(onSubmit)}>
-          click me
-        </button>
         <button
           onClick={handleCreateFakeEvent}
           className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
         >
           Tạo sự kiện & sang bước 2
         </button>
+        {/* <div className="flex justify-end">
+          <button
+            type="button"
+            className="bg-secondary hover:bg-emphasis rounded px-4 py-2 text-white"
+            onClick={handleSubmit(onSubmit)}
+          >
+            {!eventId ? "Thêm mới" : "Chỉnh sửa"}
+          </button>
+        </div> */}
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={handleSubmit(onSubmit)}
+            className={`relative w-[130px] rounded border-none bg-[#f18927] px-2 py-2 font-bold tracking-wider text-white uppercase opacity-80 shadow-[0px_7px_2px_#d86f0e,0px_8px_5px_#000] transition-all duration-200 hover:opacity-100 active:top-1 active:shadow-[0px_3px_2px_#d86f0e,0px_3px_5px_#000]`}
+          >
+            {!eventId ? "Thêm mới" : "Chỉnh sửa"}
+          </button>
+        </div>
+
         <Loading isLoading={isLoading} />
       </div>
     </div>

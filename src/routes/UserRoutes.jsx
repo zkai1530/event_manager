@@ -13,3 +13,4 @@ const UserRoutes = () => {
 };
 
 export default UserRoutes;
+// /user

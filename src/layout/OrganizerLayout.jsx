@@ -13,7 +13,7 @@ const OrganizerLayout = () => {
         <div className="fixed left-0 h-screen w-13">
           <OrganizerSidebar />
         </div>
-        <div className="container mx-auto ml-13 flex-1">
+        <div className=" ml-13 flex-1 py-8 px-15">
           <main>
             <Outlet />
           </main>

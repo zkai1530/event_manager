@@ -5,6 +5,7 @@ import { IoLogoBuffer } from "react-icons/io";
 import { CiSettings } from "react-icons/ci";
 import { MdOutlineDashboard } from "react-icons/md";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const menuItems = [
   {
@@ -14,6 +15,7 @@ const menuItems = [
   {
     icons: <SiEventbrite size={25} />,
     label: "Events",
+    path: "/organizations/events/all",
   },
   {
     icons: <MdOutlineDashboard size={25} />,
@@ -34,13 +36,15 @@ const menuItems = [
 ];
 
 const OrganizerSidebar = () => {
+  const navigate = useNavigate();
   return (
-    <nav className="flex h-screen flex-col bg-secondary p-2 text-white shadow-md duration-500">
+    <nav className="bg-secondary flex h-screen flex-col p-2 text-white shadow-md duration-500">
       <ul className="flex-1">
         {menuItems.map((item, index) => {
           return (
             <li
               key={index}
+              onClick={() => navigate(item.path)}
               className="group hover:bg-emphasis relative my-8 flex cursor-pointer items-center justify-center gap-2 rounded-md py-2 duration-300"
             >
               <div>{item.icons}</div>
@@ -51,20 +55,8 @@ const OrganizerSidebar = () => {
           );
         })}
       </ul>
-      {/* footer */}
-      {/* <div className="flex items-center gap-2 px-3 py-2">
-        <div>
-          <FaUserCircle size={30} />
-        </div>
-        <div
-          className={`leading-5 ${!open && "w-0 translate-x-24"} overflow-hidden duration-500`}
-        >
-          <p>Saheb</p>
-          <span className="text-xs">saheb@gmail.com</span>
-        </div>
-      </div> */}
     </nav>
   );
-}
+};
 
 export default OrganizerSidebar;

@@ -2,7 +2,7 @@ import { useAuth } from "context/AuthContext";
 import { useEffect, useRef, useState } from "react";
 import { FaSearch, FaMapMarkerAlt, FaPlus, FaRegHeart } from "react-icons/fa";
 import { GrNotification } from "react-icons/gr";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { getUserInfo } from "services/user/userService";
 
 const Header = () => {
@@ -12,6 +12,7 @@ const Header = () => {
   const [location, setLocation] = useState("Hồ Chí Minh city");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const userInfoRef = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!avatar && token) {
@@ -24,10 +25,10 @@ const Header = () => {
 
   const toggleDropdown = () => {
     setDropdownOpen((prev) => !prev);
-  };  
+  };
 
   const dropdownItems = [
-    { id: 1, label: "Manage my events", link: "/manage/event/create" },
+    { id: 1, label: "Manage my events", link: "/organizations/events/all" },
     { id: 2, label: "Settings", link: "/settings" },
     { id: 3, label: "Logout", link: "/logout" },
   ];
@@ -77,7 +78,10 @@ const Header = () => {
         {/* Action Buttons */}
         <div className="flex w-fit items-center space-x-3 lg:space-x-5">
           {/* Create Event Button */}
-          <button className="bg-main hover:bg-main-bold flex cursor-pointer items-center space-x-2 rounded-full px-2 py-2 text-white lg:px-4">
+          <button
+            onClick={() => navigate("/manage/event/create")}
+            className="bg-main hover:bg-main-bold flex cursor-pointer items-center space-x-2 rounded-full px-2 py-2 text-white lg:px-4"
+          >
             <FaPlus />
             <span className="text-sm md:text-base">Tạo sự kiện</span>
           </button>
