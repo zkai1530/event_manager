@@ -1,4 +1,5 @@
 import ScheduleModal from "components/modal/ScheduleModal";
+import Loading from "components/UI/Loading";
 import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { IoEllipsisVertical, IoTicketOutline } from "react-icons/io5";
@@ -37,7 +38,7 @@ const CreateTicket = () => {
     const requestData = {
       ...data,
       scheduleIds:
-        eventType === "single"
+        eventType === "SINGLE"
           ? tickets[0]?.schedules.map((s) => s.scheduleId) || []
           : selectedOption === "all" && currentTicket
             ? currentTicket.schedules.map((schedule) => schedule.scheduleId)
@@ -52,8 +53,7 @@ const CreateTicket = () => {
         await updateTicket(requestData.id, requestData, token);
       } else {
         console.log(requestData);
-        const eventId = await createTicket(requestData, token);
-        console.log(eventId);
+        await createTicket(requestData, token);
       }
     } catch (error) {
       console.error("Create/Update ticket error", error);
@@ -202,19 +202,20 @@ const CreateTicket = () => {
             // setValue("saleStart", "");
             setValue("saleEnd", "");
             setScheduleIds(
-              eventType === "single"
+              eventType === "SINGLE"
                 ? tickets[0]?.schedules.map((s) => s.scheduleId) || []
                 : [],
             );
             setSelectedOption("all");
             setIsOpen(true);
           }}
-          className={`rounded-lg bg-blue-600 px-4 py-2 text-xl font-medium text-white transition-colors hover:bg-blue-700`}
+          className={`bg-main hover:bg-main-bold cursor-pointer rounded-lg px-4 py-2 text-xl font-medium text-white transition-colors`}
         >
           Tạo vé mới
         </button>
       </div>
 
+      {/* List tickets */}
       <div className="max-w-2xl space-y-4 px-3 pt-2">
         {tickets.map((ticket, index) => (
           <div
@@ -300,7 +301,7 @@ const CreateTicket = () => {
 
         <div className="flex-1 overflow-y-auto p-6">
           <div className="flex flex-col space-y-3">
-            {/* ticket name */}
+            {/* ticket name input */}
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-600">
                 Tên vé
@@ -321,7 +322,7 @@ const CreateTicket = () => {
                 </p>
               )}
             </div>
-            {/* ticket description */}
+            {/* ticket description input */}
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-600">
                 Mô tả
@@ -335,7 +336,7 @@ const CreateTicket = () => {
                 className={`w-full rounded-lg border border-gray-500 px-4 py-2 outline-none ${errors.description ? "border-2 border-red-500" : "focus:ring-main focus:border-none focus:ring-2"} `}
               />
             </div>
-            {/* ticket price */}
+            {/* ticket price input */}
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-600">
                 Giá vé
@@ -357,7 +358,7 @@ const CreateTicket = () => {
                 </p>
               )}
             </div>
-            {/* ticket quantity */}
+            {/* ticket quantity input */}
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-600">
                 Số lượng
@@ -379,7 +380,7 @@ const CreateTicket = () => {
               )}
             </div>
 
-            {/* apply ticket to schedules */}
+            {/* apply ticket to schedules input */}
             {eventType === "RECURRING" && (
               <div className="mt-1">
                 <p className="mb-2 text-sm font-medium">Áp dụng vé cho</p>
@@ -446,7 +447,7 @@ const CreateTicket = () => {
               </div>
             )}
 
-            {/* sales start and sales end */}
+            {/* sales start and sales end input */}
             <div className="flex space-x-3">
               <div className="w-1/2 flex-col">
                 <label className="mb-1 block text-sm font-medium text-gray-600">
@@ -475,7 +476,7 @@ const CreateTicket = () => {
                     );
                     return localTime.toISOString().slice(0, 16);
                   })()}
-                  className={`w-full rounded-lg border border-gray-500 px-4 py-2 text-sm outline-none ${errors.saleStart ? "border-2 border-red-500" : "focus:ring-main focus:border-none focus:ring-2"} `}
+                  className={`w-full rounded-lg border border-gray-500 px-3 py-2 text-sm outline-none ${errors.saleStart ? "border-2 border-red-500" : "focus:ring-main focus:border-none focus:ring-2"} `}
                 />
                 {errors.saleStart && (
                   <p className="mt-1 text-sm text-red-500">
@@ -504,7 +505,7 @@ const CreateTicket = () => {
                       );
                     },
                   })}
-                  className={`w-full rounded-lg border border-gray-500 px-4 py-2 outline-none ${errors.saleEnd ? "border-2 border-red-500" : "focus:ring-main focus:border-none focus:ring-2"} `}
+                  className={`w-full rounded-lg border border-gray-500 px-3 py-2 text-sm outline-none ${errors.saleEnd ? "border-2 border-red-500" : "focus:ring-main focus:border-none focus:ring-2"} `}
                 />
                 {errors.saleEnd && (
                   <p className="mt-1 text-sm text-red-500">
@@ -524,6 +525,7 @@ const CreateTicket = () => {
           </div>
         </div>
       </div>
+      <Loading isLoading={isLoading} />
     </div>
   );
 };

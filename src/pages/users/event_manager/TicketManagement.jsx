@@ -5,6 +5,7 @@ import { IoEllipsisVertical, IoTicketOutline } from "react-icons/io5";
 import { Link } from "react-router-dom";
 import { useEventRoute } from "utils/useEventRoute";
 import CreateTicket from "./CreateTicket";
+import CreatePromotion from "./CreatePromotion";
 
 const TicketManagement = () => {
   const { eventId, section } = useEventRoute();
@@ -34,7 +35,7 @@ const TicketManagement = () => {
 
       <div className="mt-4">
         {section === "tickets" && <CreateTicket />}
-        {/* {section === "promotions" && <PromotionForm />} */}
+        {section === "promotions" && <CreatePromotion />}
       </div>
     </div>
   );

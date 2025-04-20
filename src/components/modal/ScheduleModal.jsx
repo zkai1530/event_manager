@@ -99,7 +99,7 @@ const ScheduleModal = ({
         <div className="mt-6 flex justify-end">
           <button
             onClick={handleDone}
-            className="bg-main hover:bg-main-bold cursor-pointer rounded-md px-4 py-2 text-white"
+            className="bg-main hover:bg-main-bold cursor-pointer rounded-md px-4 py-2 font-semibold text-white"
           >
             Lưu
           </button>

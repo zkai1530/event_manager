@@ -1,32 +1,43 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
+import { IoCloseSharp } from "react-icons/io5";
 
-const TicketModal = ({ onTicketsSelected, closeModal }) => {
+const TicketModal = ({
+  onTicketsSelected,
+  closeModal,
+  tickets,
+  initialSelectedIds,
+}) => {
   const [selectAll, setSelectAll] = useState(false);
-  const [schedules, setSchedules] = useState([
-    { id: 1, date: "2025-04-15", startTime: "09:00", endTime: "11:00", checked: false },
-    { id: 2, date: "2025-04-16", startTime: "13:00", endTime: "15:30", checked: false },
-    { id: 3, date: "2025-04-17", startTime: "18:00", endTime: "20:00", checked: false },
-  ]);
+  const [ticketList, setTicketList] = useState(
+    tickets.map((ticket) => ({
+      id: ticket.id,
+      name: ticket.name,
+      price: ticket.price.toFixed(2),
+      checked: initialSelectedIds
+        ? initialSelectedIds.includes(ticket.id)
+        : false,
+    })),
+  );
 
   const handleSelectAll = () => {
     const newSelectAll = !selectAll;
     setSelectAll(newSelectAll);
-    setSchedules(schedules.map(schedule => ({ ...schedule, checked: newSelectAll })));
+    setTicketList(
+      ticketList.map((ticket) => ({ ...ticket, checked: newSelectAll })),
+    );
   };
 
-  const handleScheduleCheck = (id) => {
-    const updatedSchedules = schedules.map(schedule =>
-      schedule.id === id ? { ...schedule, checked: !schedule.checked } : schedule
+  const handleTicketCheck = (id) => {
+    const updatedTickets = ticketList.map((ticket) =>
+      ticket.id === id ? { ...ticket, checked: !ticket.checked } : ticket,
     );
-    setSchedules(updatedSchedules);
-
-    const allChecked = updatedSchedules.every(s => s.checked);
-    setSelectAll(allChecked);
+    setTicketList(updatedTickets);
+    setSelectAll(updatedTickets.every((t) => t.checked));
   };
 
   const handleDone = () => {
-    const selectedIds = schedules.filter(s => s.checked).map(s => s.id);
+    const selectedIds = ticketList.filter((t) => t.checked).map((t) => t.id);
     onTicketsSelected(selectedIds);
     closeModal();
   };
@@ -35,17 +46,20 @@ const TicketModal = ({ onTicketsSelected, closeModal }) => {
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[rgba(57,54,79,0.8)]">
       <div className="relative w-[600px] rounded-lg bg-white p-6 shadow-lg">
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-lg font-semibold">Chọn lịch trình</h2>
+          <h2 className="text-lg font-semibold">Chọn vé</h2>
           <button
             onClick={closeModal}
             className="text-gray-500 hover:text-gray-700"
           >
-            ✕
+            <IoCloseSharp
+              size={20}
+              className="cursor-pointer hover:text-red-500"
+            />
           </button>
         </div>
 
         <div className="flex items-center justify-between border-b border-gray-200 py-2 font-semibold">
-          <div className="flex items-center w-[40%]">
+          <div className="flex w-[60%] items-center">
             <input
               type="checkbox"
               id="selectAll"
@@ -53,45 +67,41 @@ const TicketModal = ({ onTicketsSelected, closeModal }) => {
               checked={selectAll}
               onChange={handleSelectAll}
             />
-            <label htmlFor="selectAll">Chọn tất cả</label>
+            <label htmlFor="selectAll">Tên vé</label>
           </div>
-          <div className="w-[30%]">Giờ bắt đầu</div>
-          <div className="w-[30%]">Giờ kết thúc</div>
+          <div className="w-[40%]">Giá</div>
         </div>
 
-        {schedules.map((schedule) => (
+        {ticketList.map((ticket) => (
           <div
-            key={schedule.id}
+            key={ticket.id}
             className="flex items-center justify-between border-b border-gray-200 py-2"
           >
-            <div className="flex items-center w-[40%]">
+            <div className="flex w-[60%] items-center">
               <input
                 type="checkbox"
-                id={`schedule-${schedule.id}`}
+                id={`ticket-${ticket.id}`}
                 className="mr-2"
-                checked={schedule.checked}
-                onChange={() => handleScheduleCheck(schedule.id)}
+                checked={ticket.checked}
+                onChange={() => handleTicketCheck(ticket.id)}
               />
-              <label htmlFor={`schedule-${schedule.id}`}>
-                {schedule.date}
-              </label>
+              <label htmlFor={`ticket-${ticket.id}`}>{ticket.name}</label>
             </div>
-            <div className="w-[30%]">{schedule.startTime}</div>
-            <div className="w-[30%]">{schedule.endTime}</div>
+            <div className="w-[40%]">${ticket.price}</div>
           </div>
         ))}
 
         <div className="mt-6 flex justify-end">
           <button
             onClick={handleDone}
-            className="rounded-md bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
+            className="cursor-pointer rounded-md bg-main px-4 py-2 text-white hover:bg-main-bold font-semibold"
           >
-            Xong
+            Lưu
           </button>
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 };
 

@@ -8,6 +8,7 @@ export const createTicket = async (data, token) => {
         Authorization: `Bearer ${token}`,
       },
     });
+    console.log(response.data)
     return response.data.data;
   } catch (error) {
     console.error("createTicket", error.response?.data || error.message);
