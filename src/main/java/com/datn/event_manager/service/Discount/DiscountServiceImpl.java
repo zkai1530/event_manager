@@ -102,6 +102,7 @@ public class DiscountServiceImpl implements DiscountService {
                 .discountStart(request.getDiscountStart())
                 .discountEnd(request.getDiscountEnd())
                 .maxUses(request.getMaxUses())
+                .timesUsed(0)
                 .createdAt(LocalDateTime.now())
                 .build();
 
@@ -155,8 +156,7 @@ public class DiscountServiceImpl implements DiscountService {
         
         if (request.getName() != null)
             discount.setName(request.getName());
-        if (request.getPromoCode() != null)
-            discount.setPromoCode(request.getPromoCode());
+        discount.setPromoCode(request.getPromoCode());
         if (request.getDiscountType() != null)
             discount.setDiscountType(request.getDiscountType());
         if (request.getDiscountValue() != null)
@@ -182,11 +182,6 @@ public class DiscountServiceImpl implements DiscountService {
                 .map(Ticket::getTicketId)
                 .collect(Collectors.toSet());
         
-        // todo: return if ticketIds no have change
-        if (currentTicketIds.equals(requestTicketIds)) {
-            return discountMapper.toDiscountResponse(discount); 
-        }
-        
         // todo: remove tickets that are not in request. Example: 1
         currentTicketDiscounts.removeIf(ticketDiscount -> {
             Long ticketId = ticketDiscount.getTicket().getTicketId();
@@ -194,22 +189,24 @@ public class DiscountServiceImpl implements DiscountService {
         });
 
         // todo: add new tickets that are not in current. Example: 3
-        for (Ticket ticket : ticketsRequest) {
-            Long ticketId = ticket.getTicketId();
-            // check if exist (example: 2) => no change
-            boolean isTicketExist = currentTicketDiscounts.stream()
-                    .anyMatch(currentTicketDiscount -> currentTicketDiscount.getTicket().getTicketId().equals(ticketId));
+        if (!currentTicketIds.equals(requestTicketIds)) {
+            for (Ticket ticket : ticketsRequest) {
+                Long ticketId = ticket.getTicketId();
+                // check if exist (example: 2) => no change
+                boolean isTicketExist = currentTicketDiscounts.stream()
+                        .anyMatch(currentTicketDiscount -> currentTicketDiscount.getTicket().getTicketId().equals(ticketId));
 
-            if (!isTicketExist) {
-                TicketDiscount ticketDiscount = TicketDiscount.builder()
-                        .ticket(ticket)
-                        .discount(discount)
-                        .build();
+                if (!isTicketExist) {
+                    TicketDiscount ticketDiscount = TicketDiscount.builder()
+                            .ticket(ticket)
+                            .discount(discount)
+                            .build();
 
-                currentTicketDiscounts.add(ticketDiscount);
+                    currentTicketDiscounts.add(ticketDiscount);
+                }
             }
+            discount.setTicketDiscounts(currentTicketDiscounts);
         }
-        discount.setTicketDiscounts(currentTicketDiscounts);
         discountRepository.save(discount);
 
         return discountMapper.toDiscountResponse(discount);

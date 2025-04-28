@@ -19,6 +19,7 @@ import lombok.experimental.FieldDefaults;
 public class TicketResponse {
     Long id;
     String name;
+    String description;
     Integer sold;
     BigDecimal price;
     Integer availableQuantity;

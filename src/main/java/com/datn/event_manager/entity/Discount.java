@@ -54,6 +54,9 @@ public class Discount {
     @Column(name = "max_uses")
     Integer maxUses; // max discount can be used (unlimited if null or limited)
 
+    @Column(name = "times_used")
+    private Integer timesUsed = 0; // number of times the discount has been used
+
     @Column(name = "discount_start")
     LocalDateTime discountStart; // null means the discount is available until the event starts
 

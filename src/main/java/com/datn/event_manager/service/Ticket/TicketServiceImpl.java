@@ -71,7 +71,7 @@ public class TicketServiceImpl implements TicketService {
         List<TicketSchedule> ticketSchedules = schedules.stream()
                 .map(schedule -> TicketSchedule.builder()
                         .ticket(ticket)
-                        .schedule(schedule)
+                        .schedule(schedule) 
                         .build())
                 .toList();
 

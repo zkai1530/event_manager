@@ -19,7 +19,8 @@ public enum ErrorCode {
     INVALID_SALE_DATES("Invalid sale dates!", HttpStatus.NOT_FOUND),
     DATE_TIME_IS_NULL("Datetime is null!", HttpStatus.BAD_REQUEST),
     CONFLICT_SCHEDULE("Schedule conflict detected!", HttpStatus.CONFLICT),
-    EVENT_TYPE_MUST_BE_RECURRING("Event Type must be recurring", HttpStatus.BAD_REQUEST);
+    EVENT_TYPE_MUST_BE_RECURRING("Event Type must be recurring", HttpStatus.BAD_REQUEST),
+    UPLOAD_IMAGE_FAILED("Upload image failed!", HttpStatus.BAD_REQUEST);
 
     ErrorCode(String message, HttpStatusCode httpStatusCode) {
         this.message = message;

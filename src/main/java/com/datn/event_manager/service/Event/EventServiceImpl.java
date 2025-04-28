@@ -1,11 +1,15 @@
 package com.datn.event_manager.service.Event;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.cloudinary.Cloudinary;
 import com.datn.event_manager.controller.TicketController;
 import com.datn.event_manager.dto.request.EventLocationRequest;
 import com.datn.event_manager.dto.request.EventRequest;
@@ -23,6 +27,7 @@ import com.datn.event_manager.exception.ErrorCode;
 import com.datn.event_manager.mapper.EventMapper;
 import com.datn.event_manager.repository.*;
 import com.datn.event_manager.service.Authentication.AuthenticationService;
+import com.datn.event_manager.service.Cloudinary.CloudinaryService;
 
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
@@ -41,16 +46,25 @@ public class EventServiceImpl implements EventService {
     EventMapper eventMapper;
     FAQRepository faqRepository;
     AuthenticationService authenticationService;
+    CloudinaryService cloudinaryService;
 
     @Override
-    public String createEvent(EventRequest eventRequest) {
+    public String createEvent(EventRequest eventRequest, MultipartFile file) {
         User user = authenticationService.getUserFromToken();
+        String imageUrl = null;
+        if (file != null) {
+            try {
+                imageUrl = cloudinaryService.uploadImage(file);
+            } catch (IOException e) {
+                throw new AppException(ErrorCode.UPLOAD_IMAGE_FAILED);
+            }
+        }
         Event event = Event.builder()
                 .user(user)
                 .name(eventRequest.getName())
                 .summary(eventRequest.getSummary())
                 .description(eventRequest.getDescription())
-                .imageUrl(eventRequest.getImageUrl())
+                .imageUrl(imageUrl)
                 .capacity(eventRequest.getCapacity())
                 .eventType(eventRequest.getEventType())
                 .isPublished(false)
@@ -128,7 +142,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     @Transactional
-    public EventResponse updateEvent(Long eventId, EventRequest request) {
+    public EventResponse updateEvent(Long eventId, EventRequest request, MultipartFile file) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new AppException(ErrorCode.EVENT_NOT_FOUND));
         // check user have permission ? (authorized?)
@@ -148,8 +162,19 @@ public class EventServiceImpl implements EventService {
             event.setSummary(request.getSummary());
         if (request.getDescription() != null)
             event.setDescription(request.getDescription());
-        if (request.getImageUrl() != null)
-            event.setImageUrl(request.getImageUrl());
+        if (file != null) {
+            try {
+                // Lấy public_id từ imageUrl hiện tại (nếu có)
+                String oldPublicId = event.getImageUrl() != null
+                        ? cloudinaryService.extractPublicId(event.getImageUrl())
+                        : null;
+                // Upload ảnh mới và xóa ảnh cũ (nếu có)
+                String newImageUrl = cloudinaryService.updateImage(file, oldPublicId);
+                event.setImageUrl(newImageUrl);
+            } catch (IOException e) {
+                throw new AppException(ErrorCode.UPLOAD_IMAGE_FAILED);
+            }
+        }
         if (request.getCapacity() > 0)
             event.setCapacity(request.getCapacity());
         if (request.getEventType() != null)
@@ -313,9 +338,10 @@ public class EventServiceImpl implements EventService {
     public EventByUserResponse getEventByUser() {
         User user = authenticationService.getUserFromToken();
         Event event = eventRepository.findByUser(user);
-        if (event == null) return null;
+        if (event == null)
+            return null;
         int totalTicketsSold = eventRepository.getTotalTicketsSold(event.getEventId());
-        
+
         EventByUserResponse eventByUserResponse = eventMapper.toEventByUserResponse(event);
         eventByUserResponse.setTotalTicketsSold(totalTicketsSold);
         return eventByUserResponse;

@@ -17,6 +17,7 @@ public interface DiscountMapper {
     @Mapping(source = "discount.discountType", target = "discountType")
     @Mapping(source = "discount.discountValue", target = "discountValue")
     @Mapping(source = "discount.maxUses", target = "maxUses")
+    @Mapping(source = "discount.timesUsed", target = "timesUsed")
     @Mapping(source = "discount.discountStart", target = "discountStart")
     @Mapping(source = "discount.discountEnd", target = "discountEnd")
     DiscountResponse toDiscountResponse(TicketDiscount ticketDiscount);

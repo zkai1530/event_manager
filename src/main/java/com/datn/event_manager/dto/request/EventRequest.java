@@ -19,7 +19,6 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class EventRequest {
     String name;
-    String imageUrl;
     String summary;
     String description;
     int capacity;

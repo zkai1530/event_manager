@@ -31,6 +31,7 @@ import org.springframework.security.config.Customizer;
 public class SecurityConfig {
     private final String[] PUBLIC_GET_ENDPOINTS = {
             "/send-mail",
+            "/event/{eventId}"
 
     };
     private final String[] PUBLIC_POST_ENDPOINTS = {
@@ -47,7 +48,8 @@ public class SecurityConfig {
         httpSecurity
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(request -> 
-                    request.requestMatchers(HttpMethod.GET, PUBLIC_GET_ENDPOINTS).permitAll()
+                    request.requestMatchers(HttpMethod.OPTIONS).permitAll()
+                    .requestMatchers(HttpMethod.GET, PUBLIC_GET_ENDPOINTS).permitAll()
                             .requestMatchers(HttpMethod.POST, PUBLIC_POST_ENDPOINTS).permitAll()
                             .anyRequest().authenticated()
         );

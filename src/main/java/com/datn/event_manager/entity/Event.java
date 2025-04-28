@@ -45,7 +45,9 @@ public class Event {
     @Column(nullable = false)
     String summary;
 
+    @Column(columnDefinition = "MEDIUMTEXT")
     String description;
+    
     String imageUrl;
     int capacity;
 

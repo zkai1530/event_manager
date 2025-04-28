@@ -24,6 +24,7 @@ public class DiscountResponse {
     DiscountType discountType; // PERCENT or FIXED
     BigDecimal discountValue;
     Integer maxUses; 
+    Integer timesUsed;
     LocalDateTime discountStart; 
     LocalDateTime discountEnd;
 }
