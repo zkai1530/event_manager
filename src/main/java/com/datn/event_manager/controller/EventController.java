@@ -8,9 +8,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -31,7 +29,6 @@ import lombok.experimental.FieldDefaults;
 @RequestMapping("/event")
 public class EventController {
     EventService eventService;
-    CloudinaryService cloudinaryService;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<APIResponse> createEvent(@RequestPart("eventRequest") EventRequest eventRequest,
@@ -63,4 +60,24 @@ public class EventController {
     public ResponseEntity<APIResponse> getEventByUser() {
         return ResponseEntity.ok(new APIResponse(Message.RESOURCE_FOUND, eventService.getEventsByUser()));
     }
+
+    @GetMapping("/event-status/{eventId}")
+    public ResponseEntity<APIResponse> getEventStatus(@PathVariable Long eventId) {
+        return ResponseEntity.ok(new APIResponse(Message.RESOURCE_FOUND, eventService.getEventStatus(eventId)));
+    }
+
+    @PostMapping("/publish/{eventId}")
+    public ResponseEntity<APIResponse> publishEvent(@PathVariable Long eventId) {
+        eventService.publishEvent(eventId);
+        return ResponseEntity
+                .ok(new APIResponse(Message.EVENT_PUBLISHED_SUCCESSFULLY, null));
+    }
+
+    @PostMapping("/unpublish/{eventId}")
+    public ResponseEntity<APIResponse> unpublishEvent(@PathVariable Long eventId) {
+        eventService.unpublishEvent(eventId);
+        return ResponseEntity
+                .ok(new APIResponse(Message.EVENT_UNPUBLISHED_SUCCESSFULLY, null));
+    }
+
 }

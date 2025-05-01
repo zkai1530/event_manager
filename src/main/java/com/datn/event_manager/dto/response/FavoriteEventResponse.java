@@ -1,5 +1,6 @@
 package com.datn.event_manager.dto.response;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 import com.datn.event_manager.entity.FAQ;
@@ -16,17 +17,12 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class EventResponse {
-    String userId;
+public class FavoriteEventResponse {
     Long eventId;
     String name;
     String imageUrl;
-    String summary;
-    String description;
-    int capacity;
     EventType eventType; // Single, recurring
-    Boolean isPublished;
     EventLocationResponse eventLocation;
-    List<EventScheduleResponse> schedules;
-    List<FAQResponse> faqs;
+    EventScheduleResponse nearestSchedule;
+    BigDecimal cheapestTicketPrice;
 }

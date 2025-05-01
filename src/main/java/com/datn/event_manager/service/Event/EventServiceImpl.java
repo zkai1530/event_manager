@@ -16,6 +16,7 @@ import com.datn.event_manager.dto.request.EventRequest;
 import com.datn.event_manager.dto.request.FAQRequest;
 import com.datn.event_manager.dto.response.EventByUserResponse;
 import com.datn.event_manager.dto.response.EventResponse;
+import com.datn.event_manager.dto.response.EventStatusResponse;
 import com.datn.event_manager.entity.Event;
 import com.datn.event_manager.entity.EventLocation;
 import com.datn.event_manager.entity.EventSchedule;
@@ -28,6 +29,7 @@ import com.datn.event_manager.mapper.EventMapper;
 import com.datn.event_manager.repository.*;
 import com.datn.event_manager.service.Authentication.AuthenticationService;
 import com.datn.event_manager.service.Cloudinary.CloudinaryService;
+import com.datn.event_manager.service.Notification.NotificationService;
 
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
@@ -43,10 +45,12 @@ public class EventServiceImpl implements EventService {
     EventRepository eventRepository;
     EventLocationRepository eventLocationRepository;
     EventScheduleRepository eventScheduleRepository;
+    TicketRepository ticketRepository;
     EventMapper eventMapper;
     FAQRepository faqRepository;
     AuthenticationService authenticationService;
     CloudinaryService cloudinaryService;
+    NotificationService notificationService;
 
     @Override
     public String createEvent(EventRequest eventRequest, MultipartFile file) {
@@ -345,6 +349,68 @@ public class EventServiceImpl implements EventService {
         EventByUserResponse eventByUserResponse = eventMapper.toEventByUserResponse(event);
         eventByUserResponse.setTotalTicketsSold(totalTicketsSold);
         return eventByUserResponse;
+    }
+
+    @Override
+    public EventStatusResponse getEventStatus(Long eventId) {
+        User user = authenticationService.getUserFromToken();
+
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new AppException(ErrorCode.EVENT_NOT_FOUND));
+
+        if (!user.getUserId().equals(event.getUser().getUserId())) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
+        boolean hasEvent = true;
+        boolean hasSchedule = eventScheduleRepository.existsByEventId(eventId);
+        boolean hasTicket = ticketRepository.existsByEventId(eventId);
+
+        return EventStatusResponse.builder()
+                .hasEvent(hasEvent)
+                .hasSchedule(hasSchedule)
+                .hasTicket(hasTicket)
+                .build();
+    }
+
+    @Override
+    public void publishEvent(Long eventId) {
+        User user = authenticationService.getUserFromToken();
+
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new AppException(ErrorCode.EVENT_NOT_FOUND));
+
+        if (!user.getUserId().equals(event.getUser().getUserId())) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
+        if (event.getIsPublished().equals(true)) {
+            throw new AppException(ErrorCode.EVENT_ALREADY_PUBLISHED);
+        }
+
+        event.setIsPublished(true);
+        eventRepository.save(event);
+
+        notificationService.notifyFollowersOnEventCreation(eventId, user.getUserId());
+    }
+
+    @Override
+    public void unpublishEvent(Long eventId) {
+        User user = authenticationService.getUserFromToken();
+
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new AppException(ErrorCode.EVENT_NOT_FOUND));
+
+        if (!user.getUserId().equals(event.getUser().getUserId())) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
+        if (event.getIsPublished().equals(false)) {
+            throw new AppException(ErrorCode.EVENT_ALREADY_UNPUBLISHED);
+        }
+
+        event.setIsPublished(false);
+        eventRepository.save(event);
     }
 
 }
