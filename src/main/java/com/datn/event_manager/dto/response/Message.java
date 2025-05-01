@@ -19,5 +19,7 @@ public class Message {
     public static final String CREATE_PROMOTION_SUCCESS = "Create promotion was successfully!";
     public static final String UPDATE_PROMOTION_SUCCESS = "Update promotion was successfully!";
     public static final String DELETE_PROMOTION_SUCCESS = "Delete promotion was successfully!";
+    public static final String CREATE_ORDER_SUCCESS = "Create order was successfully!";
+    public static final String UPDATE_ORDER_STATUS_SUCCESS = "Order status updated successfully!";
 }
 

@@ -2,6 +2,7 @@ package com.datn.event_manager.entity;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import com.datn.event_manager.enums.DiscountType;
@@ -68,4 +69,7 @@ public class Discount {
 
     @OneToMany(mappedBy = "discount", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     List<TicketDiscount> ticketDiscounts;
+
+    @OneToMany(mappedBy = "discount", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<OrderTicket> orderTickets;
 }

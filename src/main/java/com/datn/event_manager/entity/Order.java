@@ -29,7 +29,7 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE) 
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
 @Table(name = "`order`")
 public class Order {
@@ -52,13 +52,25 @@ public class Order {
     @JoinColumn(name = "user_id")
     User user;
 
-    @OneToOne(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    Payment payment;
+    @Column(name = "payment_link_id")
+    String paymentLinkId;
+
+    @Column(name = "payment_status")
+    @Enumerated(EnumType.STRING)
+    PaymentStatus paymentStatus;
 
     @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     List<OrderTicket> orderTickets;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "schedule_id")
+    EventSchedule schedule;
+
     public enum OrderStatus {
         PENDING, PAID, CANCELED
+    }
+
+    public enum PaymentStatus {
+        PENDING, SUCCESS, FAILED
     }
 }

@@ -13,14 +13,20 @@ public enum ErrorCode {
     UNAUTHENTICATED("Unauthenticated", HttpStatus.UNAUTHORIZED), // when token isn't existed
     EVENT_NOT_FOUND("Event not found!", HttpStatus.NOT_FOUND),
     TICKET_NOT_FOUND("Ticket not found!", HttpStatus.NOT_FOUND),
+    TICKET_QUANTITY_EXCEEDS_AVAILABLE("Ticket quantity exceeds available!", HttpStatus.BAD_REQUEST),
     SCHEDULE_NOT_FOUND("Schedule not found!", HttpStatus.NOT_FOUND),
     DISCOUNT_NOT_FOUND("Discount not found!", HttpStatus.NOT_FOUND),
+    PAYMENT_NOT_FOUND("Payment not found!", HttpStatus.NOT_FOUND),
+    ORDER_NOT_FOUND("Order not found!", HttpStatus.NOT_FOUND),
+    DISCOUNT_EXPIRED("Discount has expired!", HttpStatus.BAD_REQUEST),
+    DISCOUNT_USAGE_LIMIT_REACHED("Discount has reached maximum usage!", HttpStatus.NOT_FOUND),
     GOOGLE_AUTH_FAILED("Google auth failed", HttpStatus.NOT_FOUND),
     INVALID_SALE_DATES("Invalid sale dates!", HttpStatus.NOT_FOUND),
     DATE_TIME_IS_NULL("Datetime is null!", HttpStatus.BAD_REQUEST),
     CONFLICT_SCHEDULE("Schedule conflict detected!", HttpStatus.CONFLICT),
     EVENT_TYPE_MUST_BE_RECURRING("Event Type must be recurring", HttpStatus.BAD_REQUEST),
-    UPLOAD_IMAGE_FAILED("Upload image failed!", HttpStatus.BAD_REQUEST);
+    UPLOAD_IMAGE_FAILED("Upload image failed!", HttpStatus.BAD_REQUEST),
+    INVALID_REQUEST_DATA("Invalid request data!", HttpStatus.BAD_REQUEST);
 
     ErrorCode(String message, HttpStatusCode httpStatusCode) {
         this.message = message;

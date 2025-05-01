@@ -50,5 +50,8 @@ public class EventSchedule {
 
     @OneToMany(mappedBy = "schedule", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     List<TicketSchedule> ticketSchedules;
+
+    @OneToMany(mappedBy = "schedule", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    List<Order> orders;
 }
 
