@@ -2,6 +2,7 @@ package com.datn.event_manager.service.Payment;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
@@ -9,6 +10,7 @@ import com.datn.event_manager.entity.Discount;
 import com.datn.event_manager.entity.Order;
 import com.datn.event_manager.entity.OrderTicket;
 import com.datn.event_manager.entity.Ticket;
+import com.datn.event_manager.entity.TicketSchedule;
 import com.datn.event_manager.entity.Order.OrderStatus;
 import com.datn.event_manager.entity.Order.PaymentStatus;
 import com.datn.event_manager.exception.AppException;
@@ -16,6 +18,7 @@ import com.datn.event_manager.exception.ErrorCode;
 import com.datn.event_manager.repository.DiscountRepository;
 import com.datn.event_manager.repository.OrderRepository;
 import com.datn.event_manager.repository.TicketRepository;
+import com.datn.event_manager.repository.TicketScheduleRepository;
 import com.datn.event_manager.service.PayOS.PayOSService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -36,6 +39,7 @@ public class PaymentServiceImpl implements PaymentService {
     PayOSService payOSService;
     OrderRepository orderRepository;
     TicketRepository ticketRepository;
+    TicketScheduleRepository ticketScheduleRepository;
     DiscountRepository discountRepository;
 
     @Override
@@ -68,13 +72,21 @@ public class PaymentServiceImpl implements PaymentService {
         order.setPaymentStatus(PaymentStatus.SUCCESS);
         order.setStatus(OrderStatus.PAID);
 
-        // todo: update ticket's sold
+        // todo: create code for qrcode
+        String qrCode = UUID.randomUUID().toString();
+        order.setQrCode(qrCode);
+
+        // todo: update ticketscheudle's sold
         Set<Long> usedDiscountIds = new HashSet<>();
         for (OrderTicket orderTicket : order.getOrderTickets()) {
             Ticket ticket = orderTicket.getTicket();
-            int newSold = ticket.getSold() + orderTicket.getQuantity();
-            ticket.setSold(newSold);
-            ticketRepository.save(ticket);
+            TicketSchedule ticketSchedule = ticket.getTicketSchedules().stream()
+                    .filter(ts -> ts.getSchedule().getScheduleId().equals(order.getSchedule().getScheduleId()))
+                    .findFirst()
+                    .orElseThrow(() -> new AppException(ErrorCode.SCHEDULE_NOT_FOUND));
+            int newSold = ticketSchedule.getSold() + orderTicket.getQuantity();
+            ticketSchedule.setSold(newSold);
+            ticketScheduleRepository.save(ticketSchedule);
 
             if (orderTicket.getDiscount() != null) {
                 usedDiscountIds.add(orderTicket.getDiscount().getDiscountId());

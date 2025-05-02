@@ -72,6 +72,8 @@ public class TicketServiceImpl implements TicketService {
                 .map(schedule -> TicketSchedule.builder()
                         .ticket(ticket)
                         .schedule(schedule) 
+                        .availableQuantity(request.getAvailableQuantity())
+                        .sold(0)
                         .build())
                 .toList();
 
@@ -177,6 +179,8 @@ public class TicketServiceImpl implements TicketService {
                 TicketSchedule ticketSchedule = TicketSchedule.builder()
                         .ticket(ticket)
                         .schedule(schedule)
+                        .availableQuantity(request.getAvailableQuantity() != null ? request.getAvailableQuantity()
+                                : ticket.getAvailableQuantity())
                         .build();
                 currentTicketSchedules.add(ticketSchedule);
             }

@@ -8,9 +8,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.datn.event_manager.dto.request.CheckInRequest;
 import com.datn.event_manager.dto.request.OrderRequest;
 import com.datn.event_manager.dto.response.APIResponse;
 import com.datn.event_manager.dto.response.Message;
+import com.datn.event_manager.dto.response.OrderResponse;
 import com.datn.event_manager.service.Order.OrderService;
 
 import lombok.AccessLevel;
@@ -34,5 +36,10 @@ public class OrderController {
     public ResponseEntity<APIResponse> cancelOrder(@PathVariable Long orderId) {
         orderService.cancelOrder(orderId);
         return ResponseEntity.ok(new APIResponse(Message.UPDATE_ORDER_STATUS_SUCCESS, null));
+    }
+
+    @PostMapping("/check-in")
+    public ResponseEntity<APIResponse> checkIn(@RequestBody CheckInRequest request) {
+        return ResponseEntity.ok(new APIResponse(Message.UPDATE_ORDER_STATUS_SUCCESS, orderService.checkIn(request)));
     }
 }

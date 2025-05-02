@@ -33,6 +33,7 @@ public enum ErrorCode {
     INVALID_REQUEST_DATA("Invalid request data!", HttpStatus.BAD_REQUEST),
     ALREADY_FAVORITED("Event already added to your favorites!", HttpStatus.BAD_REQUEST),
     ALREADY_FOLLOW("You are already following this user", HttpStatus.BAD_REQUEST),
+    ALREADY_CHECKED_IN("This order already checked in!", HttpStatus.BAD_REQUEST),
     NOT_FOLLOWING("You are not following this user", HttpStatus.BAD_REQUEST);
 
 

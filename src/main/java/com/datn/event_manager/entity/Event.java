@@ -50,6 +50,9 @@ public class Event {
     
     String imageUrl;
     int capacity;
+    
+    @Column(unique = true)
+    String slug;
 
     @OneToOne(mappedBy = "event")
     EventLocation eventLocation;

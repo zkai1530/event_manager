@@ -1,6 +1,7 @@
 package com.datn.event_manager.service.Event;
 
 import java.io.IOException;
+import java.text.Normalizer;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -74,6 +75,10 @@ public class EventServiceImpl implements EventService {
                 .isPublished(false)
                 .createdAt(LocalDateTime.now())
                 .build();
+        eventRepository.save(event);
+
+        String slug = toSlug(event.getName()) + "-" + event.getEventId();
+        event.setSlug(slug);
         eventRepository.save(event);
 
         // Location
@@ -160,8 +165,11 @@ public class EventServiceImpl implements EventService {
         EventType newEventType = request.getEventType();
 
         // Event
-        if (request.getName() != null)
+        if (request.getName() != null) {
             event.setName(request.getName());
+            String newSlug = toSlug(request.getName()) + "-" + event.getEventId();
+            event.setSlug(newSlug);
+        }
         if (request.getSummary() != null)
             event.setSummary(request.getSummary());
         if (request.getDescription() != null)
@@ -411,6 +419,17 @@ public class EventServiceImpl implements EventService {
 
         event.setIsPublished(false);
         eventRepository.save(event);
+    }
+
+    public String toSlug(String input) {
+        String slug = Normalizer.normalize(input, Normalizer.Form.NFD)
+                .replaceAll("[\\p{InCombiningDiacriticalMarks}]", "")
+                .toLowerCase()
+                .replaceAll("[^a-z0-9\\s]", "")
+                .replaceAll("\\s+", "-")
+                .replaceAll("-{2,}", "-")
+                .replaceAll("^-|-$", "");
+        return slug;
     }
 
 }

@@ -23,4 +23,13 @@ public class TicketSchedule {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "schedule_id", nullable = false)
     EventSchedule schedule;
+
+    @Column(name = "available_quantity", nullable = false)
+    Integer availableQuantity;
+
+    @Column(name = "sold", nullable = false)
+    Integer sold = 0;
+
+    @Column(name = "checked_in_count")
+    Integer checkedInCount = 0;
 }

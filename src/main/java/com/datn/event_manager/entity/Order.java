@@ -59,6 +59,12 @@ public class Order {
     @Enumerated(EnumType.STRING)
     PaymentStatus paymentStatus;
 
+    @Column(name = "qr_code", unique = true)
+    String qrCode;
+
+    @Column(name = "is_checked_in")
+    Boolean isCheckedIn = false;
+
     @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     List<OrderTicket> orderTickets;
 

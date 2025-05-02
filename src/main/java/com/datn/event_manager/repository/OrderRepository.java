@@ -16,4 +16,6 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             "JOIN TicketSchedule ts ON ot.ticket.ticketId = ts.ticket.ticketId " +
             "WHERE ts.schedule.scheduleId = :scheduleId")
     List<String> findUsersByScheduleId(Long scheduleId);
+
+    Optional<Order> findByQrCode(String qrCode);
 }

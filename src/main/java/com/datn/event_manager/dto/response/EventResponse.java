@@ -24,6 +24,7 @@ public class EventResponse {
     String summary;
     String description;
     int capacity;
+    String slug;
     EventType eventType; // Single, recurring
     Boolean isPublished;
     EventLocationResponse eventLocation;

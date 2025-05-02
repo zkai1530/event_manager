@@ -12,28 +12,31 @@ import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 import com.datn.event_manager.configuration.PayOSConfig;
+import com.datn.event_manager.dto.request.CheckInRequest;
 import com.datn.event_manager.dto.request.OrderRequest;
 import com.datn.event_manager.dto.request.TicketItem;
+import com.datn.event_manager.dto.response.OrderResponse;
 import com.datn.event_manager.entity.Discount;
 import com.datn.event_manager.entity.EventSchedule;
 import com.datn.event_manager.entity.Order;
 import com.datn.event_manager.entity.OrderTicket;
 import com.datn.event_manager.entity.Ticket;
-import com.datn.event_manager.entity.TicketDiscount;
+import com.datn.event_manager.entity.TicketSchedule;
 import com.datn.event_manager.entity.User;
 import com.datn.event_manager.entity.Order.OrderStatus;
 import com.datn.event_manager.entity.Order.PaymentStatus;
 import com.datn.event_manager.enums.DiscountType;
 import com.datn.event_manager.exception.AppException;
 import com.datn.event_manager.exception.ErrorCode;
+import com.datn.event_manager.mapper.OrderMapper;
 import com.datn.event_manager.repository.DiscountRepository;
 import com.datn.event_manager.repository.EventScheduleRepository;
 import com.datn.event_manager.repository.OrderRepository;
 import com.datn.event_manager.repository.TicketDiscountRepository;
 import com.datn.event_manager.repository.TicketRepository;
+import com.datn.event_manager.repository.TicketScheduleRepository;
 import com.datn.event_manager.service.Authentication.AuthenticationService;
 import com.datn.event_manager.service.PayOS.PayOSService;
-import com.datn.event_manager.service.Payment.PaymentService;
 
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
@@ -55,6 +58,8 @@ public class OrderServiceImpl implements OrderService {
     TicketRepository ticketRepository;
     DiscountRepository discountRepository;
     TicketDiscountRepository ticketDiscountRepository;
+    TicketScheduleRepository ticketScheduleRepository;
+    OrderMapper orderMapper;
     OrderRepository orderRepository;
     PayOSConfig payOSConfig;
     PayOSService payOSService;
@@ -75,9 +80,17 @@ public class OrderServiceImpl implements OrderService {
             Ticket ticket = ticketRepository.findById(ticketItem.getTicketId())
                     .orElseThrow(() -> new AppException(ErrorCode.TICKET_NOT_FOUND));
 
-            if (ticketItem.getQuantity() > ticket.getAvailableQuantity() - ticket.getSold()) {
+            TicketSchedule ticketSchedule = ticket.getTicketSchedules().stream()
+                    .filter(ts -> ts.getSchedule().getScheduleId().equals(eventSchedule.getScheduleId()))
+                    .findFirst()
+                    .orElseThrow(() -> new AppException(ErrorCode.SCHEDULE_NOT_FOUND));
+            if (ticketItem.getQuantity() > ticketSchedule.getAvailableQuantity() - ticketSchedule.getSold()) {
                 throw new AppException(ErrorCode.TICKET_QUANTITY_EXCEEDS_AVAILABLE);
             }
+            // if (ticketItem.getQuantity() > ticket.getAvailableQuantity() -
+            // ticket.getSold()) {
+            // throw new AppException(ErrorCode.TICKET_QUANTITY_EXCEEDS_AVAILABLE);
+            // }
 
             BigDecimal ticketPrice = ticket.getPrice().multiply(BigDecimal.valueOf(ticketItem.getQuantity()));
 
@@ -193,6 +206,39 @@ public class OrderServiceImpl implements OrderService {
             order.setPaymentStatus(PaymentStatus.FAILED);
             orderRepository.save(order);
         }
+    }
+
+    @Override
+    public OrderResponse checkIn(CheckInRequest request) {
+        User user = authenticationService.getUserFromToken();
+
+        Order order = orderRepository.findByQrCode(request.getQrCode())
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+
+        // // check if user is the owner of the event
+        if (!order.getSchedule().getEvent().getUser().getUserId().equals(user.getUserId())) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
+        if (order.getIsCheckedIn()) {   
+            throw new AppException(ErrorCode.ALREADY_CHECKED_IN);
+        }
+
+        order.setIsCheckedIn(true);
+
+        // update each checkedInCount for TicketSchedule
+        EventSchedule schedule = order.getSchedule();
+        for (OrderTicket orderTicket : order.getOrderTickets()) {
+            TicketSchedule ticketSchedule = orderTicket.getTicket().getTicketSchedules().stream()
+                    .filter(ts -> ts.getSchedule().getScheduleId().equals(schedule.getScheduleId()))
+                    .findFirst()
+                    .orElseThrow(() -> new AppException(ErrorCode.SCHEDULE_NOT_FOUND));
+            ticketSchedule.setCheckedInCount(ticketSchedule.getCheckedInCount() + orderTicket.getQuantity());
+            ticketScheduleRepository.save(ticketSchedule);
+        }
+
+        orderRepository.save(order);
+        return orderMapper.toOrderResponse(order);
     }
 
 }
