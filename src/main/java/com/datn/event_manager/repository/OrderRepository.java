@@ -3,10 +3,14 @@ package com.datn.event_manager.repository;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import com.datn.event_manager.entity.Order;
+import com.datn.event_manager.entity.User;
+import com.datn.event_manager.entity.Order.OrderStatus;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
     Optional<Order> findByPaymentLinkId(String paymentLinkId);
@@ -18,4 +22,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     List<String> findUsersByScheduleId(Long scheduleId);
 
     Optional<Order> findByQrCode(String qrCode);
+
+    Page<Order> findByUser(User user, Pageable pageable);
+    Page<Order> findByUserAndStatus(User user, OrderStatus status, Pageable pageable);
 }

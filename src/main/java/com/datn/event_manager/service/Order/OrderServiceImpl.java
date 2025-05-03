@@ -4,17 +4,23 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.datn.event_manager.configuration.PayOSConfig;
 import com.datn.event_manager.dto.request.CheckInRequest;
 import com.datn.event_manager.dto.request.OrderRequest;
 import com.datn.event_manager.dto.request.TicketItem;
+import com.datn.event_manager.dto.response.MyTicketResponse;
 import com.datn.event_manager.dto.response.OrderResponse;
 import com.datn.event_manager.entity.Discount;
 import com.datn.event_manager.entity.EventSchedule;
@@ -28,7 +34,9 @@ import com.datn.event_manager.entity.Order.PaymentStatus;
 import com.datn.event_manager.enums.DiscountType;
 import com.datn.event_manager.exception.AppException;
 import com.datn.event_manager.exception.ErrorCode;
+import com.datn.event_manager.mapper.MyTicketMapper;
 import com.datn.event_manager.mapper.OrderMapper;
+import com.datn.event_manager.mapper.TicketMapper;
 import com.datn.event_manager.repository.DiscountRepository;
 import com.datn.event_manager.repository.EventScheduleRepository;
 import com.datn.event_manager.repository.OrderRepository;
@@ -37,6 +45,7 @@ import com.datn.event_manager.repository.TicketRepository;
 import com.datn.event_manager.repository.TicketScheduleRepository;
 import com.datn.event_manager.service.Authentication.AuthenticationService;
 import com.datn.event_manager.service.PayOS.PayOSService;
+import com.datn.event_manager.service.Payment.PaymentService;
 
 import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
@@ -63,6 +72,8 @@ public class OrderServiceImpl implements OrderService {
     OrderRepository orderRepository;
     PayOSConfig payOSConfig;
     PayOSService payOSService;
+    PaymentService paymentService;
+    MyTicketMapper myTicketMapper;
 
     @Override
     @Transactional
@@ -94,50 +105,66 @@ public class OrderServiceImpl implements OrderService {
 
             BigDecimal ticketPrice = ticket.getPrice().multiply(BigDecimal.valueOf(ticketItem.getQuantity()));
 
-            Discount discount = null;
-            if (ticketItem.getDiscountId() != null) {
-                discount = discountRepository.findById(ticketItem.getDiscountId())
-                        .orElseThrow(() -> new AppException(ErrorCode.DISCOUNT_NOT_FOUND));
-
-                boolean isValidDiscount = ticketDiscountRepository
-                        .existsByTicketAndDiscount(ticket, discount);
-
-                if (!isValidDiscount) {
-                    throw new IllegalArgumentException(
-                            "Discount " + discount.getName() + " is not applicable for ticket: " + ticket.getName());
+            List<Discount> discounts = new ArrayList<>();
+            if (ticketItem.getDiscountIds() != null && !ticketItem.getDiscountIds().isEmpty()) {
+                if (ticketItem.getDiscountIds().size() > 2) {
+                    throw new IllegalArgumentException("Maximum 2 discounts per ticket item");
                 }
 
-                LocalDateTime now = LocalDateTime.now();
-                if (discount.getDiscountStart() != null && now.isBefore(discount.getDiscountStart())) {
-                    throw new IllegalArgumentException("Discount is not yet valid: " + discount.getName());
+                for (Long discountId : ticketItem.getDiscountIds()) {
+                    Discount discount = discountRepository.findById(discountId)
+                            .orElseThrow(() -> new AppException(ErrorCode.DISCOUNT_NOT_FOUND));
+
+                    // Kiểm tra promoCode: tối đa 1 null, 1 không null
+                    long nullPromoCount = ticketItem.getDiscountIds().stream()
+                            .map(id -> discountRepository.findById(id)
+                                    .orElseThrow(() -> new AppException(ErrorCode.DISCOUNT_NOT_FOUND)))
+                            .filter(d -> d.getPromoCode() == null)
+                            .count();
+                    if (nullPromoCount > 1) {
+                        throw new IllegalArgumentException("Only one discount with null promoCode allowed");
+                    }
+
+                    boolean isValidDiscount = ticketDiscountRepository.existsByTicketAndDiscount(ticket, discount);
+                    if (!isValidDiscount) {
+                        throw new IllegalArgumentException(
+                                "Discount " + discount.getName() + " is not applicable for ticket: "
+                                        + ticket.getName());
+                    }
+
+                    LocalDateTime now = LocalDateTime.now();
+                    if (discount.getDiscountStart() != null && now.isBefore(discount.getDiscountStart())) {
+                        throw new IllegalArgumentException("Discount is not yet valid: " + discount.getName());
+                    }
+                    if (discount.getDiscountEnd() != null && now.isAfter(discount.getDiscountEnd())) {
+                        throw new AppException(ErrorCode.DISCOUNT_EXPIRED);
+                    }
+
+                    if (discount.getMaxUses() != null && discount.getTimesUsed() >= discount.getMaxUses()) {
+                        throw new AppException(ErrorCode.DISCOUNT_USAGE_LIMIT_REACHED);
+                    }
+
+                    discounts.add(discount);
+                    usedDiscountIds.add(discountId);
                 }
-                if (discount.getDiscountEnd() != null && now.isAfter(discount.getDiscountEnd())) {
-                    throw new AppException(ErrorCode.DISCOUNT_EXPIRED);
+
+                // Áp dụng giảm giá tuần tự
+                for (Discount discount : discounts) {
+                    if (discount.getDiscountType() == DiscountType.PERCENT) {
+                        BigDecimal discountAmount = ticketPrice.multiply(discount.getDiscountValue())
+                                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+                        ticketPrice = ticketPrice.subtract(discountAmount);
+                    } else if (discount.getDiscountType() == DiscountType.FIXED) {
+                        ticketPrice = ticketPrice.subtract(discount.getDiscountValue());
+                    }
                 }
-
-                if (discount.getMaxUses() != null && discount.getTimesUsed() >= discount.getMaxUses()) {
-                    throw new AppException(ErrorCode.DISCOUNT_USAGE_LIMIT_REACHED);
-                }
-
-                if (discount.getDiscountType() == DiscountType.PERCENT) {
-                    log.info("discount: " + discount.getDiscountValue());
-                    BigDecimal discountAmount = ticketPrice.multiply(discount.getDiscountValue())
-                            .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
-
-                    ticketPrice = ticketPrice.subtract(discountAmount);
-
-                } else if (discount.getDiscountType() == DiscountType.FIXED) {
-                    ticketPrice = ticketPrice.subtract(discount.getDiscountValue());
-                }
-
-                usedDiscountIds.add(discount.getDiscountId());
             }
 
             totalPrice = totalPrice.add(ticketPrice);
 
             OrderTicket orderTicket = OrderTicket.builder()
                     .ticket(ticket)
-                    .discount(discount)
+                    .discount(!discounts.isEmpty() ? discounts.get(0) : null)
                     .priceAtPurchase(ticket.getPrice().doubleValue())
                     .quantity(ticketItem.getQuantity())
                     .build();
@@ -152,6 +179,7 @@ public class OrderServiceImpl implements OrderService {
                 .status(OrderStatus.PENDING)
                 .paymentStatus(PaymentStatus.PENDING)
                 .orderTickets(orderTickets)
+                .isCheckedIn(false)
                 .createdAt(LocalDateTime.now())
                 .build();
 
@@ -187,6 +215,8 @@ public class OrderServiceImpl implements OrderService {
         order.setPaymentLinkId(response.getPaymentLinkId());
         orderRepository.save(order);
 
+        paymentService.storeUsedDiscountIds(response.getPaymentLinkId(), usedDiscountIds);
+
         return response.getCheckoutUrl();
     }
 
@@ -220,7 +250,7 @@ public class OrderServiceImpl implements OrderService {
             throw new AppException(ErrorCode.UNAUTHORIZED);
         }
 
-        if (order.getIsCheckedIn()) {   
+        if (order.getIsCheckedIn()) {
             throw new AppException(ErrorCode.ALREADY_CHECKED_IN);
         }
 
@@ -239,6 +269,41 @@ public class OrderServiceImpl implements OrderService {
 
         orderRepository.save(order);
         return orderMapper.toOrderResponse(order);
+    }
+
+    @Override
+    public Page<MyTicketResponse> getMyTicketsByOrderStatus(String status, String timeFilter, Pageable pageable) {
+        User user = authenticationService.getUserFromToken();
+
+        Page<Order> orders;
+        if (status.equalsIgnoreCase("ALL")) {
+            orders = orderRepository.findByUser(user, pageable);
+        } else {
+            OrderStatus orderStatus = OrderStatus.valueOf(status.toUpperCase());
+            orders = orderRepository.findByUserAndStatus(user, orderStatus, pageable);
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        boolean isUpcoming = timeFilter.equalsIgnoreCase("upcoming");
+        List<Order> filteredOrders = orders.getContent().stream()
+                .filter(order -> {
+                    LocalDateTime eventTime = order.getSchedule().getScheduleDate()
+                            .atTime(order.getSchedule().getStartTime());
+                    return isUpcoming ? eventTime.isAfter(now) : eventTime.isBefore(now);
+                })
+                .collect(Collectors.toList());
+
+        // Tạo Page mới từ filteredOrders
+        Pageable filteredPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
+        int start = (int) filteredPageable.getOffset();
+        int end = Math.min((start + filteredPageable.getPageSize()), filteredOrders.size());
+        List<Order> pagedOrders = start < filteredOrders.size()
+                ? filteredOrders.subList(start, end)
+                : Collections.emptyList();
+
+        Page<Order> filteredPage = new PageImpl<>(pagedOrders, filteredPageable, filteredOrders.size());
+
+        return filteredPage.map(myTicketMapper::toMyTicketResponse);
     }
 
 }

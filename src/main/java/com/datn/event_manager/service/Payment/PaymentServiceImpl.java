@@ -1,8 +1,10 @@
 package com.datn.event_manager.service.Payment;
 
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.stereotype.Service;
 
@@ -41,6 +43,20 @@ public class PaymentServiceImpl implements PaymentService {
     TicketRepository ticketRepository;
     TicketScheduleRepository ticketScheduleRepository;
     DiscountRepository discountRepository;
+
+    Map<String, Set<Long>> usedDiscountIdsMap = new ConcurrentHashMap<>();
+
+    // Hàm lưu usedDiscountIds
+    @Override
+    public void storeUsedDiscountIds(String paymentLinkId, Set<Long> usedDiscountIds) {
+        usedDiscountIdsMap.put(paymentLinkId, usedDiscountIds);
+    }
+
+    // Hàm lấy usedDiscountIds
+    @Override
+    public Set<Long> getUsedDiscountIds(String paymentLinkId) {
+        return usedDiscountIdsMap.getOrDefault(paymentLinkId, new HashSet<>());
+    }
 
     @Override
     @Transactional
@@ -94,13 +110,20 @@ public class PaymentServiceImpl implements PaymentService {
         }
 
         // todo: update used discount
-        for (Long discountId : usedDiscountIds) {
+        Set<Long> usedDiscountIds1 = getUsedDiscountIds(paymentLinkId); // Lấy từ cache
+        for (Long discountId : usedDiscountIds1) {
             Discount discount = discountRepository.findById(discountId)
                     .orElseThrow(() -> new AppException(ErrorCode.DISCOUNT_NOT_FOUND));
 
-            discount.setTimesUsed(discount.getTimesUsed() + 1);
+            int totalQuantity = order.getOrderTickets().stream()
+                    .mapToInt(OrderTicket::getQuantity)
+                    .sum();
+            discount.setTimesUsed(discount.getTimesUsed() + totalQuantity);
             discountRepository.save(discount);
         }
+
+        // Xóa cache sau khi xử lý
+        usedDiscountIdsMap.remove(paymentLinkId);
 
         // switch (status) {
         // case "00":
@@ -125,6 +148,7 @@ public class PaymentServiceImpl implements PaymentService {
         // discount.setTimesUsed(discount.getTimesUsed() + 1);
         // discountRepository.save(discount);
         // }
+
         // break;
         // case "CANCELED":
         // order.setPaymentStatus(PaymentStatus.FAILED);

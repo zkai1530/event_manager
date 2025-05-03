@@ -1,7 +1,11 @@
 package com.datn.event_manager.service.Order;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import com.datn.event_manager.dto.request.CheckInRequest;
 import com.datn.event_manager.dto.request.OrderRequest;
+import com.datn.event_manager.dto.response.MyTicketResponse;
 import com.datn.event_manager.dto.response.OrderResponse;
 
 public interface OrderService {
@@ -10,4 +14,6 @@ public interface OrderService {
     void cancelOrder(Long orderId);
 
     OrderResponse checkIn(CheckInRequest request);
+
+    Page<MyTicketResponse> getMyTicketsByOrderStatus(String status, String timeFilter, Pageable pageable);
 }

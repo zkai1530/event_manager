@@ -15,7 +15,6 @@ import com.datn.event_manager.entity.User.UserMode;
 import com.datn.event_manager.exception.AppException;
 import com.datn.event_manager.exception.ErrorCode;
 import com.datn.event_manager.mapper.UserMapper;
-import com.datn.event_manager.mapper.UserMapperImpl;
 import com.datn.event_manager.repository.RoleRepository;
 import com.datn.event_manager.repository.UserRepository;
 import com.datn.event_manager.service.Authentication.AuthenticationService;
@@ -30,8 +29,6 @@ import lombok.extern.slf4j.Slf4j;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
 public class UserServiceImpl implements UserService {
-
-    private final UserMapperImpl userMapperImpl;
     UserRepository userRepository;
     RoleRepository roleRepository;
     AuthenticationService authenticationService;

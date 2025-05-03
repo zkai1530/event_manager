@@ -1,6 +1,4 @@
-package com.datn.event_manager.dto.request;
-
-import java.util.List;
+package com.datn.event_manager.dto.response;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -14,8 +12,7 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class TicketItem {
-    Long ticketId;
+public class TicketItemDetail {
+    String ticketName;
     Integer quantity;
-    List<Long> discountIds;
 }

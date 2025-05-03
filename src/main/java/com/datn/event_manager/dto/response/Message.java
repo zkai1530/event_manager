@@ -29,5 +29,6 @@ public class Message {
     public static final String DELETE_FOLLOW_SUCCESS = "Unfollow was successfully!";
     public static final String DELETE_NOTIFICATION_SUCCESS = "Delete notification successfully!";
     public static final String CHECK_IN_SUCCESS = "Check in successfully!";
+    public static final String GET_MYTICKET_SUCCESS = "Get my tickets successfully!";
 }
 
