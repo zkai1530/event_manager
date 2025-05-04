@@ -31,7 +31,8 @@ import org.springframework.security.config.Customizer;
 public class SecurityConfig {
     private final String[] PUBLIC_GET_ENDPOINTS = {
             "/send-mail",
-            "/event/{eventId}"
+            "/event/{eventId}",
+            "/event/search/{keyword}/result"
 
     };
     private final String[] PUBLIC_POST_ENDPOINTS = {

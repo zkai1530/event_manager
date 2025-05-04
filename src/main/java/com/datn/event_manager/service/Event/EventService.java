@@ -1,15 +1,18 @@
 package com.datn.event_manager.service.Event;
 
+import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.datn.event_manager.dto.request.EventRequest;
 import com.datn.event_manager.dto.response.EventByUserResponse;
 import com.datn.event_manager.dto.response.EventResponse;
+import com.datn.event_manager.dto.response.EventSearchResponse;
 import com.datn.event_manager.dto.response.EventStatusResponse;
-
 
 public interface EventService {
     String createEvent(EventRequest eventRequest, MultipartFile file);
@@ -19,8 +22,9 @@ public interface EventService {
     EventResponse getEventById(Long eventId);
 
     EventResponse updateEvent(Long eventId, EventRequest eventRequest, MultipartFile file);
-    
+
     List<EventByUserResponse> getEventsByUser();
+
     EventByUserResponse getEventByUser();
 
     EventStatusResponse getEventStatus(Long eventId);
@@ -28,4 +32,7 @@ public interface EventService {
     void publishEvent(Long eventId);
 
     void unpublishEvent(Long eventId);
+
+    Page<EventSearchResponse> searchByName(String keyword, String location, boolean isFree, LocalDate startDate,
+            LocalDate endDate, Pageable pageable);
 }

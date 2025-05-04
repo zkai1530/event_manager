@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.mapstruct.IterableMapping;
 import org.mapstruct.Mapper;
@@ -14,8 +15,11 @@ import com.datn.event_manager.dto.request.ScheduleItem;
 import com.datn.event_manager.dto.response.EventByUserResponse;
 import com.datn.event_manager.dto.response.EventResponse;
 import com.datn.event_manager.dto.response.EventScheduleResponse;
+import com.datn.event_manager.dto.response.EventScheduleSearchResponse;
+import com.datn.event_manager.dto.response.EventSearchResponse;
 import com.datn.event_manager.dto.response.FavoriteEventResponse;
 import com.datn.event_manager.dto.response.TicketResponse;
+import com.datn.event_manager.dto.response.TicketSearchResponse;
 import com.datn.event_manager.entity.Event;
 import com.datn.event_manager.entity.EventSchedule;
 import com.datn.event_manager.entity.FavoriteEvent;
@@ -130,5 +134,45 @@ public interface EventMapper {
                             .orElse(null);
                 })
                 .orElse(null);
+    }
+
+    @Named("toEventSearchResponse")
+    @Mapping(target = "eventId", source = "eventId")
+    @Mapping(target = "name", source = "name")
+    @Mapping(target = "imageUrl", source = "imageUrl")
+    @Mapping(target = "summary", source = "summary")
+    @Mapping(target = "eventType", source = "eventType")
+    @Mapping(target = "eventLocation", source = "eventLocation")
+    @Mapping(target = "schedules", source = "schedules", qualifiedByName = "mapSchedulesToSearchResponse")
+    EventSearchResponse toEventSearchResponse(Event event);
+
+    @IterableMapping(qualifiedByName = "toEventSearchResponse")
+    List<EventSearchResponse> toEventSearchResponseList(List<Event> events);
+
+    @Named("mapSchedulesToSearchResponse")
+    default List<EventScheduleSearchResponse> mapSchedulesToSearchResponse(List<EventSchedule> schedules) {
+        if (schedules == null || schedules.isEmpty()) {
+            return null;
+        }
+        LocalDate currentDate = LocalDate.now();
+        return schedules.stream()
+                .filter(schedule -> schedule.getScheduleDate() != null
+                        && schedule.getScheduleDate().isAfter(currentDate))
+                .sorted(Comparator.comparing(EventSchedule::getScheduleDate))
+                .map(schedule -> {
+                    EventScheduleSearchResponse response = new EventScheduleSearchResponse();
+                    response.setScheduleDate(schedule.getScheduleDate());
+                    List<TicketSearchResponse> ticketResponses = schedule.getTicketSchedules().stream()
+                            .map(ticketSchedule -> {
+                                TicketSearchResponse ticketResponse = new TicketSearchResponse();
+                                // Lấy price từ Ticket
+                                ticketResponse.setPrice(ticketSchedule.getTicket() != null ? ticketSchedule.getTicket().getPrice() : BigDecimal.ZERO);
+                                return ticketResponse;
+                            })
+                            .collect(Collectors.toList());
+                    response.setTicketSchedules(ticketResponses);
+                    return response;
+                })
+                .collect(Collectors.toList());
     }
 }

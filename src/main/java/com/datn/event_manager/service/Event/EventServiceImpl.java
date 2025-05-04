@@ -2,11 +2,15 @@ package com.datn.event_manager.service.Event;
 
 import java.io.IOException;
 import java.text.Normalizer;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -17,6 +21,7 @@ import com.datn.event_manager.dto.request.EventRequest;
 import com.datn.event_manager.dto.request.FAQRequest;
 import com.datn.event_manager.dto.response.EventByUserResponse;
 import com.datn.event_manager.dto.response.EventResponse;
+import com.datn.event_manager.dto.response.EventSearchResponse;
 import com.datn.event_manager.dto.response.EventStatusResponse;
 import com.datn.event_manager.entity.Event;
 import com.datn.event_manager.entity.EventLocation;
@@ -430,6 +435,12 @@ public class EventServiceImpl implements EventService {
                 .replaceAll("-{2,}", "-")
                 .replaceAll("^-|-$", "");
         return slug;
+    }
+
+    @Override
+    public Page<EventSearchResponse> searchByName(String keyword, String location, boolean isFree, LocalDate startDate, LocalDate endDate, Pageable pageable) {
+        Page<Event> events = eventRepository.searchByName(keyword, location, isFree, startDate, endDate, pageable);
+        return events.map(eventMapper::toEventSearchResponse);
     }
 
 }
