@@ -22,6 +22,7 @@ import com.datn.event_manager.dto.request.OrderRequest;
 import com.datn.event_manager.dto.request.TicketItem;
 import com.datn.event_manager.dto.response.MyTicketResponse;
 import com.datn.event_manager.dto.response.OrderResponse;
+import com.datn.event_manager.dto.response.ticketsales.OrderResponse1;
 import com.datn.event_manager.entity.Discount;
 import com.datn.event_manager.entity.EventSchedule;
 import com.datn.event_manager.entity.Order;
@@ -68,6 +69,7 @@ public class OrderServiceImpl implements OrderService {
     DiscountRepository discountRepository;
     TicketDiscountRepository ticketDiscountRepository;
     TicketScheduleRepository ticketScheduleRepository;
+    EventScheduleRepository eventScheduleRepository;
     OrderMapper orderMapper;
     OrderRepository orderRepository;
     PayOSConfig payOSConfig;
@@ -304,6 +306,32 @@ public class OrderServiceImpl implements OrderService {
         Page<Order> filteredPage = new PageImpl<>(pagedOrders, filteredPageable, filteredOrders.size());
 
         return filteredPage.map(myTicketMapper::toMyTicketResponse);
+    }
+
+    public OrderResponse1 getSalesByScheduleId(Long scheduleId) {
+        User user = authenticationService.getUserFromToken();
+        EventSchedule eventSchedule = eventScheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new AppException(ErrorCode.SCHEDULE_NOT_FOUND));
+
+        // Check if the user is the owner of the event
+        if (!user.getUserId().equals(eventSchedule.getEvent().getUser().getUserId())) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+        OrderResponse1 response = new OrderResponse1();
+
+        List<Object[]> ticketScheduleResults = ticketScheduleRepository.findTicketSchedulesByScheduleId(scheduleId);
+        List<TicketSchedule> ticketSchedules = ticketScheduleResults.stream()
+                .map(result -> (TicketSchedule) result[0])
+                .collect(Collectors.toList());
+        response.setTicketSchedules(orderMapper.toTicketScheduleResponseList(ticketSchedules));
+
+        List<Object[]> orderResults = orderRepository.findOrdersByScheduleId(scheduleId);
+        List<Order> orders = orderResults.stream()
+                .map(result -> (Order) result[0])
+                .collect(Collectors.toList());
+        response.setOrders(orderMapper.toOrderDetailResponseList(orders));
+
+        return response;
     }
 
 }

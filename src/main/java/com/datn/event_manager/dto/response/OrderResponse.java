@@ -24,7 +24,7 @@ public class OrderResponse {
     String eventName;
     LocalDate scheduleDate;
     LocalTime startTime;
-LocalTime endTime;
+    LocalTime endTime;
     int totalQuantity;
     List<OrderTicketResponse> orderTickets;
 }

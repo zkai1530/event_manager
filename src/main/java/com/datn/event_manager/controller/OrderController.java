@@ -18,6 +18,7 @@ import com.datn.event_manager.dto.request.OrderRequest;
 import com.datn.event_manager.dto.response.APIResponse;
 import com.datn.event_manager.dto.response.Message;
 import com.datn.event_manager.dto.response.OrderResponse;
+import com.datn.event_manager.dto.response.ticketsales.OrderResponse1;
 import com.datn.event_manager.service.Order.OrderService;
 
 import lombok.AccessLevel;
@@ -61,5 +62,11 @@ public class OrderController {
         Pageable pageable = PageRequest.of(page, MYTICKET_PER_PAGE);
         return ResponseEntity.ok(new APIResponse(Message.GET_MYTICKET_SUCCESS,
                 orderService.getMyTicketsByOrderStatus(status, timeFilter, pageable)));
+    }
+
+    @GetMapping("/by-schedule/{scheduleId}")
+    public ResponseEntity<OrderResponse1> getSalesByScheduleId(@PathVariable Long scheduleId) {
+        OrderResponse1 response = orderService.getSalesByScheduleId(scheduleId);
+        return ResponseEntity.ok(response);
     }
 }
