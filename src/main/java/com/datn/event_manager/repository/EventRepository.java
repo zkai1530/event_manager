@@ -39,8 +39,16 @@ public interface EventRepository extends JpaRepository<Event, Long> {
                     "AND (:location = 'Toàn quốc' OR el.city = :location OR el.address LIKE CONCAT('%', :location, '%')) "
                     +
                     "AND (:isFree = false OR t.price = 0) " +
-                    "AND (:startDate IS NULL OR :endDate IS NULL OR es.schedule_date BETWEEN :startDate AND :endDate)", countQuery = "SELECT COUNT(DISTINCT e.event_id) "
-                                    +
+                    "AND (:startDate IS NULL OR :endDate IS NULL OR es.schedule_date BETWEEN :startDate AND :endDate) "
+                    +
+                    "AND (:eventStatus = 'all' " +
+                    "     OR (:eventStatus = 'ongoing' AND EXISTS (SELECT 1 FROM event_schedule es2 WHERE es2.event_id = e.event_id AND es2.schedule_date >= CURRENT_DATE)) "
+                    +
+                    "     OR (:eventStatus = 'past' AND NOT EXISTS (SELECT 1 FROM event_schedule es2 WHERE es2.event_id = e.event_id AND es2.schedule_date >= CURRENT_DATE))) "
+                    +
+                    "GROUP BY e.event_id " + // Thêm GROUP BY vì dùng MAX
+                    "ORDER BY MAX(es.schedule_date) DESC", // Sắp xếp theo ngày lớn nhất, từ xa đến gần
+                    countQuery = "SELECT COUNT(DISTINCT e.event_id) " +
                                     "FROM event e " +
                                     "LEFT JOIN event_location el ON e.event_id = el.event_id " +
                                     "LEFT JOIN event_schedule es ON e.event_id = es.event_id " +
@@ -50,12 +58,18 @@ public interface EventRepository extends JpaRepository<Event, Long> {
                                     "AND (:location = 'Toàn quốc' OR el.city = :location OR el.address LIKE CONCAT('%', :location, '%')) "
                                     +
                                     "AND (:isFree = false OR t.price = 0) " +
-                                    "AND (:startDate IS NULL OR :endDate IS NULL OR es.schedule_date BETWEEN :startDate AND :endDate)", nativeQuery = true)
+                                    "AND (:startDate IS NULL OR :endDate IS NULL OR es.schedule_date BETWEEN :startDate AND :endDate) "
+                                    +
+                                    "AND (:eventStatus = 'all' " +
+                                    "     OR (:eventStatus = 'ongoing' AND EXISTS (SELECT 1 FROM event_schedule es2 WHERE es2.event_id = e.event_id AND es2.schedule_date >= CURRENT_DATE)) "
+                                    +
+                                    "     OR (:eventStatus = 'past' AND NOT EXISTS (SELECT 1 FROM event_schedule es2 WHERE es2.event_id = e.event_id AND es2.schedule_date >= CURRENT_DATE)))", nativeQuery = true)
     Page<Event> searchByName(
                     @Param("keyword") String keyword,
                     @Param("location") String location,
                     @Param("isFree") boolean isFree,
                     @Param("startDate") LocalDate startDate,
                     @Param("endDate") LocalDate endDate,
+                    @Param("eventStatus") String eventStatus,
                     Pageable pageable);
 }

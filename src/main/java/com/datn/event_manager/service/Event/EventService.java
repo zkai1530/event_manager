@@ -34,5 +34,5 @@ public interface EventService {
     void unpublishEvent(Long eventId);
 
     Page<EventSearchResponse> searchByName(String keyword, String location, boolean isFree, LocalDate startDate,
-            LocalDate endDate, Pageable pageable);
+            LocalDate endDate, String eventStatus, Pageable pageable); 
 }

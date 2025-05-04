@@ -438,8 +438,10 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
-    public Page<EventSearchResponse> searchByName(String keyword, String location, boolean isFree, LocalDate startDate, LocalDate endDate, Pageable pageable) {
-        Page<Event> events = eventRepository.searchByName(keyword, location, isFree, startDate, endDate, pageable);
+    public Page<EventSearchResponse> searchByName(String keyword, String location, boolean isFree, LocalDate startDate,
+            LocalDate endDate, String eventStatus, Pageable pageable) {
+        Page<Event> events = eventRepository.searchByName(keyword, location, isFree, startDate, endDate, eventStatus,
+                pageable); // Thêm eventStatus
         return events.map(eventMapper::toEventSearchResponse);
     }
 

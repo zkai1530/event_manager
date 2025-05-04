@@ -99,11 +99,13 @@ public class EventController {
             @RequestParam(required = false, defaultValue = "Toàn quốc") String location,
             @RequestParam(required = false, defaultValue = "false") boolean isFree,
             @RequestParam(required = false) LocalDate startDate,
-            @RequestParam(required = false) LocalDate endDate) {
+            @RequestParam(required = false) LocalDate endDate,
+            @RequestParam(required = false, defaultValue = "all") String eventStatus) {
 
         Pageable pageable = PageRequest.of(page, EVENT_PER_PAGE);
-        Page<EventSearchResponse> searchResult = eventService.searchByName(keyword, location, isFree, startDate,
-                endDate, pageable);
+        String searchKeyword = keyword.isEmpty() ? "%" : keyword; // Nếu keyword rỗng, dùng % để lấy tất cả
+        Page<EventSearchResponse> searchResult = eventService.searchByName(searchKeyword, location, isFree, startDate,
+                endDate, eventStatus, pageable);
         return ResponseEntity.ok(new APIResponse(Message.RESOURCE_FOUND, searchResult));
     }
 }

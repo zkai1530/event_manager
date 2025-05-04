@@ -2,6 +2,7 @@ package com.datn.event_manager.mapper;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -152,24 +153,25 @@ public interface EventMapper {
     @Named("mapSchedulesToSearchResponse")
     default List<EventScheduleSearchResponse> mapSchedulesToSearchResponse(List<EventSchedule> schedules) {
         if (schedules == null || schedules.isEmpty()) {
-            return null;
+            return Collections.emptyList();
         }
-        LocalDate currentDate = LocalDate.now();
         return schedules.stream()
-                .filter(schedule -> schedule.getScheduleDate() != null
-                        && schedule.getScheduleDate().isAfter(currentDate))
+                .filter(schedule -> schedule.getScheduleDate() != null)
                 .sorted(Comparator.comparing(EventSchedule::getScheduleDate))
                 .map(schedule -> {
                     EventScheduleSearchResponse response = new EventScheduleSearchResponse();
                     response.setScheduleDate(schedule.getScheduleDate());
-                    List<TicketSearchResponse> ticketResponses = schedule.getTicketSchedules().stream()
-                            .map(ticketSchedule -> {
-                                TicketSearchResponse ticketResponse = new TicketSearchResponse();
-                                // Lấy price từ Ticket
-                                ticketResponse.setPrice(ticketSchedule.getTicket() != null ? ticketSchedule.getTicket().getPrice() : BigDecimal.ZERO);
-                                return ticketResponse;
-                            })
-                            .collect(Collectors.toList());
+                    List<TicketSearchResponse> ticketResponses = schedule.getTicketSchedules() != null
+                            ? schedule.getTicketSchedules().stream()
+                                    .map(ticketSchedule -> {
+                                        TicketSearchResponse ticketResponse = new TicketSearchResponse();
+                                        ticketResponse.setPrice(ticketSchedule.getTicket() != null
+                                                ? ticketSchedule.getTicket().getPrice()
+                                                : BigDecimal.ZERO);
+                                        return ticketResponse;
+                                    })
+                                    .collect(Collectors.toList())
+                            : Collections.emptyList();
                     response.setTicketSchedules(ticketResponses);
                     return response;
                 })
