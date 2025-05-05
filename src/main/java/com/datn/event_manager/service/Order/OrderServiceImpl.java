@@ -23,6 +23,8 @@ import com.datn.event_manager.dto.request.TicketItem;
 import com.datn.event_manager.dto.response.MyTicketResponse;
 import com.datn.event_manager.dto.response.OrderResponse;
 import com.datn.event_manager.dto.response.ticketsales.OrderResponse1;
+import com.datn.event_manager.dto.response.ticketsales.PagedOrderResponse;
+import com.datn.event_manager.dto.response.ticketsales.TicketScheduleResponse;
 import com.datn.event_manager.entity.Discount;
 import com.datn.event_manager.entity.EventSchedule;
 import com.datn.event_manager.entity.Order;
@@ -308,7 +310,8 @@ public class OrderServiceImpl implements OrderService {
         return filteredPage.map(myTicketMapper::toMyTicketResponse);
     }
 
-    public OrderResponse1 getSalesByScheduleId(Long scheduleId) {
+    @Override
+    public PagedOrderResponse getSalesByScheduleId(Long scheduleId, Pageable pageable) {
         User user = authenticationService.getUserFromToken();
         EventSchedule eventSchedule = eventScheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new AppException(ErrorCode.SCHEDULE_NOT_FOUND));
@@ -317,21 +320,34 @@ public class OrderServiceImpl implements OrderService {
         if (!user.getUserId().equals(eventSchedule.getEvent().getUser().getUserId())) {
             throw new AppException(ErrorCode.UNAUTHORIZED);
         }
-        OrderResponse1 response = new OrderResponse1();
 
+        // get TicketSchedules
         List<Object[]> ticketScheduleResults = ticketScheduleRepository.findTicketSchedulesByScheduleId(scheduleId);
         List<TicketSchedule> ticketSchedules = ticketScheduleResults.stream()
                 .map(result -> (TicketSchedule) result[0])
                 .collect(Collectors.toList());
-        response.setTicketSchedules(orderMapper.toTicketScheduleResponseList(ticketSchedules));
 
-        List<Object[]> orderResults = orderRepository.findOrdersByScheduleId(scheduleId);
+        // get Orders
+        Page<Object[]> orderResults = orderRepository.findOrdersByScheduleId(scheduleId, pageable);
         List<Order> orders = orderResults.stream()
                 .map(result -> (Order) result[0])
                 .collect(Collectors.toList());
+        
+        OrderResponse1 response = new OrderResponse1();
+        response.setTicketSchedules(orderMapper.toTicketScheduleResponseList(ticketSchedules));
         response.setOrders(orderMapper.toOrderDetailResponseList(orders));
 
-        return response;
+        // create PagedOrderResponse
+        PagedOrderResponse pagedResponse = new PagedOrderResponse();
+        pagedResponse.setData(response);
+        pagedResponse.setPageNumber(orderResults.getNumber());
+        pagedResponse.setPageSize(orderResults.getSize());
+        pagedResponse.setTotalElements(orderResults.getTotalElements());
+        pagedResponse.setTotalPages(orderResults.getTotalPages());
+        pagedResponse.setLast(orderResults.isLast());
+        pagedResponse.setFirst(orderResults.isFirst());
+
+        return pagedResponse;
     }
 
 }

@@ -17,6 +17,7 @@ public class EventByUserResponse {
     Long eventId;
     String name;
     String imageUrl;
+    String slug;
     EventType eventType; // Single, recurring
     ScheduleItem scheduleItem;
     Boolean isPublished;

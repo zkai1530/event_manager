@@ -11,6 +11,7 @@ public enum ErrorCode {
     USER_EXISTED("User is existed!", HttpStatus.CONFLICT),
     UNAUTHORIZED("Access Denied! (unauthorized)", HttpStatus.FORBIDDEN), // when token don't have permission
     UNAUTHENTICATED("Unauthenticated", HttpStatus.UNAUTHORIZED), // when token isn't existed
+    MISSING_REQUIRED_FIELDS("Missing field!", HttpStatus.BAD_REQUEST),
     EVENT_NOT_FOUND("Event not found!", HttpStatus.NOT_FOUND),
     EVENT_ALREADY_PUBLISHED("Event is already published!", HttpStatus.BAD_REQUEST),
     EVENT_ALREADY_UNPUBLISHED("Event is already unpublished!", HttpStatus.BAD_REQUEST),
@@ -34,7 +35,9 @@ public enum ErrorCode {
     ALREADY_FAVORITED("Event already added to your favorites!", HttpStatus.BAD_REQUEST),
     ALREADY_FOLLOW("You are already following this user", HttpStatus.BAD_REQUEST),
     ALREADY_CHECKED_IN("This order already checked in!", HttpStatus.BAD_REQUEST),
-    NOT_FOLLOWING("You are not following this user", HttpStatus.BAD_REQUEST);
+    NOT_FOLLOWING("You are not following this user", HttpStatus.BAD_REQUEST),
+    USER_ALREADY_HAS_BANK_ACCOUNT("User already has bank account!",HttpStatus.CONFLICT),
+    USER_HAS_NO_BANK_ACCOUNT("User has no bank account!", HttpStatus.NOT_FOUND);
 
 
     ErrorCode(String message, HttpStatusCode httpStatusCode) {

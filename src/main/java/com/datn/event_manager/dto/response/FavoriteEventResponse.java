@@ -21,6 +21,7 @@ public class FavoriteEventResponse {
     Long eventId;
     String name;
     String imageUrl;
+    String slug;
     EventType eventType; // Single, recurring
     EventLocationResponse eventLocation;
     EventScheduleResponse nearestSchedule;

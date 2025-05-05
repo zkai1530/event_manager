@@ -60,6 +60,7 @@ public interface EventMapper {
     @Mapping(target = "eventId", source = "event.eventId")
     @Mapping(target = "name", source = "event.name")
     @Mapping(target = "imageUrl", source = "event.imageUrl")
+    @Mapping(target = "slug", source = "event.slug")
     @Mapping(target = "eventType", source = "event.eventType")
     @Mapping(target = "eventLocation", source = "event.eventLocation")
     @Mapping(target = "nearestSchedule", source = "event.schedules", qualifiedByName = "mapNearestScheduleWithTickets")

@@ -28,10 +28,10 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
     Page<Order> findByUserAndStatus(User user, OrderStatus status, Pageable pageable);
 
     @Query("SELECT o, u, ot, t " +
-           "FROM Order o " +
-           "JOIN o.user u " +
-           "LEFT JOIN o.orderTickets ot " +
-           "LEFT JOIN ot.ticket t " +
-           "WHERE o.schedule.scheduleId = :scheduleId")
-    List<Object[]> findOrdersByScheduleId(@Param("scheduleId") Long scheduleId);
+       "FROM Order o " +
+       "JOIN o.user u " +
+       "LEFT JOIN o.orderTickets ot " +
+       "LEFT JOIN ot.ticket t " +
+       "WHERE o.schedule.scheduleId = :scheduleId AND o.status = 'PAID'")
+    Page<Object[]> findOrdersByScheduleId(@Param("scheduleId") Long scheduleId, Pageable pageable);
 }

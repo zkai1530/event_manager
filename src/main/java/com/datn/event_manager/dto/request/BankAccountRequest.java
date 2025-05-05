@@ -1,4 +1,4 @@
-package com.datn.event_manager.dto.response.ticketsales;
+package com.datn.event_manager.dto.request;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -8,12 +8,13 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class OrderTicketResponse1 {
-    String ticketName;
-    Integer quantity;
-    Double priceAtPurchase;
+public class BankAccountRequest {
+    String accountNumber;
+    String accountName;
+    String bankName;
+    String bankShortName;
 }

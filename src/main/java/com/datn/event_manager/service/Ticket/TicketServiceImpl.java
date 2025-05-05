@@ -131,6 +131,7 @@ public class TicketServiceImpl implements TicketService {
             ticket.setSaleStart(request.getSaleStart());
         if (request.getSaleEnd() != null)
             ticket.setSaleEnd(request.getSaleEnd());
+        ticket.setSold(0);
 
         // update scheduleIds
         

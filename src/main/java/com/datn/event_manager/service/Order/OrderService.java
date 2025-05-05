@@ -8,6 +8,7 @@ import com.datn.event_manager.dto.request.OrderRequest;
 import com.datn.event_manager.dto.response.MyTicketResponse;
 import com.datn.event_manager.dto.response.OrderResponse;
 import com.datn.event_manager.dto.response.ticketsales.OrderResponse1;
+import com.datn.event_manager.dto.response.ticketsales.PagedOrderResponse;
 
 public interface OrderService {
     String createOrder(OrderRequest orderRequest) throws Exception;
@@ -18,5 +19,5 @@ public interface OrderService {
 
     Page<MyTicketResponse> getMyTicketsByOrderStatus(String status, String timeFilter, Pageable pageable);
 
-    OrderResponse1 getSalesByScheduleId(Long scheduleId);
+    PagedOrderResponse getSalesByScheduleId(Long scheduleId, Pageable pageable);
 }

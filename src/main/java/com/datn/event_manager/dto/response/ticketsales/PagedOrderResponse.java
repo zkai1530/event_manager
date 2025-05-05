@@ -12,8 +12,12 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class OrderTicketResponse1 {
-    String ticketName;
-    Integer quantity;
-    Double priceAtPurchase;
+public class PagedOrderResponse {
+    OrderResponse1 data;
+    int pageNumber;
+    int pageSize;
+    long totalElements;
+    int totalPages;
+    boolean last;
+    boolean first;
 }

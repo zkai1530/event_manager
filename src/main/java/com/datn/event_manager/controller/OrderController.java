@@ -37,6 +37,10 @@ public class OrderController {
     @Value("${myticket-per-page}")
     int MYTICKET_PER_PAGE;
 
+    @NonFinal
+    @Value("${recent-order-per-page}")
+    int RECENT_ORDER;
+
     @PostMapping("/create-order")
     public ResponseEntity<APIResponse> createOrder(@RequestBody OrderRequest orderRequest) throws Exception {
         // return checkoutUrl
@@ -65,8 +69,10 @@ public class OrderController {
     }
 
     @GetMapping("/by-schedule/{scheduleId}")
-    public ResponseEntity<OrderResponse1> getSalesByScheduleId(@PathVariable Long scheduleId) {
-        OrderResponse1 response = orderService.getSalesByScheduleId(scheduleId);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<APIResponse> getSalesByScheduleId(@PathVariable Long scheduleId,
+            @RequestParam(required = false, defaultValue = "0") int page) {
+        Pageable pageable = PageRequest.of(page, RECENT_ORDER);
+        return ResponseEntity.ok(new APIResponse(Message.RESOURCE_FOUND,
+                orderService.getSalesByScheduleId(scheduleId, pageable)));
     }
 }

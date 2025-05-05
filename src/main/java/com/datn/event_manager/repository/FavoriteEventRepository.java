@@ -13,6 +13,6 @@ public interface FavoriteEventRepository extends JpaRepository<FavoriteEvent, Lo
 
     boolean existsByUserAndEvent(User user, Event event);
 
-void deleteByUserAndEvent(User user, Event event);
+    void deleteByUserAndEvent(User user, Event event);
 
 }

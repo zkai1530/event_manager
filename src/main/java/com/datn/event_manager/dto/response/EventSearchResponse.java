@@ -22,6 +22,7 @@ public class EventSearchResponse {
     String name;
     String imageUrl;
     String summary;
+    String slug;
     EventType eventType;
     EventLocationResponse eventLocation;
     List<EventScheduleSearchResponse> schedules;

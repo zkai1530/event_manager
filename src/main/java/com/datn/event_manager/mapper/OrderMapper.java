@@ -53,7 +53,7 @@ public interface OrderMapper {
     List<OrderDetailResponse> toOrderDetailResponseList(List<Order> orders);
 
     @Named("mapToOrderTicketResponse1")
-    @Mapping(target = "ticketId", source = "ticket.ticketId")
+    @Mapping(target = "ticketName", source = "ticket.name")
     @Mapping(target = "quantity", source = "quantity")
     @Mapping(target = "priceAtPurchase", source = "priceAtPurchase")
     OrderTicketResponse1 mapToOrderTicketResponse1(OrderTicket orderTicket);
