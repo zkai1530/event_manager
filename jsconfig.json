@@ -6,7 +6,10 @@
     "baseUrl": "./src",
     "checkJs": true,
     "jsx": "react-jsx",
-    "moduleResolution": "node"
+    "moduleResolution": "node",
+    "paths": {
+      "@/*": ["*"]
+    }
   },
   "include": ["src"]
 }

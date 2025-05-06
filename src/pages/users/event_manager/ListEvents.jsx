@@ -37,7 +37,7 @@ const ListEvents = () => {
           <div className="relative">
             <input
               type="text"
-              placeholder="Search events"
+              placeholder="Tìm kiếm sự kiện"
               className="rounded-lg border py-2 pr-4 pl-10 text-gray-700 focus:ring-2 focus:ring-blue-500 focus:outline-none"
             />
             <svg
@@ -65,7 +65,7 @@ const ListEvents = () => {
                 d="M4 8h12M4 12h12"
               />
             </svg>
-            <span>List</span>
+            <span>Danh sách</span>
           </button>
           <button className="flex items-center space-x-2 rounded-lg border px-4 py-2 text-gray-700">
             <svg
@@ -81,10 +81,10 @@ const ListEvents = () => {
                 d="M8 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-2m-4-2v4m0 0H8m4 0h4"
               />
             </svg>
-            <span>Calendar</span>
+            <span>Dạng lịch</span>
           </button>
           <button className="flex items-center space-x-2 rounded-lg border px-4 py-2 text-gray-700">
-            <span>Draft</span>
+            <span>Phác thảo</span>
             <svg
               className="h-5 w-5"
               fill="none"
@@ -101,7 +101,7 @@ const ListEvents = () => {
           </button>
         </div>
         <button className="rounded-lg bg-orange-600 px-4 py-2 text-white">
-          Create Event
+          Tạo sự kiện
         </button>
       </div>
 
@@ -117,19 +117,19 @@ const ListEvents = () => {
                       scope="col"
                       className="w-[50%] px-6 py-3 text-start text-xs font-medium text-white uppercase"
                     >
-                      Event
+                      Sự kiện
                     </th>
                     <th
                       scope="col"
                       className="w-[20%] px-6 py-3 text-start text-xs font-medium text-white uppercase"
                     >
-                      Sold
+                      LƯỢT BÁN
                     </th>
                     <th
                       scope="col"
                       className="w-[15%] px-6 py-3 text-start text-xs font-medium text-white uppercase"
                     >
-                      Status
+                      TÌNH TRẠNG
                     </th>
                     <th
                       scope="col"
@@ -160,10 +160,11 @@ const ListEvents = () => {
                           }
                           className="transition-shadow hover:relative hover:shadow-md"
                         >
-                          <td className="px-6 py-4 whitespace-nowrap">
+                          <td className="px-6 py-4">
                             <div className="flex items-center space-x-3">
                               <img
-                                src="/event_background.jpg"
+                                // src="/event_background.jpg"
+                                src={event.imageUrl}
                                 alt="Event"
                                 className="h-14 w-14 rounded-lg object-cover"
                               />
@@ -187,7 +188,7 @@ const ListEvents = () => {
                             {event.totalTicketsSold}
                           </td>
                           <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-800">
-                            {event.isPublished ? "Published" : "Draft"}
+                            {event.isPublished ? "Đã ra mắt" : "Phác thảo"}
                           </td>
                           <td className="px-6 py-4 text-end text-sm font-medium whitespace-nowrap">
                             <button

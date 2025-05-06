@@ -8,7 +8,7 @@ export const createDiscount = async (data, token) => {
         Authorization: `Bearer ${token}`,
       },
     });
-    return response.data.data;
+    return response.data;
   } catch (error) {
     console.error("createDiscount", error.response?.data || error.message);
     throw error;
@@ -25,7 +25,7 @@ export const updateDiscount = async (discountId, data, token) => {
         Authorization: `Bearer ${token}`,
       },
     });
-    return response.data.data;
+    return response.data;
   } catch (error) {
     console.error("updateDiscount", error.response?.data || error.message);
     throw error;

@@ -5,6 +5,8 @@ import { useForm } from "react-hook-form";
 import { IoEllipsisVertical, IoTicketOutline } from "react-icons/io5";
 import { getEventInfoById } from "services/user/eventService";
 import { createTicket, updateTicket } from "services/user/ticketService";
+import Swal from "sweetalert2";
+import { FormatPrice } from "utils/formatPrice";
 import { formatDateTime } from "utils/formatSchedule";
 import { useEventRoute } from "utils/useEventRoute";
 
@@ -28,21 +30,54 @@ const CreateTicket = () => {
   const [selectedOption, setSelectedOption] = useState("all");
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [scheduleIds, setScheduleIds] = useState([]);
+  const [allSchedules, setAllSchedules] = useState([]); // schedules lúc đầu khi chưa có vé thì lưu vào
 
   const handleOptionChange = (e) => {
-    setSelectedOption(e.target.value);
+    const value = e.target.value;
+    setSelectedOption(value);
+
+    const currentTicket = tickets.find(
+      (ticket) => ticket.id === getValues("id"),
+    );
+
+    if (value === "all") {
+      const allScheduleIds = currentTicket
+        ? (currentTicket.schedules || []).map((schedule) => schedule.scheduleId)
+        : (allSchedules || []).map((schedule) => schedule.scheduleId);
+      setScheduleIds(allScheduleIds);
+      console.log("Reset scheduleIds khi chọn all:", allScheduleIds);
+    } else if (value === "certain") {
+      const initialScheduleIds = currentTicket
+        ? currentTicket.scheduleIds || []
+        : [];
+      setScheduleIds(initialScheduleIds);
+      console.log("Reset scheduleIds khi chọn certain:", initialScheduleIds);
+    }
   };
 
   const onSubmit = async (data) => {
     const currentTicket = tickets.find((ticket) => ticket.id === data.id);
+    const allScheduleIds =
+      selectedOption === "all"
+        ? currentTicket
+          ? currentTicket.schedules.map((schedule) => schedule.scheduleId)
+          : allSchedules.map((schedule) => schedule.scheduleId)
+        : scheduleIds;
+
+    // const requestData = {
+    //   ...data,
+    //   scheduleIds:
+    //     eventType === "SINGLE"
+    //       ? tickets[0]?.schedules.map((s) => s.scheduleId) || []
+    //       : allScheduleIds,
+    // };
+
     const requestData = {
       ...data,
       scheduleIds:
         eventType === "SINGLE"
-          ? tickets[0]?.schedules.map((s) => s.scheduleId) || []
-          : selectedOption === "all" && currentTicket
-            ? currentTicket.schedules.map((schedule) => schedule.scheduleId)
-            : scheduleIds,
+          ? allSchedules.map((s) => s.scheduleId)
+          : allScheduleIds,
     };
 
     console.log("Dữ liệu gửi đi:", requestData);
@@ -50,13 +85,44 @@ const CreateTicket = () => {
     try {
       setIsLoading(true);
       if (requestData.id) {
-        await updateTicket(requestData.id, requestData, token);
+        const data = await updateTicket(requestData.id, requestData, token);
+        if (data.message === "Update ticket was successfully!") {
+          Swal.fire({
+            title: "Cập nhật vé thành công!",
+            text: `Vé của bạn đã được cập nhật!.`,
+            icon: "success",
+          });
+        } else {
+          Swal.fire({
+            title: "Lỗi!",
+            text: `Cập nhật vé không thành công!.`,
+            icon: "error",
+          });
+        }
       } else {
         console.log(requestData);
-        await createTicket(requestData, token);
+        const data = await createTicket(requestData, token);
+        if (data.message === "Create ticket was successfully!") {
+          Swal.fire({
+            title: "Thêm vé thành công!",
+            text: `Vé của bạn đã được tạo!.`,
+            icon: "success",
+          });
+        } else {
+          Swal.fire({
+            title: "Lỗi!",
+            text: `Thêm vé không thành công!.`,
+            icon: "error",
+          });
+        }
       }
     } catch (error) {
       console.error("Create/Update ticket error", error);
+      Swal.fire({
+        title: "Lỗi!",
+        text: `Thêm vé không thành công!.`,
+        icon: "error",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -73,17 +139,17 @@ const CreateTicket = () => {
     setValue("price", ticket.price.toString());
     setValue("availableQuantity", ticket.availableQuantity.toString());
 
-   const formatDateTime = (dateTime) => {
-     const date = new Date(dateTime);
-     const year = date.getFullYear();
-     const month = String(date.getMonth() + 1).padStart(2, "0");
-     const day = String(date.getDate()).padStart(2, "0");
-     const hours = String(date.getHours()).padStart(2, "0");
-     const minutes = String(date.getMinutes()).padStart(2, "0");
-     return `${year}-${month}-${day}T${hours}:${minutes}`;
-   };
-   setValue("saleStart", formatDateTime(ticket.saleStart)); // Sửa tên trường
-   setValue("saleEnd", formatDateTime(ticket.saleEnd));
+    const formatDateTime = (dateTime) => {
+      const date = new Date(dateTime);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      const hours = String(date.getHours()).padStart(2, "0");
+      const minutes = String(date.getMinutes()).padStart(2, "0");
+      return `${year}-${month}-${day}T${hours}:${minutes}`;
+    };
+    setValue("saleStart", formatDateTime(ticket.saleStart)); // Sửa tên trường
+    setValue("saleEnd", formatDateTime(ticket.saleEnd));
 
     setScheduleIds(ticket.scheduleIds || []);
     // setSelectedOption(
@@ -109,7 +175,7 @@ const CreateTicket = () => {
   const [eventType, setEventType] = useState("SINGLE");
   useEffect(() => {
     setIsLoading(true);
-    getEventInfoById(eventId, token)
+    getEventInfoById(eventId)
       .then((data) => {
         console.log("tui ne", data);
         if (!data.schedules || data.schedules.length === 0) {
@@ -125,6 +191,7 @@ const CreateTicket = () => {
           startTime: schedule.startTime,
           endTime: schedule.endTime,
         }));
+        setAllSchedules(allSchedules);
 
         // Gộp tickets và gán scheduleIds
         const mergedTickets = data.schedules.reduce((acc, schedule) => {
@@ -165,7 +232,7 @@ const CreateTicket = () => {
       .finally(() => {
         setIsLoading(false);
       });
-  }, [eventId, setValue, setEventType, token]);
+  }, [eventId, setValue, setEventType]);
 
   // Click outside for close create ticket form
   useEffect(() => {
@@ -240,7 +307,9 @@ const CreateTicket = () => {
 
             {/* middle */}
             <div className="text-right">
-              <div className="mb-2 text-lg font-bold">${ticket.price}</div>
+              <div className="mb-2 text-lg font-bold">
+                {FormatPrice(ticket.price)}
+              </div>
               <p className="text-sm text-green-600">
                 ● On Sale
                 <span className="ml-3 text-gray-500">
@@ -273,7 +342,7 @@ const CreateTicket = () => {
             : "translate-x-full"
         } flex flex-col`}
       >
-        <div className="bg-secondary flex items-center justify-between border-b border-gray-200 px-6 py-3">
+        <div className="bg-main flex items-center justify-between border-b border-gray-200 px-6 py-3">
           <h2 className="text-xl font-semibold text-white">Tạo vé mới</h2>
           <button
             onClick={() => {
@@ -433,13 +502,7 @@ const CreateTicket = () => {
                         ? tickets.find(
                             (ticket) => ticket.id === getValues("id"),
                           )?.schedules || []
-                        : [
-                            ...new Map(
-                              tickets
-                                .flatMap((ticket) => ticket.schedules)
-                                .map((s) => [s.scheduleId, s]),
-                            ).values(),
-                          ]
+                        : allSchedules
                     }
                     initialSelectedIds={scheduleIds}
                   />
@@ -518,7 +581,7 @@ const CreateTicket = () => {
             </div>
             <button
               onClick={handleSubmit(onSubmit)}
-              className="mb-4 rounded-lg bg-blue-600 py-2 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400"
+              className="bg-main hover:bg-main-bold mt-4 mb-1 rounded-lg py-2 font-medium text-white transition-colors disabled:cursor-not-allowed disabled:bg-gray-400"
             >
               Lưu
             </button>

@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
 import StatusIcon from "components/UI/StatusIcon";
 import {
@@ -7,6 +7,7 @@ import {
   FaMapMarkerAlt,
   FaRegCalendarAlt,
 } from "react-icons/fa";
+import { AiFillFileImage } from "react-icons/ai";
 import { RiCalendarEventFill, RiCalendarScheduleLine } from "react-icons/ri";
 import { IoInformationCircleOutline } from "react-icons/io5";
 import { ImBin } from "react-icons/im";
@@ -21,11 +22,17 @@ import {
 } from "services/user/eventService";
 import Loading from "components/UI/Loading";
 import { formatSchedule } from "utils/formatSchedule";
+import { MdCloudUpload, MdDelete } from "react-icons/md";
+import Swal from "sweetalert2";
 
 const CreateEvent = () => {
   const token = localStorage.getItem("token");
   const [isLoading, setIsLoading] = useState(false);
   const [eventType, setEventType] = useState("singleEvent");
+  const [imageUpload, setImageUpload] = useState(null); // để hiển thị hình ảnh upload
+  const [fileNameImage, setFileNameImage] = useState("Không có file được chọn"); // lưu tên file hình ảnh upload
+  const [fileUpload, setFileUpload] = useState(null); // lưu file ảnh upload để gửi lên server
+  const fileInputRef = useRef(null);
   var toolbarOptions = [
     ["bold", "italic", "underline", "strike"],
     ["blockquote", "code-block"],
@@ -86,24 +93,66 @@ const CreateEvent = () => {
     const requestData = {
       ...rest,
       eventLocationRequest: { address, city, country, postalCode },
-      imageUrl: "https://example.com/event-image.jpg",
       capacity: 500,
       eventType: isEmptyTime ? "RECURRING" : "SINGLE",
     };
     console.log("dữ liệu", requestData);
 
+    const formData = new FormData();
+    formData.append(
+      "eventRequest",
+      new Blob([JSON.stringify(requestData)], { type: "application/json" }),
+    );
+    if (fileUpload) {
+      formData.append("image", fileUpload);
+    }
+
+    console.log(fileUpload);
+
     try {
       setIsLoading(true);
       if (eventId) {
-        await updateEvent(eventId, requestData, token);
+        const data = await updateEvent(eventId, formData, token);
+        if (data.message === "Update event was successfully!") {
+          Swal.fire({
+            title: "Cập nhật sự kiện thành công!",
+            text: `Sự kiện của bạn đã được cập nhật!.`,
+            icon: "success",
+          });
+          console.log(data.data);
+        } else {
+          Swal.fire({
+            title: "Lỗi!",
+            text: `Cập nhật sự kiện không thành công!.`,
+            icon: "error",
+          });
+        }
       } else {
-        const eventId = await createEvent(requestData, token);
-        console.log(eventId);
-        // data is eventId
-        navigate(`/manage/event/${eventId}/schedules`);
+        const data = await createEvent(formData, token);
+        if (data.message === "Create event was successfully!") {
+          Swal.fire({
+            title: "Thêm sự kiện thành công!",
+            text: `Sự kiện của bạn đã được tạo!.`,
+            icon: "success",
+          });
+          console.log(data.data);
+          // data.data is eventId
+          navigate(`/manage/event/${data.data}/schedules`);
+        } else {
+          Swal.fire({
+            title: "Lỗi!",
+            text: `Thêm sự kiện không thành công!.`,
+            icon: "error",
+          });
+        }
       }
     } catch (error) {
       console.error("Create/Update event error", error);
+      Swal.fire({
+        title: "Lỗi!",
+        text: `Thêm sự kiện không thành công!.`,
+        icon: "error",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -206,63 +255,124 @@ const CreateEvent = () => {
     navigate(`/manage/event/${fakeEventId}/tickets`);
   };
   const { eventId } = useParams();
-  const [haveTicket, setHaveTicket] = useState(true);
+  const [haveTicket, setHaveTicket] = useState(false);
   const [isReady, setIsReady] = useState(false);
   useEffect(() => {
-    setIsLoading(true);
-    getEventInfoById(eventId, token)
-      .then((data) => {
-        console.log("tui ne", data);
-        if (!data) {
+    if (eventId) {
+      setIsLoading(true);
+      getEventInfoById(eventId)
+        .then((data) => {
+          console.log("tui ne", data);
+          if (!data) {
+            setIsReady(false);
+            return;
+          }
+
+          const fetchedData = {
+            name: data.name,
+            summary: data.summary,
+            country: data.eventLocation.country,
+            city: data.eventLocation.city,
+            address: data.eventLocation.address,
+            postalCode: data.eventLocation.postalCode,
+            description: data.description,
+            faqs: data.faqs,
+          };
+
+          if (data.imageUrl) {
+            setImageUpload(data.imageUrl);
+          }
+
+          if (data.eventType === "SINGLE") {
+            // console.log(data.schedule.scheduleDate)
+            setEventType("singleEvent");
+            fetchedData.eventDate = data.schedules[0].scheduleDate;
+            fetchedData.startTime = data.schedules[0].startTime;
+            fetchedData.endTime = data.schedules[0].endTime;
+          } else if (data.eventType === "RECURRING") {
+            setEventType("recurringEvent");
+          }
+
+          // Đổ dữ liệu vào form
+          Object.entries(fetchedData).forEach(([key, value]) => {
+            setValue(key, value);
+          });
+
+          setIsReady(true);
+        })
+        .catch((err) => {
+          console.log("getEventInfoById", err);
           setIsReady(false);
-          return;
-        }
-
-        const fetchedData = {
-          name: data.name,
-          summary: data.summary,
-          country: data.eventLocation.country,
-          city: data.eventLocation.city,
-          address: data.eventLocation.address,
-          postalCode: data.eventLocation.postalCode,
-          description: data.description,
-          faqs: data.faqs,
-        };
-
-        if (data.eventType === "SINGLE") {
-          // console.log(data.schedule.scheduleDate)
-          setEventType("singleEvent");
-          fetchedData.eventDate = data.schedules[0].scheduleDate;
-          fetchedData.startTime = data.schedules[0].startTime;
-          fetchedData.endTime = data.schedules[0].endTime;
-        } else if (data.eventType === "RECURRING") {
-          setEventType("recurringEvent");
-        }
-
-        // Đổ dữ liệu vào form
-        Object.entries(fetchedData).forEach(([key, value]) => {
-          setValue(key, value);
+        })
+        .finally(() => {
+          setIsLoading(false);
         });
+    }
+  }, [eventId, setValue, setEventType]);
 
-        setIsReady(true);
-      })
-      .catch((err) => {
-        console.log("getEventInfoById", err);
-        setIsReady(false);
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
-  }, [eventId, setValue, setEventType, token]);
-
-  if (!isReady) {
-    return null; // Nếu không có eventId hợp lệ (không phải 123), không render form
+  if (!isReady && eventId) {
+    return null;
   }
+
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setFileUpload(event.target.files[0]);
+      setFileNameImage(file.name);
+      setImageUpload(URL.createObjectURL(file));
+    }
+  };
+
+  const handleDelete = () => {
+    setFileUpload(null);
+    setFileNameImage("Không có file được chọn");
+    setImageUpload(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  const handleDivClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
 
   return (
     <div className="flex min-h-screen px-25">
       <div className="">
+        <div
+          className="border-main flex h-auto min-h-[300px] w-full cursor-pointer flex-col items-center justify-center rounded-lg border-2"
+          onClick={handleDivClick}
+        >
+          <input
+            type="file"
+            accept="image/*"
+            className="input-image"
+            name="file"
+            hidden
+            ref={fileInputRef}
+            onChange={handleFileChange}
+          />
+
+          {imageUpload ? (
+            <img
+              src={imageUpload}
+              className="h-[300px] w-full rounded-lg object-cover"
+              alt=""
+            />
+          ) : (
+            <>
+              <MdCloudUpload className="text-main" size={100} />
+              <p>Chọn file để tải ảnh lên</p>
+            </>
+          )}
+        </div>
+        <section className="mt-2 mb-4 flex w-100">
+          <MdDelete className="text-main" size={25} onClick={handleDelete} />
+        </section>
         {/* Title section */}
+
         <div
           data-field="title"
           tabIndex={0}
@@ -279,7 +389,7 @@ const CreateEvent = () => {
           }}
         >
           <div className="flex items-center justify-between">
-            <h2 className="font-main text-[1.313rem] font-bold">Event Title</h2>
+            <h2 className="font-main text-[1.313rem] font-bold">Tên sự kiện</h2>
             <StatusIcon
               isExpanded={isExpanded.title}
               errors={errors}
@@ -294,8 +404,8 @@ const CreateEvent = () => {
               .subFields.some((f) => !getValues(f)) ||
               isExpanded.title) && (
               <p className="mb-2 text-sm text-gray-500">
-                Provide a clear and descriptive title that explains the essence
-                of your event.
+                Hãy cung cấp một tiêu đề rõ ràng và tóm tắt ngắn gọn về nội dung
+                sự kiện của bạn.
               </p>
             )}
 
@@ -308,7 +418,7 @@ const CreateEvent = () => {
                     required: "Name is required",
                   })}
                   className={`mb-2 w-full rounded-lg border border-gray-500 px-4 py-2 outline-none ${errors.name ? "border-2 border-red-500" : "focus:ring-main focus:border-none focus:ring-2"} `}
-                  placeholder="Name"
+                  placeholder="Tên sự kiện"
                   onBlur={async () => {
                     await trigger("name");
                   }}
@@ -332,7 +442,7 @@ const CreateEvent = () => {
                     required: "Summary is required",
                   })}
                   className={`mb-2 w-full rounded-lg border border-gray-500 px-4 py-2 outline-none ${errors.summary ? "border-2 border-red-500" : "focus:ring-main focus:border-none focus:ring-2"} `}
-                  placeholder="Sumarry"
+                  placeholder="Tóm tắt sơ lược"
                   onBlur={async () => {
                     await trigger("summary");
                   }}
@@ -379,7 +489,7 @@ const CreateEvent = () => {
           }}
         >
           <div className="flex items-center justify-between">
-            <h2 className="font-main text-[1.313rem] font-bold">Location</h2>
+            <h2 className="font-main text-[1.313rem] font-bold">Địa điểm</h2>
             <StatusIcon
               isExpanded={isExpanded.location}
               errors={errors}
@@ -393,8 +503,8 @@ const CreateEvent = () => {
             .subFields.some((f) => !getValues(f)) ||
             isExpanded.location) && (
             <p className="mt-4 mb-2 text-sm text-gray-500">
-              Please provide a clear and detailed description of where your
-              event will take place to help attendees easily find it.
+              Hãy cung cấp một mô tả rõ ràng và chi tiết về địa điểm tổ chức sự
+              kiện của bạn để giúp người tham gia dễ dàng tìm thấy.
             </p>
           )}
 
@@ -407,7 +517,7 @@ const CreateEvent = () => {
                   required: "Country is required",
                 })}
                 className={`mb-2 w-full rounded-lg border border-gray-500 px-4 py-2 outline-none ${errors.country ? "border-2 border-red-500" : "focus:ring-main focus:border-none focus:ring-2"} `}
-                placeholder="Country"
+                placeholder="Đất nước"
                 onBlur={async () => {
                   await trigger("country");
                 }}
@@ -433,7 +543,7 @@ const CreateEvent = () => {
                       required: "City is required",
                     })}
                     className={`mb-2 w-full rounded-lg border border-gray-500 px-4 py-2 outline-none ${errors.city ? "border-2 border-red-500" : "focus:ring-main focus:border-none focus:ring-2"}`}
-                    placeholder="City"
+                    placeholder="Thành phố"
                     onBlur={async () => {
                       await trigger("city");
                     }}
@@ -455,7 +565,7 @@ const CreateEvent = () => {
                       required: "Address is required",
                     })}
                     className={`mb-2 w-full rounded-lg border border-gray-500 px-4 py-2 outline-none ${errors.address ? "border-2 border-red-500" : "focus:ring-main focus:border-none focus:ring-2"}`}
-                    placeholder="Address"
+                    placeholder="Địa chỉ"
                     onBlur={async () => {
                       await trigger("address");
                     }}
@@ -481,7 +591,7 @@ const CreateEvent = () => {
                       },
                     })}
                     className={`mb-2 w-full rounded-lg border border-gray-500 px-4 py-2 outline-none ${errors.postalCode ? "border-2 border-red-500" : "focus:ring-main focus:border-none focus:ring-2"}`}
-                    placeholder="postal code"
+                    placeholder="Mã bưu chính"
                     onBlur={async () => {
                       await trigger("postalCode");
                     }}
@@ -537,7 +647,7 @@ const CreateEvent = () => {
         >
           <div className="flex items-center justify-between">
             <h2 className="font-main text-[1.313rem] font-bold">
-              Date and time
+              Ngày và giờ sự kiện
             </h2>
             {eventType === "recurringEvent" && !isExpanded.datetime ? (
               <StatusIcon
@@ -562,16 +672,15 @@ const CreateEvent = () => {
             isExpanded.datetime) &&
             !(eventType === "recurringEvent" && !isExpanded.datetime) && (
               <p className="mt-4 mb-3 text-sm text-gray-500">
-                Choose the event type and provide a detailed description of the
-                timing to ensure attendees can easily follow and participate in
-                the event.
+                Chọn loại sự kiện và cung cấp mô tả chi tiết về thời gian để đảm
+                bảo người tham gia có thể dễ dàng theo dõi và tham gia.
               </p>
             )}
 
           {isExpanded.datetime && (
             <div className="flex flex-col">
               <h3 className="mb-3 text-[1.125rem] font-semibold">
-                Type of event
+                Chọn loại sự kiện
               </h3>
               <div className="radio-input">
                 {/* Single Event */}
@@ -595,9 +704,9 @@ const CreateEvent = () => {
                       className={`text-main-bold`}
                     />
                     <div className="flex flex-col">
-                      <span className="text-gray-900">Single Event</span>
+                      <span className="text-gray-900">Sự kiện một lần</span>
                       <span className="text-xs text-gray-500">
-                        For events that happen once
+                        Dành cho các sự kiện chỉ diễn ra một lần.
                       </span>
                     </div>
                   </label>
@@ -626,15 +735,14 @@ const CreateEvent = () => {
                   >
                     {haveTicket && eventType === "singleEvent" && (
                       <div className="absolute -top-12 left-1/2 z-10 hidden w-full max-w-full -translate-x-1/2 transform rounded bg-black px-2 py-1 text-xs break-words whitespace-normal text-white shadow-md group-hover:block">
-                        Đã có vé ưenr ưenro bưeu rbweb rưhe oihweoi rhwei hrwieh
-                        riowehr ưerg i
+                        Đã có vé
                       </div>
                     )}
                     <FaRegCalendarAlt size={25} className="text-main-bold" />
                     <div className="flex flex-col">
-                      <span className="text-gray-900">Recurring Event</span>
+                      <span className="text-gray-900">Sự kiện định kỳ</span>
                       <span className="text-xs text-gray-500">
-                        For timed entry and multiple days
+                        Dành cho sự kiện có thời gian diễn ra linh hoạt.
                       </span>
                     </div>
                   </label>
@@ -663,7 +771,7 @@ const CreateEvent = () => {
                         },
                       })}
                       className={`mb-2 w-full rounded-lg border border-gray-500 px-4 py-2 outline-none ${errors.eventDate ? "border-2 border-red-500" : "focus:ring-main focus:border-none focus:ring-2"}`}
-                      placeholder="Date"
+                      placeholder="Ngày"
                       onBlur={async () => {
                         await trigger("eventDate");
                       }}
@@ -685,7 +793,7 @@ const CreateEvent = () => {
                         required: "Start time is required",
                       })}
                       className={`mb-2 w-full rounded-lg border border-gray-500 px-4 py-2 outline-none ${errors.startTime ? "border-2 border-red-500" : "focus:ring-main focus:border-none focus:ring-2"}`}
-                      placeholder="Start time"
+                      placeholder="Giờ bắt đầu"
                       onBlur={async () => {
                         await trigger("startTime");
                       }}
@@ -713,7 +821,7 @@ const CreateEvent = () => {
                         },
                       })}
                       className={`mb-2 w-full rounded-lg border border-gray-500 px-4 py-2 outline-none ${errors.endTime ? "border-2 border-red-500" : "focus:ring-main focus:border-none focus:ring-2"}`}
-                      placeholder="End time"
+                      placeholder="Giờ kết thúc"
                       onBlur={async () => {
                         await trigger("endTime");
                       }}
@@ -756,14 +864,15 @@ const CreateEvent = () => {
                 <div>
                   <div className="mb-2 flex items-center space-x-3">
                     <FaCalendarCheck size={18} className="text-main" />
-                    <h4 className="font-semibold">You choose multiple dates</h4>
+                    <h4 className="font-semibold">
+                      Bạn đã chọn sự kiện định kì
+                    </h4>
                   </div>
                   <div className="bg-main-light inline-block rounded-xl p-1 px-4 text-sm text-gray-900">
                     <div className="flex items-center space-x-3">
                       <IoInformationCircleOutline size={18} />
                       <p>
-                        You will need to add the eventDate and time later for
-                        this recurring event.
+                        Bạn sẽ thêm ngày và giờ của sự kiện ở bước tiếp theo.
                       </p>
                     </div>
                   </div>
@@ -788,10 +897,8 @@ const CreateEvent = () => {
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <h3 className="font-main text-[1.313rem] font-bold">
-                Question and answer
-              </h3>
-              <h5 className="text-sm text-gray-600">(Optional)</h5>
+              <h3 className="font-main text-[1.313rem] font-bold">Q&A</h3>
+              <h5 className="text-sm text-gray-600">(Không bắt buộc)</h5>
             </div>
             {!isExpanded.faqs &&
               getValues("faqs")?.length > 0 &&
@@ -811,9 +918,9 @@ const CreateEvent = () => {
             !getValues("faqs")?.length ||
             !getValues("faqs")?.some((faq) => faq.question || faq.answer)) && (
             <p className="mt-4 mb-2 text-sm text-gray-500">
-              FAQ: Address common questions attendees may have regarding the
-              event, including details about accessibility, facilities, and
-              more.
+              Q&A: Trả lời các câu hỏi thường gặp mà người tham gia có thể muốn
+              biết về sự kiện (ví dụ: về độ tuổi, chi tiết địa điểm sự kiện, chi
+              tiết về người dẫn sự kiện...).
             </p>
           )}
 
@@ -832,7 +939,7 @@ const CreateEvent = () => {
                         ? "border-2 border-red-500"
                         : "focus:ring-main border-gray-400 focus:border-transparent focus:ring-2"
                     }`}
-                    placeholder={`Question ${index + 1}`}
+                    placeholder={`Câu hỏi ${index + 1}`}
                     onBlur={async () => {
                       await trigger(`faqs.${index}.question`);
                     }}
@@ -853,7 +960,7 @@ const CreateEvent = () => {
                         ? "border-2 border-red-500"
                         : "focus:ring-main border-gray-400 focus:border-transparent focus:ring-2"
                     }`}
-                    placeholder={`Answer ${index + 1}`}
+                    placeholder={`Câu trả lời ${index + 1}`}
                     onBlur={async () => {
                       await trigger(`faqs.${index}.answer`);
                     }}
@@ -883,7 +990,7 @@ const CreateEvent = () => {
               onClick={() => append({ question: "", answer: "" })}
               className="mt-4 rounded-md border border-dashed border-blue-500 px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50"
             >
-              + Add question
+              + Thêm câu hỏi
             </button>
           )}
           {!errors.faqs &&
@@ -921,9 +1028,9 @@ const CreateEvent = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <h2 className="font-main text-[1.313rem] font-bold">
-                Event description
+                Mô tả sự kiện
               </h2>
-              <h5 className="text-sm text-gray-600">(Optional)</h5>
+              <h5 className="text-sm text-gray-600">(Không bắt buộc)</h5>
             </div>
             {!isExpanded.description &&
               getValues("description")
@@ -939,8 +1046,9 @@ const CreateEvent = () => {
           </div>
 
           <p className="mt-4 mb-2 text-sm text-gray-500">
-            Provide a clear and engaging description of your event to help
-            attendees know what to expect. (Optional, but recommended)
+            Hãy cung cấp mô tả rõ ràng và hấp dẫn về sự kiện của bạn để giúp
+            người tham gia biết những gì họ có thể mong đợi. (Không bắt buộc,
+            nhưng khuyến khích)
           </p>
 
           <div className="mt-4">
@@ -966,12 +1074,12 @@ const CreateEvent = () => {
             )}
           </div>
         </div>
-        <button
+        {/* <button
           onClick={handleCreateFakeEvent}
           className="rounded bg-blue-600 px-4 py-2 text-white hover:bg-blue-700"
         >
           Tạo sự kiện & sang bước 2
-        </button>
+        </button> */}
         {/* <div className="flex justify-end">
           <button
             type="button"
@@ -990,9 +1098,8 @@ const CreateEvent = () => {
             {!eventId ? "Thêm mới" : "Chỉnh sửa"}
           </button>
         </div>
-
-        <Loading isLoading={isLoading} />
       </div>
+      <Loading isLoading={isLoading} />
     </div>
   );
 };

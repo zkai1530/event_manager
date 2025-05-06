@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { IoTicketOutline } from "react-icons/io5";
 import { createDiscount, updateDiscount } from "services/user/discountService";
 import { getEventInfoById } from "services/user/eventService";
+import Swal from "sweetalert2";
 // import {
 //   createPromotion,
 //   updatePromotion,
@@ -35,26 +36,48 @@ const CreatePromotion = () => {
   const [ticketIds, setTicketIds] = useState([]);
 
   const handleOptionChange = (e) => {
-    setSelectedOption(e.target.value);
+    const value = e.target.value;
+    setSelectedOption(value);
+
+    const currentPromotion = promotions.find(
+      (p) => p.discountId === getValues("discountId"),
+    );
+
+    if (value === "all") {
+      const allTicketIds = currentPromotion
+        ? (currentPromotion.tickets || []).map((ticket) => ticket.id)
+        : (allTickets || []).map((ticket) => ticket.id);
+      setTicketIds(allTicketIds);
+      console.log("Reset ticketIds khi chọn all:", allTicketIds);
+    } else if (value === "certain") {
+      // Nếu chỉnh sửa, giữ ticketIds cũ; nếu tạo mới, reset về []
+      const initialTicketIds = currentPromotion
+        ? currentPromotion.ticketIds || []
+        : [];
+      setTicketIds(initialTicketIds);
+      console.log("Reset ticketIds khi chọn certain:", initialTicketIds);
+    }
   };
 
   const onSubmit = async (data) => {
     const currentPromotion = promotions.find(
       (promotion) => promotion.discountId === data.discountId,
     );
-    // Validation: Nếu chọn "Chỉ một vài vé" mà ticketIds rỗng
+    // Nếu chọn "Chỉ một vài vé" mà ticketIds rỗng
     if (selectedOption === "certain" && ticketIds.length === 0) {
       alert("Vui lòng chọn ít nhất một vé khi áp dụng cho một vài vé");
       return;
     }
+    const allTicketIds =
+      selectedOption === "all"
+        ? currentPromotion
+          ? (currentPromotion.tickets || []).map((ticket) => ticket.id)
+          : (allTickets || []).map((ticket) => ticket.id)
+        : ticketIds;
+
     const requestData = {
       ...data,
-      ticketIds:
-        selectedOption === "all" && currentPromotion
-          ? currentPromotion.tickets.map((ticket) => ticket.id) // Gán tất cả vé
-          : selectedOption === "all" && !currentPromotion
-            ? promotions[0]?.tickets.map((ticket) => ticket.id) || [] // Tạo mới: lấy vé từ promotion đầu tiên
-            : ticketIds,
+      ticketIds: allTicketIds,
     };
 
     console.log("Dữ liệu gửi đi:", requestData);
@@ -62,12 +85,43 @@ const CreatePromotion = () => {
     try {
       setIsLoading(true);
       if (requestData.discountId) {
-        await updateDiscount(requestData.discountId, requestData, token);
+        const data = await updateDiscount(requestData.discountId, requestData, token);
+        if (data.message === "Update promotion was successfully!") {
+          Swal.fire({
+            title: "Cập nhật khuyến mãi thành công!",
+            text: `Khuyến mãi của bạn đã được cập nhật!.`,
+            icon: "success",
+          });
+        } else {
+          Swal.fire({
+            title: "Lỗi!",
+            text: `Cập nhật khuyến mãi không thành công!.`,
+            icon: "error",
+          });
+        }
       } else {
-        await createDiscount(requestData, token);
+        const data = await createDiscount(requestData, token);
+        if (data.message === "Create promotion was successfully!") {
+          Swal.fire({
+            title: "Thêm khuyến mãi thành công!",
+            text: `Khuyến mãi của bạn đã được thêm!.`,
+            icon: "success",
+          });
+        } else {
+          Swal.fire({
+            title: "Lỗi!",
+            text: `Thêm khuyến mãi không thành công!.`,
+            icon: "error",
+          });
+        }
       }
     } catch (error) {
       console.error("Create/Update promotion error", error);
+      Swal.fire({
+        title: "Lỗi!",
+        text: `Thêm khuyến mãi không thành công!.`,
+        icon: "error",
+      });
     } finally {
       setIsLoading(false);
     }
@@ -76,6 +130,7 @@ const CreatePromotion = () => {
   const [isReady, setIsReady] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [promotions, setPromotions] = useState([]);
+  const [allTickets, setAllTickets] = useState([]); // tickets cho lần đầu tạo khuyến mãi
   const [eventType, setEventType] = useState("RECURRING");
   const [promotionType, setPromotionType] = useState("promotion");
   const [maxUsesOption, setMaxUsesOption] = useState("unlimited");
@@ -120,7 +175,7 @@ const CreatePromotion = () => {
 
   useEffect(() => {
     setIsLoading(true);
-    getEventInfoById(eventId, token)
+    getEventInfoById(eventId)
       .then((data) => {
         if (!data.schedules || data.schedules.length === 0) {
           setIsReady(false);
@@ -139,6 +194,7 @@ const CreatePromotion = () => {
               ]),
           ).values(),
         ];
+        setAllTickets(allTickets);
 
         // Gộp promotions và gán ticketIds
         const mergedPromotions = data.schedules
@@ -186,7 +242,7 @@ const CreatePromotion = () => {
       .finally(() => {
         setIsLoading(false);
       });
-  }, [eventId, setValue, setEventType, token]);
+  }, [eventId, setValue, setEventType]);
 
   // useEffect(() => {
   //   setIsLoading(true);
@@ -392,7 +448,7 @@ const CreatePromotion = () => {
             setValue("discountEnd", "");
             setTicketIds([]);
             setSelectedOption("all");
-            setPromotionType("promotion"); // Mặc định Khuyến mãi
+            setPromotionType("promotion");
             setMaxUsesOption("unlimited");
             setIsOpen(true);
           }}
@@ -469,7 +525,7 @@ const CreatePromotion = () => {
                             <div
                               className={`${promotion.promoCode ? "bg-secondary-light" : "bg-main-semilight"} inline-block rounded-xl px-2 py-1 font-semibold`}
                             >
-                              {promotion.promoCode ? "Mã giảm giá" : "Discount"}
+                              {promotion.promoCode ? "Voucher" : "Discount"}
                             </div>
                           </td>
                           <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-800">
@@ -519,7 +575,7 @@ const CreatePromotion = () => {
             : "translate-x-full"
         } flex flex-col`}
       >
-        <div className="bg-secondary flex items-center justify-between border-b border-gray-200 px-6 py-3">
+        <div className="bg-main flex items-center justify-between border-b border-gray-200 px-6 py-3">
           <h2 className="text-xl font-semibold text-white">
             Tạo khuyến mãi mới
           </h2>
@@ -562,7 +618,7 @@ const CreatePromotion = () => {
                   }}
                   className={`rounded-lg px-4 py-2 text-sm font-medium ${
                     promotionType === "promotion"
-                      ? "bg-blue-600 text-white"
+                      ? "bg-main text-white"
                       : "bg-gray-200 text-gray-600"
                   }`}
                 >
@@ -573,11 +629,11 @@ const CreatePromotion = () => {
                   onClick={() => setPromotionType("coupon")}
                   className={`rounded-lg px-4 py-2 text-sm font-medium ${
                     promotionType === "coupon"
-                      ? "bg-blue-600 text-white"
+                      ? "bg-main text-white"
                       : "bg-gray-200 text-gray-600"
                   }`}
                 >
-                  Mã giảm giá
+                  Voucher
                 </button>
               </div>
 
@@ -600,7 +656,7 @@ const CreatePromotion = () => {
                   className={`w-full rounded-lg border border-gray-500 px-4 py-2 outline-none ${
                     errors.promoCode
                       ? "border-2 border-red-500"
-                      : "focus:border-none focus:ring-2 focus:ring-blue-600"
+                      : "focus:ring-main focus:border-none focus:ring-2"
                   } `}
                 />
                 {errors.promoCode && (
@@ -627,7 +683,7 @@ const CreatePromotion = () => {
                 className={`w-full rounded-lg border border-gray-500 px-4 py-2 outline-none ${
                   errors.name
                     ? "border-2 border-red-500"
-                    : "focus:border-none focus:ring-2 focus:ring-blue-600"
+                    : "focus:ring-main focus:border-none focus:ring-2"
                 } `}
               />
               {errors.name && (
@@ -653,7 +709,7 @@ const CreatePromotion = () => {
                   className={`w-full rounded-lg border border-gray-500 px-4 py-2 outline-none ${
                     errors.discountType
                       ? "border-2 border-red-500"
-                      : "focus:border-none focus:ring-2 focus:ring-blue-600"
+                      : "focus:ring-main focus:border-none focus:ring-2"
                   } `}
                 >
                   <option value="PERCENT">Phần trăm (%)</option>
@@ -685,7 +741,7 @@ const CreatePromotion = () => {
                     className={`w-full appearance-none rounded-lg border border-gray-500 px-4 py-2 pr-10 outline-none ${
                       errors.discountValue
                         ? "border-2 border-red-500"
-                        : "focus:border-none focus:ring-2 focus:ring-blue-600"
+                        : "focus:ring-main focus:border-none focus:ring-2"
                     } `}
                   />
                   <span className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-500">
@@ -757,7 +813,7 @@ const CreatePromotion = () => {
                     className={`w-full appearance-none rounded-lg border border-gray-500 px-4 py-2 outline-none ${
                       errors.maxUses
                         ? "border-2 border-red-500"
-                        : "focus:border-none focus:ring-2 focus:ring-blue-600"
+                        : "focus:ring-main focus:border-none focus:ring-2"
                     } `}
                   />
                   {errors.maxUses && (
@@ -815,12 +871,11 @@ const CreatePromotion = () => {
               {selectedOption === "certain" && ticketIds.length > 0 && (
                 <div className="mt-2">
                   {ticketIds.map((ticketId) => {
-                    // Khi tạo mới, lấy vé từ danh sách tickets chung
                     const ticket = getValues("discountId")
                       ? promotions
                           .find((p) => p.discountId === getValues("discountId"))
                           ?.tickets.find((t) => t.id === ticketId)
-                      : promotions[0]?.tickets.find((t) => t.id === ticketId);
+                      : allTickets.find((t) => t.id === ticketId);
                     if (!ticket) return null;
                     return (
                       <div
@@ -874,13 +929,7 @@ const CreatePromotion = () => {
                       ? promotions.find(
                           (p) => p.discountId === getValues("discountId"),
                         )?.tickets || []
-                      : [
-                          ...new Map(
-                            promotions
-                              .flatMap((promotion) => promotion.tickets)
-                              .map((t) => [t.id, t]),
-                          ).values(),
-                        ]
+                      : allTickets || []
                   }
                   initialSelectedIds={ticketIds}
                 />
@@ -916,7 +965,7 @@ const CreatePromotion = () => {
                     );
                     return localTime.toISOString().slice(0, 16);
                   })()}
-                  className={`w-full rounded-lg border border-gray-500 px-3 py-2 text-sm outline-none ${errors.discountStart ? "border-2 border-red-500" : "focus:border-none focus:ring-2 focus:ring-blue-600"} `}
+                  className={`w-full rounded-lg border border-gray-500 px-3 py-2 text-sm outline-none ${errors.discountStart ? "border-2 border-red-500" : "focus:ring-main focus:border-none focus:ring-2"} `}
                 />
                 {errors.discountStart && (
                   <p className="mt-1 text-sm text-red-500">
@@ -945,7 +994,7 @@ const CreatePromotion = () => {
                       );
                     },
                   })}
-                  className={`w-full rounded-lg border border-gray-500 px-3 py-2 text-sm outline-none ${errors.discountEnd ? "border-2 border-red-500" : "focus:border-none focus:ring-2 focus:ring-blue-600"} `}
+                  className={`w-full rounded-lg border border-gray-500 px-3 py-2 text-sm outline-none ${errors.discountEnd ? "border-2 border-red-500" : "focus:ring-main focus:border-none focus:ring-2"} `}
                 />
                 {errors.discountEnd && (
                   <p className="mt-1 text-sm text-red-500">
@@ -959,7 +1008,7 @@ const CreatePromotion = () => {
 
             <button
               onClick={handleSubmit(onSubmit)}
-              className="mb-4 rounded-lg bg-blue-600 py-2 font-medium text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-400"
+              className="bg-main hover:bg-main-bold mt-4 mb-1 rounded-lg py-2 font-medium text-white transition-colors disabled:cursor-not-allowed disabled:bg-gray-400"
             >
               Lưu
             </button>

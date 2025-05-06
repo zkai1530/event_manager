@@ -12,9 +12,9 @@ const OrganizerHeader = () => {
   };
 
   const dropdownItems = [
-    { id: 1, label: "Manage my events", link: "/organizations/events" },
-    { id: 2, label: "Settings", link: "/settings" },
-    { id: 3, label: "Logout", link: "/logout" },
+    { id: 1, label: "Khám phá sự kiện", link: "/" },
+    { id: 2, label: "Tài khoản", link: "/settings" },
+    { id: 3, label: "Đăng xuất", link: "/logout" },
   ];
 
   return (
@@ -35,24 +35,24 @@ const OrganizerHeader = () => {
           {/* Create Event Button */}
           <button className="bg-secondary hover:bg-emphasis flex cursor-pointer items-center space-x-2 rounded-full px-2 py-2 text-white lg:px-4">
             <FaPlus />
-            <span className="text-sm md:text-base">Create Event</span>
+            <span className="text-sm md:text-base">Tạo sự kiện</span>
           </button>
 
           {/* Likes Link */}
-          <a href="#" className="hover:text-primary flex flex-col items-center">
+          {/* <a href="#" className="hover:text-primary flex flex-col items-center">
             <FaRegHeart size={18} className="text-gray-800" />
             <span className="text-[10px] font-semibold text-gray-500 sm:text-xs">
               Likes
             </span>
-          </a>
+          </a> */}
 
           {/* Notifications Link */}
-          <a href="#" className="hover:text-primary flex flex-col items-center">
+          {/* <a href="#" className="hover:text-primary flex flex-col items-center">
             <GrNotification size={18} className="text-gray-800" />
             <span className="text-[10px] font-semibold text-gray-500 sm:text-xs">
               Notification
             </span>
-          </a>
+          </a> */}
 
           {/* User Info */}
           <div

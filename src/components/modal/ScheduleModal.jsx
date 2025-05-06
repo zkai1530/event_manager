@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { IoCloseSharp } from "react-icons/io5";
 
@@ -20,13 +20,31 @@ const ScheduleModal = ({
         : false,
     })),
   );
+  const [searchDate, setSearchDate] = useState("");
+  const [filteredScheduleList, setFilteredScheduleList] =
+    useState(scheduleList);
+
+  useEffect(() => {
+    if (searchDate.trim() === "") {
+      setFilteredScheduleList(scheduleList); 
+    } else {
+      const filtered = scheduleList.filter(
+        (schedule) => schedule.date === searchDate, 
+      );
+      setFilteredScheduleList(filtered);
+    }
+  }, [searchDate, scheduleList]);
 
   const handleSelectAll = () => {
     const newSelectAll = !selectAll;
     setSelectAll(newSelectAll);
-    setScheduleList(
-      scheduleList.map((schedule) => ({ ...schedule, checked: newSelectAll })),
-    );
+    const updatedScheduleList = scheduleList.map((schedule) => ({
+      ...schedule,
+      checked: filteredScheduleList.some((s) => s.id === schedule.id)
+        ? newSelectAll
+        : schedule.checked,
+    }));
+    setScheduleList(updatedScheduleList);
   };
 
   const handleScheduleCheck = (id) => {
@@ -36,7 +54,11 @@ const ScheduleModal = ({
         : schedule,
     );
     setScheduleList(updatedSchedules);
-    setSelectAll(updatedSchedules.every((s) => s.checked));
+    setSelectAll(
+      updatedSchedules.every(
+        (s) => !filteredScheduleList.some((fs) => fs.id === s.id) || s.checked,
+      ),
+    );
   };
 
   const handleDone = () => {
@@ -60,6 +82,23 @@ const ScheduleModal = ({
             />
           </button>
         </div>
+        {/* Search */}
+        <div className="relative mb-4">
+          <input
+            type="date"
+            value={searchDate}
+            onChange={(e) => setSearchDate(e.target.value)}
+            className="focus:ring-main w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:outline-none"
+          />
+          {/* {searchDate && (
+            <button
+              onClick={() => setSearchDate("")} 
+              className="absolute top-1/2 right-2 -translate-y-1/2 text-gray-500 hover:text-red-500"
+            >
+              <IoCloseSharp size={16} />
+            </button>
+          )} */}
+        </div>
 
         <div className="flex items-center justify-between border-b border-gray-200 py-2 font-semibold">
           <div className="flex w-[40%] items-center">
@@ -75,27 +114,29 @@ const ScheduleModal = ({
           <div className="w-[30%]">Giờ bắt đầu</div>
           <div className="w-[30%]">Giờ kết thúc</div>
         </div>
-
-        {scheduleList.map((schedule) => (
-          <div
-            key={schedule.id}
-            className="flex items-center justify-between border-b border-gray-200 py-2"
-          >
-            <div className="flex w-[40%] items-center">
-              <input
-                type="checkbox"
-                id={`schedule-${schedule.id}`}
-                className="mr-2"
-                checked={schedule.checked}
-                onChange={() => handleScheduleCheck(schedule.id)}
-              />
-              <label htmlFor={`schedule-${schedule.id}`}>{schedule.date}</label>
+        <div className="max-h-[300px] overflow-y-auto">
+          {filteredScheduleList.map((schedule) => (
+            <div
+              key={schedule.id}
+              className="flex items-center justify-between border-b border-gray-200 py-2"
+            >
+              <div className="flex w-[40%] items-center">
+                <input
+                  type="checkbox"
+                  id={`schedule-${schedule.id}`}
+                  className="mr-2"
+                  checked={schedule.checked}
+                  onChange={() => handleScheduleCheck(schedule.id)}
+                />
+                <label htmlFor={`schedule-${schedule.id}`}>
+                  {schedule.date}
+                </label>
+              </div>
+              <div className="w-[30%]">{schedule.startTime}</div>
+              <div className="w-[30%]">{schedule.endTime}</div>
             </div>
-            <div className="w-[30%]">{schedule.startTime}</div>
-            <div className="w-[30%]">{schedule.endTime}</div>
-          </div>
-        ))}
-
+          ))}
+        </div>
         <div className="mt-6 flex justify-end">
           <button
             onClick={handleDone}

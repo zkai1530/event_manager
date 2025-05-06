@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { IoCloseSharp } from "react-icons/io5";
+import { FormatPrice } from "utils/formatPrice";
 
 const TicketModal = ({
   onTicketsSelected,
@@ -87,7 +88,7 @@ const TicketModal = ({
               />
               <label htmlFor={`ticket-${ticket.id}`}>{ticket.name}</label>
             </div>
-            <div className="w-[40%]">${ticket.price}</div>
+            <div className="w-[40%]">{FormatPrice(ticket.price)}</div>
           </div>
         ))}
 

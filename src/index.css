@@ -3,6 +3,7 @@
 @theme {
   --font-main: "Noto Sans", sans-serif;
   --font-logo: "Balsamiq Sans", sans-serif;
+  --font-inter: "Inter", sans-serif;
   /* --color-main: #00ACC1;
   --color-secondary: #B2EBF2;
   --color-emphasis: #FF7043; */
@@ -17,9 +18,9 @@
   /* --breakpoint-abc: 300px; width >= 300px */
 }
 
-/* body  {
-  font-family: var(--font-main);
-} */
+body  {
+  font-family: var(--font-inter);
+}
 
 /* h1 {
   font-size: theme(fontSize.4xl);
