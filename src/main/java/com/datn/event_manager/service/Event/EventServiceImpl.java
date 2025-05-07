@@ -4,12 +4,14 @@ import java.io.IOException;
 import java.text.Normalizer;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -333,22 +335,71 @@ public class EventServiceImpl implements EventService {
         return eventMapper.toEventResponse(event);
     }
 
+    // @Override
+    // public List<EventByUserResponse> getEventsByUser() {
+    // User user = authenticationService.getUserFromToken();
+    // List<Event> events = eventRepository.findAllByUser(user);
+
+    // if (events == null || events.isEmpty()) {
+    // return Collections.emptyList();
+    // }
+
+    // List<EventByUserResponse> responseList =
+    // eventMapper.toEventByUserResponseList(events);
+    // for (EventByUserResponse response : responseList) {
+    // Integer totalTicketsSold =
+    // eventRepository.getTotalTicketsSold(response.getEventId());
+    // response.setTotalTicketsSold(totalTicketsSold);
+    // }
+
+    // return responseList;
+    // }
+
     @Override
-    public List<EventByUserResponse> getEventsByUser() {
+    public Page<EventByUserResponse> getEventsByUser(String timeFilter, Pageable pageable) {
         User user = authenticationService.getUserFromToken();
-        List<Event> events = eventRepository.findAllByUser(user);
 
-        if (events == null || events.isEmpty()) {
-            return Collections.emptyList();
-        }
+        final String newTimeFilter = (timeFilter == null || timeFilter.trim().isEmpty()) ? "all"
+                : timeFilter.toLowerCase();
+        LocalDateTime now = LocalDateTime.now();
 
-        List<EventByUserResponse> responseList = eventMapper.toEventByUserResponseList(events);
-        for (EventByUserResponse response : responseList) {
-            Integer totalTicketsSold = eventRepository.getTotalTicketsSold(response.getEventId());
-            response.setTotalTicketsSold(totalTicketsSold);
-        }
+        Page<Event> events = eventRepository.findAllPagedByUser(user, pageable);
 
-        return responseList;
+        // Lọc dựa trên timeFilter và recurring schedules
+        List<Event> filteredEvents = events.getContent().stream()
+                .filter(event -> {
+                    if (event.getSchedules() == null || event.getSchedules().isEmpty()) {
+                        return "upcoming".equals(newTimeFilter) || "all".equals(newTimeFilter);
+                    }
+                    List<LocalDateTime> eventTimes = event.getSchedules().stream()
+                            .filter(s -> s.getScheduleDate() != null && s.getStartTime() != null)
+                            .map(s -> s.getScheduleDate().atTime(s.getStartTime()))
+                            .collect(Collectors.toList());
+                    if (eventTimes.isEmpty()) {
+                        return "upcoming".equals(newTimeFilter) || "all".equals(newTimeFilter);
+                    }
+
+                    if ("upcoming".equals(newTimeFilter)) {
+                        return eventTimes.stream().anyMatch(time -> time.isAfter(now));
+                    } else if ("past".equals(newTimeFilter)) {
+                        return eventTimes.stream().allMatch(time -> time.isBefore(now));
+                    } else { // all
+                        return true;
+                    }
+                })
+                .collect(Collectors.toList());
+
+        // event when filtered
+        List<EventByUserResponse> responses = filteredEvents.stream()
+                .map(event -> {
+                    int totalTicketsSold = eventRepository.getTotalTicketsSold(event.getEventId());
+                    EventByUserResponse response = eventMapper.toEventByUserResponse(event);
+                    response.setTotalTicketsSold(totalTicketsSold);
+                    return response;
+                })
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(responses, pageable, events.getTotalElements());
     }
 
     @Override

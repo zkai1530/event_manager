@@ -55,7 +55,7 @@ public interface OrderMapper {
     @Named("mapToOrderTicketResponse1")
     @Mapping(target = "ticketName", source = "ticket.name")
     @Mapping(target = "quantity", source = "quantity")
-    @Mapping(target = "priceAtPurchase", source = "priceAtPurchase")
+    @Mapping(target = "priceAtPurchase", source = "order.totalPrice")
     OrderTicketResponse1 mapToOrderTicketResponse1(OrderTicket orderTicket);
 
     @Named("mapOrderTicketsToOrderTicketResponse1")

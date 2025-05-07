@@ -3,6 +3,7 @@ package com.datn.event_manager.service.Order;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -40,6 +41,7 @@ import com.datn.event_manager.exception.ErrorCode;
 import com.datn.event_manager.mapper.MyTicketMapper;
 import com.datn.event_manager.mapper.OrderMapper;
 import com.datn.event_manager.mapper.TicketMapper;
+import com.datn.event_manager.repository.ComplaintRepository;
 import com.datn.event_manager.repository.DiscountRepository;
 import com.datn.event_manager.repository.EventScheduleRepository;
 import com.datn.event_manager.repository.OrderRepository;
@@ -72,6 +74,7 @@ public class OrderServiceImpl implements OrderService {
     TicketDiscountRepository ticketDiscountRepository;
     TicketScheduleRepository ticketScheduleRepository;
     EventScheduleRepository eventScheduleRepository;
+    ComplaintRepository complaintRepository;
     OrderMapper orderMapper;
     OrderRepository orderRepository;
     PayOSConfig payOSConfig;
@@ -94,6 +97,10 @@ public class OrderServiceImpl implements OrderService {
         for (TicketItem ticketItem : orderRequest.getTickets()) {
             Ticket ticket = ticketRepository.findById(ticketItem.getTicketId())
                     .orElseThrow(() -> new AppException(ErrorCode.TICKET_NOT_FOUND));
+
+            if (ticket.getSaleEnd().isBefore(LocalDateTime.now())) {
+                throw new AppException(ErrorCode.TICKET_NOT_AVAILABLE);
+            }
 
             TicketSchedule ticketSchedule = ticket.getTicketSchedules().stream()
                     .filter(ts -> ts.getSchedule().getScheduleId().equals(eventSchedule.getScheduleId()))
@@ -169,7 +176,7 @@ public class OrderServiceImpl implements OrderService {
             OrderTicket orderTicket = OrderTicket.builder()
                     .ticket(ticket)
                     .discount(!discounts.isEmpty() ? discounts.get(0) : null)
-                    .priceAtPurchase(ticket.getPrice().doubleValue())
+                    .priceAtPurchase(totalPrice.doubleValue())
                     .quantity(ticketItem.getQuantity())
                     .build();
 
@@ -279,25 +286,34 @@ public class OrderServiceImpl implements OrderService {
     public Page<MyTicketResponse> getMyTicketsByOrderStatus(String status, String timeFilter, Pageable pageable) {
         User user = authenticationService.getUserFromToken();
 
-        Page<Order> orders;
+        List<Order> allOrders;
         if (status.equalsIgnoreCase("ALL")) {
-            orders = orderRepository.findByUser(user, pageable);
+            allOrders = orderRepository.findAllByUser(user);
         } else {
             OrderStatus orderStatus = OrderStatus.valueOf(status.toUpperCase());
-            orders = orderRepository.findByUserAndStatus(user, orderStatus, pageable);
+            allOrders = orderRepository.findAllByUserAndStatus(user, orderStatus);
         }
 
         LocalDateTime now = LocalDateTime.now();
         boolean isUpcoming = timeFilter.equalsIgnoreCase("upcoming");
-        List<Order> filteredOrders = orders.getContent().stream()
+
+        List<Order> filteredOrders = allOrders.stream()
                 .filter(order -> {
-                    LocalDateTime eventTime = order.getSchedule().getScheduleDate()
-                            .atTime(order.getSchedule().getStartTime());
-                    return isUpcoming ? eventTime.isAfter(now) : eventTime.isBefore(now);
+                    if (order.getSchedule() == null || order.getSchedule().getScheduleDate() == null
+                            || order.getSchedule().getStartTime() == null) {
+                        return false;
+                    }
+                    try {
+                        LocalDateTime eventTime = order.getSchedule().getScheduleDate()
+                                .atTime(order.getSchedule().getStartTime());
+
+                        return isUpcoming ? eventTime.isAfter(now) : eventTime.isBefore(now);
+                    } catch (Exception e) {
+                        return false;
+                    }
                 })
                 .collect(Collectors.toList());
 
-        // Tạo Page mới từ filteredOrders
         Pageable filteredPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
         int start = (int) filteredPageable.getOffset();
         int end = Math.min((start + filteredPageable.getPageSize()), filteredOrders.size());
@@ -307,7 +323,11 @@ public class OrderServiceImpl implements OrderService {
 
         Page<Order> filteredPage = new PageImpl<>(pagedOrders, filteredPageable, filteredOrders.size());
 
-        return filteredPage.map(myTicketMapper::toMyTicketResponse);
+        return filteredPage.map(order -> {
+            MyTicketResponse response = myTicketMapper.toMyTicketResponse(order);
+            response.setComplaint(complaintRepository.existsByOrder(order));
+            return response;
+        });
     }
 
     @Override
@@ -332,7 +352,7 @@ public class OrderServiceImpl implements OrderService {
         List<Order> orders = orderResults.stream()
                 .map(result -> (Order) result[0])
                 .collect(Collectors.toList());
-        
+
         OrderResponse1 response = new OrderResponse1();
         response.setTicketSchedules(orderMapper.toTicketScheduleResponseList(ticketSchedules));
         response.setOrders(orderMapper.toOrderDetailResponseList(orders));

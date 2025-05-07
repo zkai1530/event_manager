@@ -17,6 +17,7 @@ public enum ErrorCode {
     EVENT_ALREADY_UNPUBLISHED("Event is already unpublished!", HttpStatus.BAD_REQUEST),
     TICKET_NOT_FOUND("Ticket not found!", HttpStatus.NOT_FOUND),
     TICKET_QUANTITY_EXCEEDS_AVAILABLE("Ticket quantity exceeds available!", HttpStatus.BAD_REQUEST),
+    TICKET_NOT_AVAILABLE("Ticket not available!", HttpStatus.BAD_REQUEST),
     SCHEDULE_NOT_FOUND("Schedule not found!", HttpStatus.NOT_FOUND),
     DISCOUNT_NOT_FOUND("Discount not found!", HttpStatus.NOT_FOUND),
     PAYMENT_NOT_FOUND("Payment not found!", HttpStatus.NOT_FOUND),
@@ -37,7 +38,11 @@ public enum ErrorCode {
     ALREADY_CHECKED_IN("This order already checked in!", HttpStatus.BAD_REQUEST),
     NOT_FOLLOWING("You are not following this user", HttpStatus.BAD_REQUEST),
     USER_ALREADY_HAS_BANK_ACCOUNT("User already has bank account!",HttpStatus.CONFLICT),
-    USER_HAS_NO_BANK_ACCOUNT("User has no bank account!", HttpStatus.NOT_FOUND);
+    USER_HAS_NO_BANK_ACCOUNT("User has no bank account!", HttpStatus.NOT_FOUND),
+    REASON_NOT_FOUND("Reason not found!", HttpStatus.NOT_FOUND),
+    ALREADY_COMPLAINED("You have already submitted a complaint for this order.", HttpStatus.BAD_REQUEST),
+    ALREADY_DISBURSED("This event has already been disbursed.", HttpStatus.BAD_REQUEST);
+
 
 
     ErrorCode(String message, HttpStatusCode httpStatusCode) {

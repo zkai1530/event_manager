@@ -133,6 +133,7 @@ public class ScheduleServiceImpl implements ScheduleService {
                         .scheduleDate(schedule.getScheduleDate())
                         .startTime(schedule.getStartTime())
                         .endTime(schedule.getEndTime())
+                        .isDisbursed(false)
                         .build())
                 .collect(Collectors.toList());
 

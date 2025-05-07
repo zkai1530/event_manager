@@ -23,7 +23,8 @@ public interface EventService {
 
     EventResponse updateEvent(Long eventId, EventRequest eventRequest, MultipartFile file);
 
-    List<EventByUserResponse> getEventsByUser();
+    Page<EventByUserResponse> getEventsByUser(String timeFilter, Pageable pageable);
+    // List<EventByUserResponse> getEventsByUser();
 
     EventByUserResponse getEventByUser();
 
@@ -34,5 +35,5 @@ public interface EventService {
     void unpublishEvent(Long eventId);
 
     Page<EventSearchResponse> searchByName(String keyword, String location, boolean isFree, LocalDate startDate,
-            LocalDate endDate, String eventStatus, Pageable pageable); 
+            LocalDate endDate, String eventStatus, Pageable pageable);
 }

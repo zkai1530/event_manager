@@ -42,6 +42,10 @@ public class EventController {
     @Value("${event-per-page}")
     int EVENT_PER_PAGE;
 
+    @NonFinal
+    @Value("${list-events-by-user-per-page}")
+    int LIST_EVENT_PER_PAGE;
+
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<APIResponse> createEvent(@RequestPart("eventRequest") EventRequest eventRequest,
             @RequestPart(value = "image", required = false) MultipartFile file) {
@@ -68,9 +72,18 @@ public class EventController {
                         eventRequest, file)));
     }
 
+    // @GetMapping
+    // public ResponseEntity<APIResponse> getEventByUser() {
+    //     return ResponseEntity.ok(new APIResponse(Message.RESOURCE_FOUND, eventService.getEventsByUser()));
+    // }
+
     @GetMapping
-    public ResponseEntity<APIResponse> getEventByUser() {
-        return ResponseEntity.ok(new APIResponse(Message.RESOURCE_FOUND, eventService.getEventsByUser()));
+    public ResponseEntity<APIResponse> getEventByUser(
+            @RequestParam(required = false, defaultValue = "all") String timeFilter,
+            @RequestParam(required = false, defaultValue = "0") int page) {
+        Pageable pageable = PageRequest.of(page, LIST_EVENT_PER_PAGE);
+        return ResponseEntity
+                .ok(new APIResponse(Message.RESOURCE_FOUND, eventService.getEventsByUser(timeFilter, pageable)));
     }
 
     @GetMapping("/event-status/{eventId}")

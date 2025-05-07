@@ -13,6 +13,7 @@ import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 
 import com.datn.event_manager.dto.request.ScheduleItem;
+import com.datn.event_manager.dto.response.DisbursementEligibleEventResponse;
 import com.datn.event_manager.dto.response.EventByUserResponse;
 import com.datn.event_manager.dto.response.EventResponse;
 import com.datn.event_manager.dto.response.EventScheduleResponse;
@@ -42,6 +43,13 @@ public interface EventMapper {
     EventByUserResponse toEventByUserResponse(Event event);
 
     List<EventByUserResponse> toEventByUserResponseList(List<Event> events);
+
+    @Named("toEligibleEventResponse")
+    @Mapping(target = "eventName", source = "name")
+    DisbursementEligibleEventResponse toEligibleEventResponse(Event event);
+
+    @IterableMapping(qualifiedByName = "toEligibleEventResponse")
+    List<DisbursementEligibleEventResponse> toEligibleEventResponse(List<Event> events);
 
     @Named("mapScheduleItem")
     default ScheduleItem mapScheduleItem(Event event) {

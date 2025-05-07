@@ -38,6 +38,9 @@ public class EventSchedule {
     @Column(name = "schedule_date", nullable = false)
     LocalDate scheduleDate; // the day the event take place
 
+    @Column(nullable = false)
+    Boolean isDisbursed = false;
+
     @Column(name = "start_time", nullable = false)
     LocalTime startTime;
 

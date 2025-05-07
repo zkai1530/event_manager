@@ -72,6 +72,9 @@ public class Order {
     @JoinColumn(name = "schedule_id")
     EventSchedule schedule;
 
+    @OneToMany(mappedBy = "order", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    List<Complaint> complaints;
+
     public enum OrderStatus {
         PENDING, PAID, CANCELED
     }

@@ -1,6 +1,7 @@
 package com.datn.event_manager.repository;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -77,4 +78,25 @@ public interface EventRepository extends JpaRepository<Event, Long> {
                         @Param("endDate") LocalDate endDate,
                         @Param("eventStatus") String eventStatus,
                         Pageable pageable);
+
+        // use for get event by user
+        Page<Event> findAllPagedByUser(User user, Pageable pageable);
+
+        // @Query("SELECT DISTINCT e FROM Event e " +
+        // "LEFT JOIN FETCH e.schedules s " +
+        // "WHERE e.isPublished = true AND e.isSuspended = false " +
+        // "AND EXISTS (SELECT 1 FROM EventSchedule es WHERE es.event = e AND
+        // es.scheduleDate < :currentDate AND es.isDisbursed = false) "
+        // +
+        // "AND EXISTS (SELECT 1 FROM Order o WHERE o.schedule IN (SELECT es2 FROM
+        // EventSchedule es2 WHERE es2.event = e) AND o.status = 'PAID')")
+        // Page<Event> findEventsEligibleForDisbursement(@Param("currentDate") LocalDate
+        // currentDate, Pageable pageable);
+        @Query("SELECT DISTINCT e FROM Event e " +
+                        "LEFT JOIN FETCH e.schedules s " +
+                        "WHERE e.isPublished = true " +
+                        "AND EXISTS (SELECT 1 FROM EventSchedule es WHERE es.event = e AND es.scheduleDate < :currentDate AND es.isDisbursed = false) "
+                        +
+                        "AND EXISTS (SELECT 1 FROM Order o WHERE o.schedule IN (SELECT es2 FROM EventSchedule es2 WHERE es2.event = e) AND o.status = 'PAID')")
+        Page<Event> findEventsEligibleForDisbursement(@Param("currentDate") LocalDate currentDate, Pageable pageable);
 }

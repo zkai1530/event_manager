@@ -71,7 +71,7 @@ public class TicketServiceImpl implements TicketService {
         List<TicketSchedule> ticketSchedules = schedules.stream()
                 .map(schedule -> TicketSchedule.builder()
                         .ticket(ticket)
-                        .schedule(schedule) 
+                        .schedule(schedule)
                         .checkedInCount(0)
                         .availableQuantity(request.getAvailableQuantity())
                         .sold(0)
@@ -134,25 +134,32 @@ public class TicketServiceImpl implements TicketService {
         ticket.setSold(0);
 
         // update scheduleIds
-        
+
         // * ticket.getTicketSchedules().clear(); // clear existing schedules
-       
+
         // * List<TicketSchedule> ticketSchedules = schedules.stream()
-                // * .map(schedule -> TicketSchedule.builder()
-                        // * .ticket(ticket)
-                        // * .schedule(schedule)
-                        // * .build())
-                // * .collect(Collectors.toList());
-      
+        // * .map(schedule -> TicketSchedule.builder()
+        // * .ticket(ticket)
+        // * .schedule(schedule)
+        // * .build())
+        // * .collect(Collectors.toList());
+
         // * ticket.getTicketSchedules().addAll(ticketSchedules); // add new schedules
         // * ticketRepository.save(ticket);
 
         // todo: take current schedule. Example: 1, 2
         List<TicketSchedule> currentTicketSchedules = ticket.getTicketSchedules();
+        if (request.getAvailableQuantity() != null) {
+            for (TicketSchedule currentTicketSchedule : currentTicketSchedules) {
+                currentTicketSchedule.setAvailableQuantity(request.getAvailableQuantity());
+                ticketScheduleRepository.save(currentTicketSchedule);
+            }
+            
+        }
 
         Set<Long> currentScheduleIds = currentTicketSchedules.stream()
-            .map(td -> td.getSchedule().getScheduleId())
-            .collect(Collectors.toSet());
+                .map(td -> td.getSchedule().getScheduleId())
+                .collect(Collectors.toSet());
 
         // todo: take ids of schedules in request. Example: 2, 3
         Set<Long> requestScheduleIds = schedulesRequest.stream()
@@ -161,9 +168,9 @@ public class TicketServiceImpl implements TicketService {
 
         // todo: return if ticketIds no have change
         if (currentScheduleIds.equals(requestScheduleIds)) {
-            return; 
+            return;
         }
-        
+
         // todo: remove schedules that are not in request. Example: 1
         currentTicketSchedules.removeIf(ticketSchedule -> {
             Long scheduleId = ticketSchedule.getSchedule().getScheduleId();
@@ -175,7 +182,8 @@ public class TicketServiceImpl implements TicketService {
             Long scheduleId = schedule.getScheduleId();
             // check if exist (example: 2) => no change
             boolean isScheduleExist = currentTicketSchedules.stream()
-                    .anyMatch(currentTicketSchedule -> currentTicketSchedule.getSchedule().getScheduleId().equals(scheduleId));
+                    .anyMatch(currentTicketSchedule -> currentTicketSchedule.getSchedule().getScheduleId()
+                            .equals(scheduleId));
 
             if (!isScheduleExist) {
                 TicketSchedule ticketSchedule = TicketSchedule.builder()
@@ -209,7 +217,7 @@ public class TicketServiceImpl implements TicketService {
 
         if (!event.getUser().getUserId().equals(user.getUserId()))
             throw new AppException(ErrorCode.UNAUTHORIZED);
-        
+
         List<Ticket> tickets = ticketRepository.findTicketsByEventId(eventId);
 
         return ticketMapper.toTicketResponseList(tickets);
@@ -219,7 +227,7 @@ public class TicketServiceImpl implements TicketService {
     public TicketResponse viewTicketById(Long ticketId) {
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new AppException(ErrorCode.TICKET_NOT_FOUND));
-        
+
         return ticketMapper.toTicketResponse(ticket);
     }
 }

@@ -1,6 +1,7 @@
 package com.datn.event_manager.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -19,4 +20,6 @@ public interface TicketScheduleRepository extends JpaRepository<TicketSchedule, 
            "JOIN ts.ticket t " +
            "WHERE ts.schedule.scheduleId = :scheduleId")
     List<Object[]> findTicketSchedulesByScheduleId(@Param("scheduleId") Long scheduleId);
+
+    Optional<TicketSchedule> findBySchedule(EventSchedule schedule);
 }
