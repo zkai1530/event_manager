@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 import com.datn.event_manager.entity.Complaint;
 import com.datn.event_manager.entity.EventSchedule;
 import com.datn.event_manager.entity.Order;
+import com.datn.event_manager.entity.User;
 
 public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
     boolean existsByOrder(Order order);
@@ -19,4 +20,15 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
 
     @Query("SELECT c FROM Complaint c JOIN c.order o WHERE o.schedule = :schedule")
     List<Complaint> findByOrderSchedule(EventSchedule schedule);
+
+    // thống kê cho organizer
+    @Query("SELECT COUNT(c) FROM Complaint c WHERE c.order.schedule.event.user = :user")
+    Long countTotalComplaintsByUser(@Param("user") User user);
+
+    // * đếm số phàn nàn theo lí do
+    @Query("SELECT c.reason.reasonName AS reason, COUNT(c) AS count " +
+            "FROM Complaint c " +
+            "WHERE c.order.schedule.event.user = :user " +
+            "GROUP BY c.reason.reasonName")
+    List<Object[]> findComplaintsByReason(@Param("user") User user);
 }

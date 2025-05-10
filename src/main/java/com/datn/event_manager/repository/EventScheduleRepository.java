@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 
 import com.datn.event_manager.entity.Event;
 import com.datn.event_manager.entity.EventSchedule;
+import com.datn.event_manager.entity.User;
 
 public interface EventScheduleRepository extends JpaRepository<EventSchedule, Long> {
     void deleteByEvent(Event event);

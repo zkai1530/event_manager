@@ -80,6 +80,7 @@ public class EventServiceImpl implements EventService {
                 .capacity(eventRequest.getCapacity())
                 .eventType(eventRequest.getEventType())
                 .isPublished(false)
+                .isSuspended(false)
                 .createdAt(LocalDateTime.now())
                 .build();
         eventRepository.save(event);

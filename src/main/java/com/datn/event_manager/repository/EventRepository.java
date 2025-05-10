@@ -2,6 +2,7 @@ package com.datn.event_manager.repository;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -99,4 +100,25 @@ public interface EventRepository extends JpaRepository<Event, Long> {
                         +
                         "AND EXISTS (SELECT 1 FROM Order o WHERE o.schedule IN (SELECT es2 FROM EventSchedule es2 WHERE es2.event = e) AND o.status = 'PAID')")
         Page<Event> findEventsEligibleForDisbursement(@Param("currentDate") LocalDate currentDate, Pageable pageable);
+
+        // thống kê cho organizer
+        @Query("SELECT COUNT(e) FROM Event e WHERE e.user = :user AND e.isPublished = true")
+        Long countByUser(@Param("user") User user);
+
+        @Query("SELECT COUNT(DISTINCT e) FROM Event e " +
+                        "WHERE e.user = :user " +
+                        "AND e.isPublished = true " +
+                        "AND EXISTS (SELECT 1 FROM EventSchedule es WHERE es.event = e AND es.scheduleDate >= :currentDate AND (es.scheduleDate > :currentDate OR (es.scheduleDate = :currentDate AND es.startTime > :currentTime)))")
+        Long countUpcomingEvents(@Param("user") User user, @Param("currentDate") LocalDate currentDate,
+                        @Param("currentTime") LocalTime currentTime);
+
+        @Query("SELECT COUNT(DISTINCT e) FROM Event e " +
+                        "WHERE e.user = :user " +
+                        "AND e.isPublished = true " +
+                        "AND NOT EXISTS (SELECT 1 FROM EventSchedule es WHERE es.event = e AND es.scheduleDate >= :currentDate AND (es.scheduleDate > :currentDate OR (es.scheduleDate = :currentDate AND es.startTime > :currentTime)))")
+        Long countPastEvents(@Param("user") User user, @Param("currentDate") LocalDate currentDate,
+                        @Param("currentTime") LocalTime currentTime);
+
+        @Query("SELECT COUNT(e) FROM Event e WHERE e.user = :user AND e.isSuspended = true")
+        Long countSuspendedEvents(@Param("user") User user);
 }

@@ -64,6 +64,9 @@ public class Event {
     @Column(nullable = false)
     Boolean isPublished = false;
 
+    @Column
+    Boolean isSuspended = false;
+
     @Column(nullable = false, updatable = false)
     LocalDateTime createdAt = LocalDateTime.now();
 
