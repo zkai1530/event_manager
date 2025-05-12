@@ -18,7 +18,7 @@ import { useParams } from "react-router-dom";
 import { createSchedules } from "services/user/schedulesService";
 import { FormatPrice } from "utils/formatPrice";
 import Swal from "sweetalert2";
-import Loading from "components/UI/Loading";
+import Loading from "@/components/ui/Loading";
 
 const CreateSchedule = () => {
   const [isOpen, setIsOpen] = useState(false);

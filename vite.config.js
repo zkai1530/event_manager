@@ -30,4 +30,12 @@ export default defineConfig({
       utils: path.resolve(__dirname, "src/utils"),
     },
   },
+
+  // server: {
+  //   host: "0.0.0.0",
+  //   port: 5173,
+  //   allowedHosts: [
+  //     "d2a1-2405-4802-b54b-1280-9ca4-453d-effa-5fcb.ngrok-free.app",
+  //   ],
+  // },
 });

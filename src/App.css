@@ -306,3 +306,16 @@ input[type="number"] {
   margin-bottom: 0.25rem;
   color: #4b5563; 
 }
+
+video {
+  width: 100%;
+  height: 300px;
+  border: 2px solid #ccc;
+}
+
+@media (max-width: 640px) {
+  video {
+    height: 200px;
+    width: 100%;
+  }
+}

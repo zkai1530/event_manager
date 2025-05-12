@@ -3,7 +3,8 @@ import { createPortal } from "react-dom";
 import { format } from "date-fns";
 import { IoCloseSharp } from "react-icons/io5";
 import { createOrder } from "services/user/orderService";
-import Loading from "components/UI/Loading";
+import Loading from "@/components/ui/Loading";
+import Swal from "sweetalert2";
 
 const TicketSelectionModal = ({
   eventInfo,
@@ -19,7 +20,7 @@ const TicketSelectionModal = ({
       return acc;
     }, {}),
   );
-  // THÊM MỚI: State để lưu mã khuyến mãi và discountId đã áp dụng
+
   const [promoCodes, setPromoCodes] = useState(
     eventInfo.tickets.reduce((acc, ticket) => {
       acc[ticket.id] = { code: "", appliedDiscount: null };
@@ -42,7 +43,6 @@ const TicketSelectionModal = ({
     });
   };
 
-  // THÊM MỚI: Hàm xử lý nhập mã khuyến mãi
   const handlePromoCodeChange = (ticketId, code) => {
     setPromoCodes((prev) => ({
       ...prev,
@@ -50,24 +50,26 @@ const TicketSelectionModal = ({
     }));
   };
 
-  // SỬA: Hàm kiểm tra và áp dụng mã khuyến mãi
   const applyPromoCode = (ticketId) => {
     const ticket = eventInfo.tickets.find((t) => t.id === ticketId);
     const promoCode = promoCodes[ticketId].code;
     const discount = ticket.discounts.find((d) => d.promoCode === promoCode);
 
-    // Giả lập API trả về true
     if (discount && discount.promoCode !== null) {
       setPromoCodes((prev) => ({
         ...prev,
         [ticketId]: { code: discount.promoCode, appliedDiscount: discount },
       }));
     } else {
-      alert("Mã khuyến mãi không hợp lệ.");
+      Swal.fire({
+        title: "Cảnh báo!",
+        text: "Mã khuyến mãi không hợp lệ!",
+        icon: "warning",
+        confirmButtonText: "OK",
+      });
     }
   };
 
-  // THÊM: Hàm xóa mã khuyến mãi
   const removePromoCode = (ticketId) => {
     setPromoCodes((prev) => ({
       ...prev,
@@ -75,12 +77,12 @@ const TicketSelectionModal = ({
     }));
   };
 
-  // SỬA: Hàm kiểm tra vé không còn bán
+  // kiểm tra vé không còn bán
   const isTicketNotAvailable = (ticket) => {
     return new Date(ticket.saleEnd) < new Date();
   };
 
-  // SỬA: Hàm tính giá sau giảm giá
+  //  tính giá sau giảm giá
   const calculateTicketPrice = (ticket) => {
     let price = ticket.price;
     const autoDiscount = ticket.discounts.find((d) => d.promoCode === null);
@@ -94,9 +96,15 @@ const TicketSelectionModal = ({
           : price - autoDiscount.discountValue;
     }
 
-    // Áp dụng discount từ mã nhập, giảm thêm 50% trên giá hiện tại
+    // Áp dụng discount từ mã nhập
     if (appliedDiscount && appliedDiscount.promoCode !== null) {
-      price = price * 0.5; // Giảm thêm 50%
+      if (appliedDiscount.discountType === "PERCENT") {
+        price = price * (1 - appliedDiscount.discountValue / 100);
+      } else if (appliedDiscount.discountType === "FIXED") {
+        price = price - appliedDiscount.discountValue; 
+      }
+      // Để giá không âm
+      price = Math.max(0, price);
     }
 
     return Math.max(0, price);
@@ -205,11 +213,6 @@ const TicketSelectionModal = ({
 
   const { subtotal = 0, total = 0 } = calculateSummary();
 
-  const formattedDate = selectedSchedule
-    ? format(new Date(selectedSchedule.scheduleDate), "EEEE, MMMM dd") +
-      ` ${selectedSchedule.timezone || ""}`
-    : "";
-
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[rgba(57,54,79,0.8)]">
       <div className="relative flex h-[90vh] w-[1100px] flex-col rounded-lg bg-white p-6 shadow-lg">
@@ -260,9 +263,51 @@ const TicketSelectionModal = ({
                 return (
                   <div
                     key={ticket.id}
-                    className="mb-4 rounded-lg border border-blue-500 px-4 py-3"
+                    className="mb-4 rounded-lg border border-blue-500"
                   >
-                    <div className="flex items-center justify-between">
+                    <div>
+                      {/* Ô nhập mã khuyến mãi, chỉ hiển thị nếu vé còn bán */}
+                      {!isNotAvailable ? (
+                        ticket.discounts.some((d) => d.promoCode !== null) && (
+                          <div className="mt-2 flex w-full items-center gap-2 px-3 pt-2">
+                            <input
+                              type="text"
+                              placeholder="Nhập mã khuyến mãi"
+                              value={promoCodes[ticket.id].code}
+                              onChange={(e) =>
+                                handlePromoCodeChange(ticket.id, e.target.value)
+                              }
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  applyPromoCode(ticket.id);
+                                }
+                              }}
+                              className="flex-grow rounded border border-gray-300 px-2 py-1 text-sm"
+                              disabled={!!promoCodes[ticket.id].appliedDiscount}
+                            />
+                            {promoCodes[ticket.id].appliedDiscount ? (
+                              <button
+                                onClick={() => removePromoCode(ticket.id)}
+                                className="rounded bg-red-500 px-2 py-1 text-sm text-white hover:bg-red-600"
+                              >
+                                X
+                              </button>
+                            ) : (
+                              <button
+                                onClick={() => applyPromoCode(ticket.id)}
+                                className="rounded bg-blue-500 px-3 py-1 text-sm text-white hover:bg-blue-600"
+                              >
+                                Áp dụng
+                              </button>
+                            )}
+                          </div>
+                        )
+                      ) : (
+                        <div></div>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-between px-4 py-3">
                       <div>
                         <h4 className="text-lg font-medium">{ticket.name}</h4>
                         <p className="text-sm text-gray-800">
@@ -280,44 +325,6 @@ const TicketSelectionModal = ({
                             ? "Vé hiện không còn bán"
                             : `Mở bán đến ngày ${format(new Date(ticket.saleEnd), "dd/MM/yyyy")}`}
                         </p>
-                        {/* Ô nhập mã khuyến mãi chỉ hiển thị nếu vé còn bán */}
-                        {!isNotAvailable &&
-                          ticket.discounts.some(
-                            (d) => d.promoCode !== null,
-                          ) && (
-                            <div className="mt-2 flex w-full items-center gap-2">
-                              <input
-                                type="text"
-                                placeholder="Nhập mã khuyến mãi"
-                                value={promoCodes[ticket.id].code}
-                                onChange={(e) =>
-                                  handlePromoCodeChange(
-                                    ticket.id,
-                                    e.target.value,
-                                  )
-                                }
-                                className="flex-grow rounded border border-gray-300 px-2 py-1 text-sm"
-                                disabled={
-                                  !!promoCodes[ticket.id].appliedDiscount
-                                }
-                              />
-                              {promoCodes[ticket.id].appliedDiscount ? (
-                                <button
-                                  onClick={() => removePromoCode(ticket.id)}
-                                  className="rounded bg-red-500 px-2 py-1 text-sm text-white hover:bg-red-600"
-                                >
-                                  X
-                                </button>
-                              ) : (
-                                <button
-                                  onClick={() => applyPromoCode(ticket.id)}
-                                  className="rounded bg-blue-500 px-3 py-1 text-sm text-white hover:bg-blue-600"
-                                >
-                                  Apply
-                                </button>
-                              )}
-                            </div>
-                          )}
                       </div>
                       <div className="flex items-center space-x-2">
                         <button

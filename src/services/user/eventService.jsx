@@ -39,13 +39,16 @@ export const updateEvent = async (eventId, formData, token) => {
   }
 };
 
-export const getEventListInfoByUser = async (token) => {
+export const getEventListInfoByUser = async (token, page, timeFilter) => {
   try {
-    const response = await axios.get("/event", {
-      headers: {
-        Authorization: `Bearer ${token}`,
+    const response = await axios.get(
+      `/event?timeFilter=${timeFilter}&page=${page}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       },
-    });
+    );
     console.log(response.data.data);
     return response.data.data;
   } catch (error) {
@@ -116,7 +119,7 @@ export const searchEvents = async (
 };
 
 export const getEventProgress = async (eventId, token) => {
-  console.log("e", eventId)
+  console.log("e", eventId);
   try {
     const response = await axios.get(`/event/event-status/${eventId}`, {
       headers: {
@@ -127,6 +130,35 @@ export const getEventProgress = async (eventId, token) => {
     return response.data.data;
   } catch (error) {
     console.error("getEventProgress", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const getCateAndTheme = async (token) => {
+  try {
+    const response = await axios.get(`/event/category-theme`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data.data;
+  } catch (error) {
+    console.error("getCateAndTheme", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const addCateAndTheme = async (eventId, cateId, themeId, token) => {
+  console.log(token);
+  try {
+    const response = await axios.post(`/event/category-theme/${eventId}/${cateId}/${themeId}`, null, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("addCateAndTheme", error.response?.data || error.message);
     throw error;
   }
 };

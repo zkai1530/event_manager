@@ -1,4 +1,4 @@
-import Loading1 from "components/UI/Loading1";
+import Loading1 from "@/components/ui/Loading1";
 import { useAuth } from "context/AuthContext";
 import { useEffect, useRef, useState } from "react";
 import { FaSearch, FaMapMarkerAlt, FaPlus, FaRegHeart } from "react-icons/fa";
@@ -9,7 +9,11 @@ import {
   useNavigate,
   useSearchParams,
 } from "react-router-dom";
-import { deleteNoti, getAllNotiByUser, readNoti } from "services/user/notificationService";
+import {
+  deleteNoti,
+  getAllNotiByUser,
+  readNoti,
+} from "services/user/notificationService";
 import { getUserInfo } from "services/user/userService";
 
 const Header = () => {
@@ -49,7 +53,7 @@ const Header = () => {
   const dropdownItems = [
     { id: 1, label: "Sự kiện của tôi", link: "/organizations/events/all" },
     { id: 2, label: "Vé của tôi", link: "/user/my-tickets/all/upcoming" },
-    { id: 3, label: "Tài khoản", link: "/settings" },
+    { id: 3, label: "Tài khoản", link: "/user/account" },
     { id: 4, label: "Đăng xuất", link: "/logout" },
   ];
 
@@ -93,10 +97,10 @@ const Header = () => {
   // Gọi API khi mở dropdown
   useEffect(() => {
     // if (showNotifications && token) {
-      fetchNotifications();
+    fetchNotifications();
     // }
   }, [showNotifications, token]);
-  console.log(notifications)
+  console.log(notifications);
 
   return (
     <header className="border-b border-gray-200 bg-white py-3">
@@ -104,7 +108,10 @@ const Header = () => {
         {/* Logo and Search */}
         <div className="flex min-w-0 flex-1 items-center gap-4">
           {/* Logo */}
-          <div className="flex w-fit cursor-pointer items-center">
+          <div
+            className="flex w-fit cursor-pointer items-center"
+            onClick={() => navigate("/")}
+          >
             <h1 className="font-logo from-main to-emphasis bg-gradient-to-r bg-clip-text text-[22px] font-bold text-transparent md:text-[26px]">
               Eventify
             </h1>
@@ -131,6 +138,13 @@ const Header = () => {
                 placeholder="Tìm kiếm sự kiện"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    navigate(
+                      `/search?q=${encodeURIComponent(searchQuery || "")}`,
+                    );
+                  }
+                }}
                 className="focus:ring-main w-full rounded-lg border border-gray-300 py-2 pr-12 pl-4 focus:ring-1 focus:outline-none"
               />
               <button
@@ -209,9 +223,7 @@ const Header = () => {
                         className="mr-2 h-12 w-12 rounded-md object-cover"
                       />
                       <div className="flex-1">
-                        <p className="text-sm text-gray-800">
-                          {notif.message} 
-                        </p>
+                        <p className="text-sm text-gray-800">{notif.message}</p>
                       </div>
                       {!notif.isRead ? (
                         <span className="bg-main-bold ml-2 h-2 w-2 rounded-full"></span>
@@ -285,7 +297,7 @@ const Header = () => {
               placeholder="Choose a location"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              className="focus:ring-secondary w-full rounded-lg border border-gray-300 py-2 pr-3.5 pl-10 focus:ring-1 focus:outline-none"
+              className="focus:ring-secondary1 w-full rounded-lg border border-gray-300 py-2 pr-3.5 pl-10 focus:ring-1 focus:outline-none"
             />
             <FaMapMarkerAlt className="text-main absolute top-1/2 left-3 -translate-y-1/2 transform" />
           </div>
@@ -297,7 +309,7 @@ const Header = () => {
               placeholder="Tìm kiếm sự kiện"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="focus:ring-secondary w-full rounded-lg border border-gray-300 py-2 pr-12 pl-4 focus:ring-1 focus:outline-none"
+              className="focus:ring-secondary1 w-full rounded-lg border border-gray-300 py-2 pr-12 pl-4 focus:ring-1 focus:outline-none"
             />
             <button className="bg-main hover:bg-main-bold absolute inset-y-0 right-0 m-0.5 flex cursor-pointer items-center justify-center rounded-lg px-3 text-white">
               <FaSearch className="h-4 w-4" />

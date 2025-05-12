@@ -1,11 +1,12 @@
 import { useRef, useState } from "react";
 import {FaPlus, FaRegHeart } from "react-icons/fa";
 import { GrNotification } from "react-icons/gr";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const OrganizerHeader = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const userInfoRef = useRef(null);
+  const navigate = useNavigate();
 
   const toggleDropdown = () => {
     setDropdownOpen((prev) => !prev);
@@ -18,12 +19,15 @@ const OrganizerHeader = () => {
   ];
 
   return (
-    <header className="border-b border-gray-100 py-3 bg-white">
+    <header className="border-b border-gray-100 bg-white py-3">
       <div className="container mx-auto flex flex-wrap items-center justify-between gap-4">
         {/* Logo and Search */}
         <div className="flex min-w-0 flex-1 items-center gap-4">
           {/* Logo */}
-          <div className="flex w-fit items-center cursor-pointer">
+          <div
+            className="flex w-fit cursor-pointer items-center"
+            onClick={() => navigate("/organizations/events/all")}
+          >
             <h1 className="font-logo from-main to-emphasis bg-gradient-to-r bg-clip-text text-[22px] font-bold text-transparent md:text-[26px]">
               Eventify
             </h1>
@@ -33,7 +37,10 @@ const OrganizerHeader = () => {
         {/* Action Buttons */}
         <div className="flex w-fit items-center space-x-3 lg:space-x-5">
           {/* Create Event Button */}
-          <button className="bg-secondary hover:bg-emphasis flex cursor-pointer items-center space-x-2 rounded-full px-2 py-2 text-white lg:px-4">
+          <button
+            className="bg-secondary1 hover:bg-emphasis flex cursor-pointer items-center space-x-2 rounded-full px-2 py-2 text-white lg:px-4"
+            onClick={() => navigate("/manage/event/create")}
+          >
             <FaPlus />
             <span className="text-sm md:text-base">Tạo sự kiện</span>
           </button>

@@ -84,10 +84,34 @@ export const fetchTicketSales = async (scheduleId, token) => {
         Authorization: `Bearer ${token}`,
       },
     });
-    console.log(response.data)
+    console.log(response.data);
     return response.data.data;
   } catch (error) {
     console.error("fetchTicketSales", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const reportOrder = async (orderId, reasonId, token) => {
+  console.log(orderId, reasonId, token)
+  try {
+    const response = await axios.post(
+      "/complaint",
+      {
+        orderId,
+        reasonId,
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    );
+    console.log(response.data);
+    return response.data;
+  } catch (error) {
+    console.error("reportOrder", error.response?.data || error.message);
     throw error;
   }
 };

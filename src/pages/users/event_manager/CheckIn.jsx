@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import { BrowserQRCodeReader } from "@zxing/library";
-import Swal from "sweetalert2";
 
 function CheckIn() {
   const [scanResult, setScanResult] = useState(null);
@@ -18,22 +17,15 @@ function CheckIn() {
         .decodeFromVideoDevice(null, videoRef.current, (result, error) => {
           if (result) {
             console.log("QR Code detected:", result.getText());
-            const qrCodeText = result.getText();
-            setScanResult(qrCodeText); // Lưu giá trị quét trước
-            checkIn(qrCodeText);
+            setScanResult(result.getText());
+            checkIn(result.getText());
             setIsScanning(false);
           }
           if (error) {
-            // Kiểm tra lỗi NotFoundException và bỏ qua
-            const errorMessage =
-              error && error.message ? error.message : String(error);
-            if (errorMessage.includes("NotFoundException")) {
-              return; // Bỏ qua lỗi NotFoundException (bao gồm NotFoundException2)
-            }
             console.error("QR Reader error:", error);
             setCameraError(
               JSON.stringify(
-                { message: "QR Reader error", data: errorMessage },
+                { message: "QR Reader error", data: error.message },
                 null,
                 2,
               ),
@@ -42,10 +34,9 @@ function CheckIn() {
         })
         .catch((err) => {
           console.error("Camera access error:", err);
-          const errMessage = err && err.message ? err.message : String(err);
           setCameraError(
             JSON.stringify(
-              { message: "Camera access error", data: errMessage },
+              { message: "Camera access error", data: err.message },
               null,
               2,
             ),
@@ -73,7 +64,7 @@ function CheckIn() {
   };
 
   const checkIn = async (qrCode) => {
-    console.log("QR Code scanned:", qrCode);
+    console.log("QR Code scanned:", qrCode); // Log giá trị QR code
     const token =
       "eyJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJldmVudF9tYW5hZ2VyLmNvbSIsInN1YiI6InprYWkiLCJleHAiOjE3NDY5MzYyOTMsImlhdCI6MTc0Njg0OTg5MywianRpIjoiNGExOTY5YmQtN2QxOC00YzdlLTk1ZmEtMjBhOWYzNjRiMjZlIiwic2NvcGUiOiJVU0VSIn0.N9INuIICVZCF44fVLmLV6vj0mqvX83Rcb2flGSBJwITux7GURDcOUhRKt5Xxz5SjF1IJgX8jsy47mcRp-vTfIw";
     try {
@@ -88,47 +79,9 @@ function CheckIn() {
           body: JSON.stringify({ qrCode }),
         },
       );
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
       const data = await response.json();
-      console.log("API response:", data);
+      console.log("API response:", data); // Log phản hồi từ API
       setScanResult(JSON.stringify(data, null, 2));
-
-      // Xử lý hiển thị modal dựa trên message
-      if (data.message === "Check in successfully!") {
-        const { data: ticketData } = data;
-        Swal.fire({
-          title: "Check-in Thành Công!",
-          html: `
-            <div style="text-align: left; font-size: 16px;">
-              <p><strong>Order ID:</strong> ${ticketData.orderId}</p>
-              <p><strong>Event:</strong> ${ticketData.eventName}</p>
-              <p><strong>Date:</strong> ${ticketData.scheduleDate}</p>
-              <p><strong>Time:</strong> ${ticketData.startTime} - ${ticketData.endTime}</p>
-              <p><strong>Total Quantity:</strong> ${ticketData.totalQuantity}</p>
-              <h3 style="margin-top: 10px;">Tickets:</h3>
-              <ul>
-                ${ticketData.orderTickets
-                  .map(
-                    (ticket) =>
-                      `<li>${ticket.ticketName} (Qty: ${ticket.quantity})</li>`,
-                  )
-                  .join("")}
-              </ul>
-            </div>
-          `,
-          icon: "success",
-          confirmButtonText: "OK",
-        });
-      } else if (data.message === "This order already checked in!") {
-        Swal.fire({
-          title: "Lỗi!",
-          text: "Đơn hàng này đã được check-in!",
-          icon: "error",
-          confirmButtonText: "OK",
-        });
-      }
     } catch (error) {
       console.error("API error:", error);
       setScanResult(
@@ -138,12 +91,6 @@ function CheckIn() {
           2,
         ),
       );
-      Swal.fire({
-        title: "Lỗi!",
-        text: `Check-in không thành công: ${error.message}`,
-        icon: "error",
-        confirmButtonText: "OK",
-      });
     }
   };
 
@@ -164,7 +111,6 @@ function CheckIn() {
             <video
               ref={videoRef}
               className="mb-4 h-[300px] w-full border-2 border-gray-300"
-              autoPlay
             />
             <button
               onClick={stopScanner}
@@ -177,6 +123,40 @@ function CheckIn() {
         {cameraError && (
           <div className="mt-4 rounded bg-red-100 p-4 text-red-600">
             <pre className="max-h-40 overflow-auto text-sm">{cameraError}</pre>
+          </div>
+        )}
+        {scanResult && (
+          <div className="mt-4 rounded bg-gray-200 p-4">
+            <pre className="max-h-40 overflow-auto text-sm">{scanResult}</pre>
+            {JSON.parse(scanResult).message === "Check in successfully!" && (
+              <div className="mt-2">
+                <h2 className="text-lg font-semibold">Check-in Details</h2>
+                <p>Order ID: {JSON.parse(scanResult).data.orderId}</p>
+                <p>Event: {JSON.parse(scanResult).data.eventName}</p>
+                <p>Date: {JSON.parse(scanResult).data.scheduleDate}</p>
+                <p>
+                  Time: {JSON.parse(scanResult).data.startTime} -{" "}
+                  {JSON.parse(scanResult).data.endTime}
+                </p>
+                <p>
+                  Total Quantity: {JSON.parse(scanResult).data.totalQuantity}
+                </p>
+                <h3 className="mt-2 font-semibold">Tickets:</h3>
+                <ul>
+                  {JSON.parse(scanResult).data.orderTickets.map(
+                    (ticket, index) => (
+                      <li key={index}>
+                        {ticket.ticketName} (Qty: {ticket.quantity})
+                      </li>
+                    ),
+                  )}
+                </ul>
+              </div>
+            )}
+            {JSON.parse(scanResult).message ===
+              "This order already checked in!" && (
+              <p className="mt-2 text-red-500">Order already checked in!</p>
+            )}
           </div>
         )}
       </div>

@@ -1,11 +1,16 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { QRCodeCanvas } from "qrcode.react";
-import { getMyTicketsByOrderStatus } from "services/user/orderService";
+import {
+  getMyTicketsByOrderStatus,
+  reportOrder,
+} from "services/user/orderService";
+import Swal from "sweetalert2";
 
 const MyTickets = () => {
   const { status = "all", timeFilter = "upcoming" } = useParams();
   const navigate = useNavigate();
+  const token = localStorage.getItem("token");
 
   const tabs = [
     { display: "Tất cả", value: "all" },
@@ -45,7 +50,6 @@ const MyTickets = () => {
   const fetchTickets = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem("token");
       const data = await getMyTicketsByOrderStatus(
         statusMap[activeTab],
         timeFilterMap[activeSubTab],
@@ -73,6 +77,26 @@ const MyTickets = () => {
       "upcoming";
     navigate(`/user/my-tickets/${tabValue}/${subTabValue}`);
   }, [activeTab, activeSubTab, navigate]);
+
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [selectedTicketForReport, setSelectedTicketForReport] = useState(null);
+  const [reasons, setReasons] = useState([]);
+  const [selectedReason, setSelectedReason] = useState("");
+
+  useEffect(() => {
+    const fetchReasons = async () => {
+      // Giả lập dữ liệu với reasonId và reason
+      const mockReasons = [
+        { reasonId: 1, reason: "Sự kiện không diễn ra" },
+        { reasonId: 2, reason: "Không được check-in dù đã mua vé" },
+        { reasonId: 3, reason: "Thông tin sự kiện sai lệch" },
+        { reasonId: 4, reason: "Sự kiện có dấu hiệu lừa đảo" },
+        { reasonId: 5, reason: "Lý do khác" },
+      ];
+      setReasons(mockReasons);
+    };
+    fetchReasons();
+  }, []);
 
   const handleNextPage = () => {
     if (page < totalPages - 1) setPage(page + 1);
@@ -114,6 +138,49 @@ const MyTickets = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handleReportOrder = async (orderId, reasonId) => {
+    try {
+      const response = await reportOrder(orderId, reasonId, token);
+      if (response.message === "Access Denied!") {
+        Swal.fire({
+          title: "Lỗi!",
+          text: "Bạn không có quyền báo cáo đơn hàng này",
+          icon: "error",
+          confirmButtonText: "OK",
+        });
+        return false;
+      } else if (response.message === "Request was successful!") {
+        Swal.fire({
+          title: "Thành công!",
+          text: "Bạn đã báo cáo thành công",
+          icon: "success",
+          confirmButtonText: "OK",
+        });
+        return true;
+      } else if (
+        response.message ===
+        "You have already submitted a complaint for this order."
+      ) {
+        Swal.fire({
+          title: "Cảnh báo!",
+          text: "Bạn đã báo cáo đơn hàng này rồi",
+          icon: "warning",
+          confirmButtonText: "OK",
+        });
+        return false;
+      }
+    } catch (err) {
+      console.error("Error reporting order:", err);
+      Swal.fire({
+        title: "Lỗi!",
+        text: "Đã có lỗi xảy ra",
+        icon: "error",
+        confirmButtonText: "OK",
+      });
+      return false;
+    }
   };
 
   return (
@@ -225,9 +292,25 @@ const MyTickets = () => {
                         : ticket.status}
                 </p>
               </div>
+              {ticket.status === "PAID" && (
+                <button
+                  onClick={() => {
+                    setSelectedTicketForReport(ticket);
+                    setShowReportModal(true);
+                  }}
+                  disabled={ticket.complaint}
+                  className={`cursor-pointer rounded-full px-4 py-2 text-white ${
+                    ticket.complaint
+                      ? "!cursor-not-allowed bg-gray-400"
+                      : "bg-red-400 hover:bg-red-500"
+                  }`}
+                >
+                  {ticket.complaint ? "Đã báo cáo" : "Báo cáo"}
+                </button>
+              )}
               <button
                 onClick={() => openModal(ticket)}
-                className="bg-main cursor-pointer rounded-full px-4 py-2 text-white"
+                className="bg-main ml-2 cursor-pointer rounded-full px-4 py-2 text-white"
               >
                 Chi tiết vé
               </button>
@@ -261,7 +344,7 @@ const MyTickets = () => {
           <div className="relative w-[600px] rounded-lg bg-white p-6 shadow-lg">
             <button
               onClick={closeModal}
-              className="absolute top-4 right-4 text-gray-600 hover:text-gray-800 cursor-pointer"
+              className="absolute top-4 right-4 cursor-pointer text-gray-600 hover:text-gray-800"
             >
               ✕
             </button>
@@ -308,6 +391,73 @@ const MyTickets = () => {
                 Tải xuống mã QR
               </button>
             )}
+          </div>
+        </div>
+      )}
+
+      {showReportModal && selectedTicketForReport && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[rgba(57,54,79,0.8)]">
+          <div className="relative flex flex-col rounded-lg bg-white p-6 shadow-lg">
+            <div className="w-full max-w-md rounded-lg bg-white p-3">
+              <h2 className="mb-4 text-lg font-bold">Báo cáo đơn hàng</h2>
+              <div className="mb-4 flex flex-col gap-3">
+                {reasons.map((item, index) => (
+                  <label key={index} className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      name="reason"
+                      value={item.reasonId}
+                      checked={selectedReason === item.reasonId.toString()}
+                      onChange={(e) => setSelectedReason(e.target.value)}
+                      className="h-4 w-4"
+                    />
+                    <span>{item.reason}</span>
+                  </label>
+                ))}
+              </div>
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => {
+                    setShowReportModal(false);
+                    setSelectedReason("");
+                  }}
+                  className="rounded-full bg-gray-300 px-4 py-2"
+                >
+                  Hủy
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!selectedReason) {
+                      Swal.fire({
+                        title: "Cảnh báo!",
+                        text: "Vui lòng chọn lý do báo cáo!",
+                        icon: "warning",
+                        confirmButtonText: "OK",
+                      });
+                      return;
+                    }
+                    const success = await handleReportOrder(
+                      selectedTicketForReport.orderId,
+                      Number(selectedReason),
+                    );
+                    if (success) {
+                      setTickets((prevTickets) =>
+                        prevTickets.map((t) =>
+                          t.orderId === selectedTicketForReport.orderId
+                            ? { ...t, complaint: true }
+                            : t,
+                        ),
+                      );
+                    }
+                    setShowReportModal(false);
+                    setSelectedReason("");
+                  }}
+                  className="rounded-full bg-red-500 px-4 py-2 text-white"
+                >
+                  Báo cáo
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

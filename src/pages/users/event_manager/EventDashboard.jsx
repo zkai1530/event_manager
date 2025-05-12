@@ -239,7 +239,7 @@ const EventDashboard = () => {
           <div className="inline-block min-w-full p-1.5 align-middle">
             <div className="overflow-visible">
               <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-secondary">
+                <thead className="bg-secondary1">
                   <tr>
                     <th
                       scope="col"

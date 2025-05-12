@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Controller, useFieldArray, useForm } from "react-hook-form";
-import StatusIcon from "components/UI/StatusIcon";
+import StatusIcon from "@/components/ui/StatusIcon";
 import {
   FaArrowRight,
   FaCalendarCheck,
@@ -20,7 +20,7 @@ import {
   getEventInfoById,
   updateEvent,
 } from "services/user/eventService";
-import Loading from "components/UI/Loading";
+import Loading from "@/components/ui/Loading";
 import { formatSchedule } from "utils/formatSchedule";
 import { MdCloudUpload, MdDelete } from "react-icons/md";
 import Swal from "sweetalert2";
@@ -1083,7 +1083,7 @@ const CreateEvent = () => {
         {/* <div className="flex justify-end">
           <button
             type="button"
-            className="bg-secondary hover:bg-emphasis rounded px-4 py-2 text-white"
+            className="bg-secondary1 hover:bg-emphasis rounded px-4 py-2 text-white"
             onClick={handleSubmit(onSubmit)}
           >
             {!eventId ? "Thêm mới" : "Chỉnh sửa"}

@@ -16,325 +16,22 @@ import DOMPurify from "dompurify";
 import { useParams } from "react-router-dom";
 import { getEventInfoById } from "services/user/eventService";
 import TicketSelectionModal from "components/modal/TicketSelectionModal";
-import Loading from "components/UI/Loading";
-
-// const fakeData = {
-//   eventId: 7,
-//   name: "Tech Conference 2025",
-//   imageUrl: "https://i.ibb.co/KjwT91m0/event-background.jpg",
-//   summary: "A conference for technology enthusiasts.",
-//   description:
-//     "<p>Join us for a day of tech talks, networking, and hands-on workshops.</p>",
-//   capacity: 500,
-//   eventType: "RECURRING",
-//   isPublished: false,
-//   eventLocation: {
-//     city: "Hanoi",
-//     address: "123 Main Street",
-//     postalCode: "100000",
-//     country: "Vietnam",
-//   },
-//   schedules: [
-//     {
-//       scheduleId: 24,
-//       scheduleDate: "2025-04-28",
-//       startTime: "10:00:00",
-//       endTime: "11:00:00",
-//       ticketSchedules: [
-//         {
-//           id: 6,
-//           name: "VIP Ticket",
-//           description: "Access to all areas",
-//           sold: 0,
-//           price: 100.0,
-//           availableQuantity: 50,
-//           saleStart: "2025-04-01T10:00:00",
-//           saleEnd: "2025-04-05T22:00:00",
-//           discounts: [
-//             {
-//               discountId: "3",
-//               name: "Early Bird Discount",
-//               promoCode: null,
-//               discountType: "PERCENT",
-//               discountValue: 15.0,
-//               maxUses: null,
-//               timesUsed: 0,
-//               discountStart: "2025-04-20T00:00:00",
-//               discountEnd: "2025-04-21T23:59:59",
-//             },
-//             {
-//               discountId: "4",
-//               name: "abcd",
-//               promoCode: "banvatoi",
-//               discountType: "PERCENT",
-//               discountValue: 10.0,
-//               maxUses: 20,
-//               timesUsed: 0,
-//               discountStart: "2025-04-21T11:43:00",
-//               discountEnd: "2025-04-22T11:43:00",
-//             },
-//           ],
-//         },
-//         {
-//           id: 7,
-//           name: "VIP Ticket",
-//           description: "Access to all areas",
-//           sold: 0,
-//           price: 100.0,
-//           availableQuantity: 50,
-//           saleStart: "2025-04-01T10:00:00",
-//           saleEnd: "2025-04-05T22:00:00",
-//           discounts: [
-//             {
-//               discountId: "3",
-//               name: "Early Bird Discount",
-//               promoCode: null,
-//               discountType: "PERCENT",
-//               discountValue: 15.0,
-//               maxUses: null,
-//               timesUsed: 0,
-//               discountStart: "2025-04-20T00:00:00",
-//               discountEnd: "2025-04-21T23:59:59",
-//             },
-//             {
-//               discountId: "4",
-//               name: "abcd",
-//               promoCode: "banvatoi",
-//               discountType: "PERCENT",
-//               discountValue: 10.0,
-//               maxUses: 20,
-//               timesUsed: 0,
-//               discountStart: "2025-04-21T11:43:00",
-//               discountEnd: "2025-04-22T11:43:00",
-//             },
-//           ],
-//         },
-//         {
-//           id: 8,
-//           name: "VIP Ticket",
-//           description: "Access to all areas",
-//           sold: 0,
-//           price: 100.0,
-//           availableQuantity: 50,
-//           saleStart: "2025-04-01T10:00:00",
-//           saleEnd: "2025-04-05T22:00:00",
-//           discounts: [
-//             {
-//               discountId: "3",
-//               name: "Early Bird Discount",
-//               promoCode: null,
-//               discountType: "PERCENT",
-//               discountValue: 15.0,
-//               maxUses: null,
-//               timesUsed: 0,
-//               discountStart: "2025-04-20T00:00:00",
-//               discountEnd: "2025-04-21T23:59:59",
-//             },
-//             {
-//               discountId: "4",
-//               name: "abcd",
-//               promoCode: "banvatoi",
-//               discountType: "PERCENT",
-//               discountValue: 10.0,
-//               maxUses: 20,
-//               timesUsed: 0,
-//               discountStart: "2025-04-21T11:43:00",
-//               discountEnd: "2025-04-22T11:43:00",
-//             },
-//           ],
-//         },
-//         {
-//           id: 9,
-//           name: "VIP Ticket",
-//           description: "Access to all areas",
-//           sold: 0,
-//           price: 100.0,
-//           availableQuantity: 50,
-//           saleStart: "2025-04-01T10:00:00",
-//           saleEnd: "2025-04-05T22:00:00",
-//           discounts: [
-//             {
-//               discountId: "3",
-//               name: "Early Bird Discount",
-//               promoCode: null,
-//               discountType: "PERCENT",
-//               discountValue: 15.0,
-//               maxUses: null,
-//               timesUsed: 0,
-//               discountStart: "2025-04-20T00:00:00",
-//               discountEnd: "2025-04-21T23:59:59",
-//             },
-//             {
-//               discountId: "4",
-//               name: "abcd",
-//               promoCode: "banvatoi",
-//               discountType: "PERCENT",
-//               discountValue: 10.0,
-//               maxUses: 20,
-//               timesUsed: 0,
-//               discountStart: "2025-04-21T11:43:00",
-//               discountEnd: "2025-04-22T11:43:00",
-//             },
-//           ],
-//         },
-//         {
-//           id: 10,
-//           name: "VIP Ticket hạng vé phổ thông danh cho người dưới 19",
-//           description: "Access to all areas",
-//           sold: 0,
-//           price: 100.0,
-//           availableQuantity: 50,
-//           saleStart: "2025-04-01T10:00:00",
-//           saleEnd: "2025-04-05T22:00:00",
-//           discounts: [
-//             {
-//               discountId: "3",
-//               name: "Early Bird Discount",
-//               promoCode: null,
-//               discountType: "PERCENT",
-//               discountValue: 15.0,
-//               maxUses: null,
-//               timesUsed: 0,
-//               discountStart: "2025-04-20T00:00:00",
-//               discountEnd: "2025-04-21T23:59:59",
-//             },
-//             {
-//               discountId: "4",
-//               name: "abcd",
-//               promoCode: "banvatoi",
-//               discountType: "PERCENT",
-//               discountValue: 10.0,
-//               maxUses: 20,
-//               timesUsed: 0,
-//               discountStart: "2025-04-21T11:43:00",
-//               discountEnd: "2025-04-22T11:43:00",
-//             },
-//           ],
-//         },
-//         {
-//           id: 11,
-//           name: "VIP Ticket",
-//           description: "Access to all areas",
-//           sold: 0,
-//           price: 100.0,
-//           availableQuantity: 50,
-//           saleStart: "2025-04-01T10:00:00",
-//           saleEnd: "2025-04-05T22:00:00",
-//           discounts: [
-//             {
-//               discountId: "3",
-//               name: "Early Bird Discount",
-//               promoCode: null,
-//               discountType: "PERCENT",
-//               discountValue: 15.0,
-//               maxUses: null,
-//               timesUsed: 0,
-//               discountStart: "2025-04-20T00:00:00",
-//               discountEnd: "2025-04-21T23:59:59",
-//             },
-//             {
-//               discountId: "4",
-//               name: "abcd",
-//               promoCode: "banvatoi",
-//               discountType: "PERCENT",
-//               discountValue: 10.0,
-//               maxUses: 20,
-//               timesUsed: 0,
-//               discountStart: "2025-04-21T11:43:00",
-//               discountEnd: "2025-04-22T11:43:00",
-//             },
-//           ],
-//         },
-//       ],
-//     },
-//     {
-//       scheduleId: 25,
-//       scheduleDate: "2025-04-29",
-//       startTime: "10:00:00",
-//       endTime: "11:00:00",
-//       ticketSchedules: [
-//         {
-//           id: 6,
-//           name: "VIP Ticket",
-//           description: "Access to all areas",
-//           sold: 0,
-//           price: 100.0,
-//           availableQuantity: 50,
-//           saleStart: "2025-04-01T10:00:00",
-//           saleEnd: "2025-04-05T22:00:00",
-//           discounts: [
-//             {
-//               discountId: "3",
-//               name: "Early Bird Discount",
-//               promoCode: null,
-//               discountType: "PERCENT",
-//               discountValue: 15.0,
-//               maxUses: null,
-//               timesUsed: 0,
-//               discountStart: "2025-04-20T00:00:00",
-//               discountEnd: "2025-04-21T23:59:59",
-//             },
-//             {
-//               discountId: "4",
-//               name: "abcd",
-//               promoCode: "banvatoi",
-//               discountType: "PERCENT",
-//               discountValue: 10.0,
-//               maxUses: 20,
-//               timesUsed: 0,
-//               discountStart: "2025-04-21T11:43:00",
-//               discountEnd: "2025-04-22T11:43:00",
-//             },
-//           ],
-//         },
-//       ],
-//     },
-//     {
-//       scheduleId: 26,
-//       scheduleDate: "2025-05-10",
-//       startTime: "07:00:00",
-//       endTime: "09:00:00",
-//       ticketSchedules: [],
-//     },
-//   ],
-//   faqs: [
-//     {
-//       id: 10,
-//       answer: "Business casual.",
-//       question: "What is the dress code?",
-//     },
-//     {
-//       id: 11,
-//       answer: "Yes, lunch and coffee breaks are included.",
-//       question: "Will food be provided?",
-//     },
-//   ],
-// };
+import Loading from "@/components/ui/Loading";
 
 const EventDetails = () => {
   const [eventData, setEventData] = useState(null);
   const [selectedSchedule, setSelectedSchedule] = useState(null);
   const [openFAQStates, setOpenFAQStates] = useState(null);
-  const { eventId } = useParams();
   const [isLoading, setIsLoading] = useState(false);
   const [showTicketModal, setShowTicketModal] = useState(false);
-
-  // useEffect(() => {
-  //   setEventData(fakeData);
-  //   const filteredSchedules = filterAndSortSchedules(fakeData.schedules);
-  //   setSelectedSchedule(
-  //     filteredSchedules.length > 0 ? filteredSchedules[0] : null,
-  //   );
-
-  //   setOpenFAQStates(fakeData.faqs.map(() => false));
-  // }, []);
+  const { slug } = useParams();
+  const eventId = slug.split("-").pop();
 
   useEffect(() => {
     setIsLoading(true);
     getEventInfoById(eventId)
       .then((data) => {
         setEventData(data);
-        console.log("data", data);
         console.log("data", data);
 
         const filteredSchedules = filterAndSortSchedules(data.schedules);
@@ -351,7 +48,7 @@ const EventDetails = () => {
         setIsLoading(false);
       });
   }, [eventId]);
-  console.log("selectedSchedule ",selectedSchedule)
+  console.log("selectedSchedule ", selectedSchedule);
 
   const filterAndSortSchedules = (schedules) => {
     if (!schedules || schedules.length === 0) return [];
@@ -529,6 +226,21 @@ const EventDetails = () => {
     setIsEnd(swiper.isEnd);
   };
 
+  if (eventData && !eventData.isPublished) {
+    return (
+      <div className="mt-10 flex flex-col items-center">
+        <div className="mb-4 h-64 w-64 overflow-hidden rounded-full">
+          <img
+            src="https://media.licdn.com/dms/image/v2/C5112AQEw1fXuabCTyQ/article-inline_image-shrink_1500_2232/article-inline_image-shrink_1500_2232/0/1581099611064?e=1750896000&v=beta&t=fblYUKpkCWv7sAgz1kS7_a7oMZlVJxQ-G464m5HC0YM"
+            alt="No tickets"
+            className="h-full w-full object-cover"
+          />
+        </div>
+        <p className="text-lg">Không tìm thấy thông tin chi tiết</p>
+      </div>
+    );
+  }
+
   return (
     <>
       {eventData && (
@@ -547,7 +259,7 @@ const EventDetails = () => {
                 <h2 className="font-inter mb-2 text-[1.5rem] font-bold text-white uppercase">
                   {eventData.name}
                 </h2>
-                <div className="flex flex-col w-full">
+                <div className="flex w-full flex-col">
                   <div className="mb-2 flex items-center space-x-3">
                     <FaMapMarkerAlt size={22} className="text-white" />
                     <p className="text-main text-sm font-bold">{`${eventData.eventLocation.address}, ${eventData.eventLocation.city}, ${eventData.eventLocation.country}`}</p>

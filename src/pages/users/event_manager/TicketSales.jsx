@@ -66,7 +66,7 @@ const TicketSalesPage = () => {
         </div>
         <div className="flex flex-col rounded-lg bg-white p-4 shadow-[0px_1px_9px_-1px_rgba(0,0,0,0.2)]">
           <h2 className="text-md mb-1 font-medium text-gray-800">
-            Tickets Sold
+            Tổng vé bán
           </h2>
           <p className="text-2xl font-bold text-gray-900">
             {totalTicketsSold.toLocaleString()} /{" "}
@@ -126,10 +126,7 @@ const TicketSalesPage = () => {
             </thead>
             <tbody>
               {data.orders.map((order, idx) => (
-                <tr
-                  key={order.orderId}
-                  className={`text-sm`}
-                >
+                <tr key={order.orderId} className={`text-sm`}>
                   <td className="py-2 text-left font-medium text-gray-900">
                     {order.orderId}
                   </td>
@@ -141,7 +138,7 @@ const TicketSalesPage = () => {
                     )}
                   </td>
                   <td className="py-2 text-center">
-                    {order.orderTickets[0]?.ticketId}{" "}
+                    {order.orderTickets[0]?.ticketName}{" "}
                     {/* Adjust if ticket name is available */}
                   </td>
                   <td className="py-2 text-center font-semibold text-gray-900">

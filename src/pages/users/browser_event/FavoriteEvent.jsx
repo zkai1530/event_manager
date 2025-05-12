@@ -1,8 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { FaHeart } from "react-icons/fa";
-import Loading1 from "components/UI/Loading1";
-import { getFavoriteEvents, removeFavorite } from "services/user/favoriteService";
+import Loading1 from "@/components/ui/Loading1";
+import {
+  getFavoriteEvents,
+  removeFavorite,
+} from "services/user/favoriteService";
 import { FormatPrice } from "utils/formatPrice";
 
 const FavoriteEvent = () => {
@@ -126,7 +129,7 @@ const FavoriteEvent = () => {
             <div
               key={index}
               className="flex cursor-pointer items-center rounded-lg p-4 transition-all hover:shadow-[0px_0px_8px_2px_#97F9FF,0px_4px_6px_-1px_rgba(0,0,0,0.1)]"
-              onClick={() => navigate(`/details/${event.eventId}`)}
+              onClick={() => navigate(`/details/${event.slug}`)}
             >
               <div className="mr-4 h-22 w-32">
                 <img

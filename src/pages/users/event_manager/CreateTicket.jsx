@@ -1,5 +1,5 @@
 import ScheduleModal from "components/modal/ScheduleModal";
-import Loading from "components/UI/Loading";
+import Loading from "@/components/ui/Loading";
 import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { IoEllipsisVertical, IoTicketOutline } from "react-icons/io5";
@@ -299,7 +299,8 @@ const CreateTicket = () => {
                 <div className="flex items-center space-x-2">
                   <IoTicketOutline />
                   <p className="text-sm text-gray-500">
-                    Tổng cộng: {ticket.availableQuantity} vé
+                    {ticket.availableQuantity} vé /{" "}
+                    {ticket.schedules.length} lịch trình
                   </p>
                 </div>
               </div>

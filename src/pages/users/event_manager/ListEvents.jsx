@@ -1,4 +1,4 @@
-import Loading from "components/UI/Loading";
+import Loading from "@/components/ui/Loading";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getEventListInfoByUser } from "services/user/eventService";
@@ -9,11 +9,23 @@ const ListEvents = () => {
   const token = localStorage.getItem("token");
   const [events, setEvents] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [page, setPage] = useState(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    return parseInt(urlParams.get("page") || "0", 10);
+  });
+  const [totalPages, setTotalPages] = useState(0);
+  const [timeFilter, setTimeFilter] = useState(() => {
+    const status = window.location.pathname.split("/events/")[1] || "all";
+    return status === "all" ? "all" : status;
+  });
 
   useEffect(() => {
     setIsLoading(true);
-    getEventListInfoByUser(token)
-      .then(setEvents)
+    getEventListInfoByUser(token, page, timeFilter) 
+      .then((data) => {
+        setEvents(data.content);
+        setTotalPages(data.totalPages);
+      })
       .catch((err) => {
         console.error("getEventListInfoByUser", err);
         throw err;
@@ -21,13 +33,13 @@ const ListEvents = () => {
       .finally(() => {
         setIsLoading(false);
       });
-  }, [token]);
+  }, [token, page, timeFilter]);
   console.log("aa", events);
 
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <h1 className="font-logo mb-4 text-6xl font-[900] text-gray-900">
+      <h1 className="font-logo mb-4 text-6xl font-[900] text-main-bold">
         Events
       </h1>
 
@@ -83,22 +95,21 @@ const ListEvents = () => {
             </svg>
             <span>Dạng lịch</span>
           </button>
-          <button className="flex items-center space-x-2 rounded-lg border px-4 py-2 text-gray-700">
-            <span>Phác thảo</span>
-            <svg
-              className="h-5 w-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          <div className="">
+            <select
+              value={timeFilter}
+              onChange={(e) => {
+                const newFilter = e.target.value;
+                setTimeFilter(newFilter);
+                navigate(`/organizations/events/${newFilter}?page=${page}`);
+              }}
+              className="rounded-lg border px-4 py-2"
             >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M19 9l-7 7-7-7"
-              />
-            </svg>
-          </button>
+              <option value="all">Tất cả</option>
+              <option value="upcoming">Sắp xảy ra</option>
+              <option value="past">Đã qua</option>
+            </select>
+          </div>
         </div>
         <button className="rounded-lg bg-orange-600 px-4 py-2 text-white">
           Tạo sự kiện
@@ -111,7 +122,7 @@ const ListEvents = () => {
           <div className="inline-block min-w-full p-1.5 align-middle">
             <div className="overflow-visible">
               <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-secondary">
+                <thead className="bg-secondary1">
                   <tr>
                     <th
                       scope="col"
@@ -206,6 +217,35 @@ const ListEvents = () => {
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Pagination */}
+      <div className="mt-4 flex items-center justify-center space-x-4">
+        <button
+          onClick={() => {
+            const newPage = Math.max(page - 1, 0);
+            setPage(newPage);
+            navigate(`?page=${newPage}`);
+          }}
+          disabled={page === 0}
+          className="rounded bg-gray-300 px-4 py-2 disabled:opacity-50"
+        >
+          Previous
+        </button>
+        <span>
+          Trang {page + 1} / {totalPages}
+        </span>
+        <button
+          onClick={() => {
+            const newPage = page + 1;
+            setPage(newPage);
+            navigate(`?page=${newPage}`);
+          }}
+          disabled={page + 1 >= totalPages} // Disable nếu đã ở trang cuối
+          className="rounded bg-gray-300 px-4 py-2 disabled:opacity-50"
+        >
+          Next
+        </button>
       </div>
       <Loading isLoading={isLoading} />
     </div>

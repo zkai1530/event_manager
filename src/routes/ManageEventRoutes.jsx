@@ -5,7 +5,7 @@ import { Routes, Route } from "react-router-dom";
 import TicketManagement from "pages/users/event_manager/TicketManagement";
 import EventDashboard from "pages/users/event_manager/EventDashboard";
 import TicketSalesPage from "pages/users/event_manager/TicketSales";
-import BankAccountSetup from "@/pages/users/event_manager/BankAccountForm";
+import BankAccountSetup from "@/pages/users/event_manager/EventPublish";
 
 const ManageEventRoutes = () => {
   return (

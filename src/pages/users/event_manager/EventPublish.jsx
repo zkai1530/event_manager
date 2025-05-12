@@ -1,7 +1,13 @@
 import { useState, useEffect } from "react";
 import Select from "react-select";
 import { useParams } from "react-router-dom";
-import { getEventInfoById, publishEvent } from "services/user/eventService";
+import {
+  addCateAndTheme,
+  getCateAndTheme,
+  getEventInfoById,
+  publishEvent,
+  unpublishEvent,
+} from "services/user/eventService";
 import {
   addBankAccount,
   getMyBankAccount,
@@ -11,7 +17,7 @@ import Swal from "sweetalert2";
 import { FormatPrice } from "@/utils/formatPrice";
 import { MdOutlineReduceCapacity } from "react-icons/md";
 
-const BankAccountSetup = () => {
+const EventPublish = () => {
   const { eventId } = useParams();
   const [banks, setBanks] = useState([]);
   const [eventInfo, setEventInfo] = useState(null);
@@ -26,6 +32,12 @@ const BankAccountSetup = () => {
     event_type: "",
     category: "",
   });
+  const [categoryThemeOptions, setCategoryThemeOptions] = useState({
+    categories: [],
+    themes: [],
+  });
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedTheme, setSelectedTheme] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -98,6 +110,43 @@ const BankAccountSetup = () => {
     fetchData();
   }, [eventId, token, banks]);
 
+  useEffect(() => {
+    const fetchCategoryAndTheme = async () => {
+      try {
+        const data = await getCateAndTheme(token);
+        const categories = data
+          .filter((item) => item.type === "category")
+          .map((item) => ({
+            value: item.id,
+            label: item.name,
+          }));
+        const themes = data
+          .filter((item) => item.type === "theme")
+          .map((item) => ({
+            value: item.id,
+            label: item.name,
+          }));
+        setCategoryThemeOptions({ categories, themes });
+      } catch (error) {
+        console.error("fetchCategoryAndTheme", error);
+      }
+    };
+    fetchCategoryAndTheme();
+  }, [token]);
+
+  useEffect(() => {
+    setSelectedCategory(
+      categoryThemeOptions.categories.find(
+        (option) => option.value === eventInfo?.categoryId,
+      ) || null,
+    );
+    setSelectedTheme(
+      categoryThemeOptions.themes.find(
+        (option) => option.value === eventInfo?.themeId,
+      ) || null,
+    );
+  }, [eventInfo, categoryThemeOptions]);
+
   const handleBankChange = (selectedOption) => {
     setSelectedBank(selectedOption);
     const selectedBankData = banks.find(
@@ -117,11 +166,11 @@ const BankAccountSetup = () => {
   };
 
   const handleTypeChange = (selectedOption) => {
-    setFormData({ ...formData, event_type: selectedOption?.value || "" });
+    setSelectedCategory(selectedOption);
   };
 
   const handleCategoryChange = (selectedOption) => {
-    setFormData({ ...formData, category: selectedOption?.value || "" });
+    setSelectedTheme(selectedOption); 
   };
 
   const handlePublish = async (e) => {
@@ -133,6 +182,19 @@ const BankAccountSetup = () => {
     setError("");
     try {
       setLoading(true);
+      const response = await addCateAndTheme(
+        eventId,
+        selectedCategory?.value || null,
+        selectedTheme?.value || null,
+        token,
+      );
+      if (response.message === "Add category and theme was successfully!") {
+        setEventInfo((prev) => ({
+          ...prev,
+          categoryId: selectedCategory?.value || null,
+          themeId: selectedTheme?.value || null,
+        }));
+      }
       const data = await publishEvent(eventId, token);
       if (data.message === "Event published successfully!") {
         Swal.fire({
@@ -140,7 +202,7 @@ const BankAccountSetup = () => {
           text: `Sự kiện đã được publish!.`,
           icon: "success",
         });
-        console.log(data.data);
+        setEventInfo((prev) => ({ ...prev, isPublished: true }));
       } else {
         Swal.fire({
           title: "Lỗi!",
@@ -160,6 +222,31 @@ const BankAccountSetup = () => {
         Swal.fire({
           title: "Lỗi!",
           text: `Publish sự kiện không thành công!.`,
+          icon: "error",
+        });
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUnpublish = async () => {
+    try {
+      const data = await unpublishEvent(eventId, token);
+      if (data.message === "Event unpublished successfully!") {
+        Swal.fire({
+          title: "Huỷ Publish sự kiện thành công!",
+          text: `Sự kiện hiện đang phác thảo!.`,
+          icon: "success",
+        });
+        setEventInfo((prev) => ({ ...prev, isPublished: false }));
+      }
+    } catch (error) {
+      console.error("handleUnpublish ", error.response.data);
+      if (error.response.data.message === "Event is already unpublished!") {
+        Swal.fire({
+          title: "Sự kiện đã được huỷ publish!",
+          text: `Sự kiện hiện đang phác thảo!.`,
           icon: "error",
         });
       }
@@ -243,15 +330,6 @@ const BankAccountSetup = () => {
     shortName: bank.shortName,
   }));
 
-  const typeOptions = [
-    { value: "Seminar or Talk", label: "Seminar or Talk" },
-    { value: "Multiple Dates", label: "Multiple Dates" },
-  ];
-  const categoryOptions = [
-    { value: "School Activities", label: "School Activities" },
-    { value: "Dinner", label: "Dinner" },
-  ];
-
   const customFilterOption = (option, rawInput) => {
     const input = rawInput.toLowerCase();
     return (
@@ -261,6 +339,7 @@ const BankAccountSetup = () => {
   };
 
   const isBankAdded = !!bankAccount;
+  console.log(eventInfo);
 
   return (
     <div className="px-2">
@@ -289,11 +368,11 @@ const BankAccountSetup = () => {
                     ? "Multiple Dates"
                     : eventInfo.schedules[0]?.scheduleDate}
                 </p>
-                <p className="text-sm text-gray-600">
+                <div className="text-sm text-gray-600">
                   {eventInfo.eventLocation.address},{" "}
                   {eventInfo.eventLocation.city},{" "}
                   {eventInfo.eventLocation.country}
-                  <p className="text-md flex font-semibold text-gray-900">
+                  <div className="text-md flex font-semibold text-gray-900">
                     {FormatPrice(
                       Math.min(
                         ...eventInfo.schedules.flatMap((s) =>
@@ -313,8 +392,8 @@ const BankAccountSetup = () => {
                       <MdOutlineReduceCapacity />
                       <span>{eventInfo.capacity}</span>
                     </div>
-                  </p>
-                </p>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -331,7 +410,8 @@ const BankAccountSetup = () => {
                     Danh mục
                   </label>
                   <Select
-                    options={typeOptions}
+                    options={categoryThemeOptions.categories}
+                    value={selectedCategory} // Dùng state riêng
                     onChange={handleTypeChange}
                     placeholder="Chọn danh mục"
                     isClearable
@@ -361,7 +441,8 @@ const BankAccountSetup = () => {
                     Chủ đề
                   </label>
                   <Select
-                    options={categoryOptions}
+                    options={categoryThemeOptions.themes}
+                    value={selectedTheme} // Dùng state riêng
                     onChange={handleCategoryChange}
                     placeholder="Chọn chủ đề"
                     isClearable
@@ -488,11 +569,11 @@ const BankAccountSetup = () => {
             />
           </div>
         )}
-        <div className="mt-6">
+        <div className="mt-6 flex justify-end">
           <button
             type="button"
             onClick={handleAddOrUpdateBank}
-            className={`w-full rounded-lg p-3 font-semibold transition ${
+            className={`rounded-lg p-3 font-semibold transition ${
               formData.bankName &&
               formData.accountNumber &&
               formData.accountName
@@ -510,7 +591,7 @@ const BankAccountSetup = () => {
         </div>
         <button
           type="submit"
-          onClick={handlePublish}
+          onClick={eventInfo?.isPublished ? handleUnpublish : handlePublish}
           className={`mt-4 w-full cursor-pointer rounded-lg p-3 font-semibold transition ${
             isBankAdded
               ? "bg-main hover:bg-main-bold text-white"
@@ -518,11 +599,11 @@ const BankAccountSetup = () => {
           }`}
           disabled={!isBankAdded}
         >
-          Publish sự kiện
+          {eventInfo?.isPublished ? "Hủy publish sự kiện" : "Publish sự kiện"}
         </button>
       </div>
     </div>
   );
 };
 
-export default BankAccountSetup;
+export default EventPublish;

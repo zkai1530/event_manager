@@ -69,7 +69,7 @@ const AccountInfo = () => {
       <div className="mx-auto max-w-4xl">
         <div className="mb-10 flex items-center justify-center">
           <FaUserCircle className="mr-3 text-4xl text-blue-500" />
-          <h2 className="bg-gradient-to-r from-blue-600 to-purple-500 bg-clip-text text-5xl font-extrabold text-transparent">
+          <h2 className="bg-gradient-to-r from-blue-600 to-purple-500 bg-clip-text text-5xl font-extrabold text-transparent p-2">
             Thông tin tài khoản
           </h2>
         </div>

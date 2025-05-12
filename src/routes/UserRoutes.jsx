@@ -1,3 +1,4 @@
+import AccountInfo from "@/pages/users/browser_event/AccountManagement";
 import UserLayout from "layout/UserLayout";
 import FavoriteEvent from "pages/users/browser_event/FavoriteEvent";
 import Home from "pages/users/browser_event/Home";
@@ -10,6 +11,7 @@ const UserRoutes = () => {
       <Route path="/" element={<UserLayout />}>
         <Route path="my-tickets/:status/:timeFilter" element={<MyTickets />} />
         <Route path="favorite-event" element={<FavoriteEvent />} />
+        <Route path="account" element={<AccountInfo />} />
       </Route>
     </Routes>
   );

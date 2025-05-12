@@ -1,4 +1,4 @@
-import Loading from "components/UI/Loading";
+import Loading from "@/components/ui/Loading";
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { getEventInfoById, getEventProgress } from "services/user/eventService";
@@ -53,7 +53,7 @@ const EventStepper = () => {
     });
   }, [eventId, token]);
 
-  console.log("pr", progress)
+  console.log("pr", progress);
 
   const isStepEnabled = (stepId) => {
     if (isCreateMode) return stepId === 1;
@@ -66,7 +66,7 @@ const EventStepper = () => {
   };
 
   return (
-    <div className="bg-secondary-light fixed h-[calc(100vh-4.063rem)] w-1/5 overflow-y-auto py-4">
+    <div className="bg-secondary1-light fixed h-[calc(100vh-4.063rem)] w-1/5 overflow-y-auto py-4">
       <div className="mb-4 flex items-center px-5">
         {/* <span className="mr-2 text-blue-500">←</span>
         <span className="text-blue-500">Back to events</span> */}
@@ -83,7 +83,9 @@ const EventStepper = () => {
           />
           <h2 className="mt-2 text-xl font-semibold">{eventInfo?.name}</h2>
           <div className="mt-2 flex items-center">
-            <button className={`rounded-lg bg-gray-200 px-3 py-1 text-gray-700`}>
+            <button
+              className={`rounded-lg bg-gray-200 px-3 py-1 text-gray-700`}
+            >
               {eventInfo != null && eventInfo?.isPublished
                 ? "Đã xuất bản"
                 : "Phác thảo"}
@@ -125,7 +127,7 @@ const EventStepper = () => {
               onClick={() => enabled && navigate(linkPath)}
             >
               <span
-                className={`bg-secondary mr-3 flex h-8 w-8 items-center justify-center rounded-full text-sm text-white ${
+                className={`bg-secondary1 mr-3 flex h-8 w-8 items-center justify-center rounded-full text-sm text-white ${
                   enabled ? "bg-blue-500" : "bg-gray-400"
                 }`}
               >

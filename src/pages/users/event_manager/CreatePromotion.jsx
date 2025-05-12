@@ -1,5 +1,5 @@
 import TicketModal from "components/modal/TicketModal";
-import Loading from "components/UI/Loading";
+import Loading from "@/components/ui/Loading";
 import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { IoTicketOutline } from "react-icons/io5";
@@ -85,7 +85,11 @@ const CreatePromotion = () => {
     try {
       setIsLoading(true);
       if (requestData.discountId) {
-        const data = await updateDiscount(requestData.discountId, requestData, token);
+        const data = await updateDiscount(
+          requestData.discountId,
+          requestData,
+          token,
+        );
         if (data.message === "Update promotion was successfully!") {
           Swal.fire({
             title: "Cập nhật khuyến mãi thành công!",
@@ -464,7 +468,7 @@ const CreatePromotion = () => {
           <div className="inline-block min-w-full p-1.5 align-middle">
             <div className="overflow-visible">
               <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-secondary">
+                <thead className="bg-secondary1">
                   <tr>
                     <th
                       scope="col"
@@ -523,7 +527,7 @@ const CreatePromotion = () => {
                           </td>
                           <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-800">
                             <div
-                              className={`${promotion.promoCode ? "bg-secondary-light" : "bg-main-semilight"} inline-block rounded-xl px-2 py-1 font-semibold`}
+                              className={`${promotion.promoCode ? "bg-secondary1-light" : "bg-main-semilight"} inline-block rounded-xl px-2 py-1 font-semibold`}
                             >
                               {promotion.promoCode ? "Voucher" : "Discount"}
                             </div>

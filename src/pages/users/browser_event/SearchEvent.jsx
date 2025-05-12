@@ -1,9 +1,9 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
-import SearchFilter from "components/UI/SearchFilter";
+import SearchFilter from "@/components/ui/SearchFilter";
 import { FaMapMarkerAlt } from "react-icons/fa";
 import { useState, useEffect } from "react";
 import { searchEvents } from "services/user/eventService";
-import Loading1 from "components/UI/Loading1";
+import Loading1 from "@/components/ui/Loading1";
 
 const formatDate = (dateString) => {
   const date = new Date(dateString);
@@ -152,7 +152,7 @@ const SearchEvent = () => {
                       <div
                         key={event.eventId}
                         className="relative cursor-pointer overflow-hidden rounded-lg transition-shadow duration-300 hover:shadow-lg"
-                        onClick={() => navigate(`/details/${event.eventId}`)}
+                        onClick={() => navigate(`/details/${event.slug  }`)}
                       >
                         <div className="relative">
                           <img
