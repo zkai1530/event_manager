@@ -33,6 +33,8 @@ import com.datn.event_manager.enums.EventType;
 public interface EventMapper {
     @Named("toEventResponse")
     @Mapping(target = "userId", source = "user.userId")
+    @Mapping(target = "categoryId", source = "category.categoryId")
+    @Mapping(target = "themeId", source = "theme.themeId")
     EventResponse toEventResponse(Event event);
 
     @IterableMapping(qualifiedByName = "toEventResponse")

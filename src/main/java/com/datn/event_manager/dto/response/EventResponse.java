@@ -30,4 +30,6 @@ public class EventResponse {
     EventLocationResponse eventLocation;
     List<EventScheduleResponse> schedules;
     List<FAQResponse> faqs;
+    Long categoryId;
+    Long themeId;
 }

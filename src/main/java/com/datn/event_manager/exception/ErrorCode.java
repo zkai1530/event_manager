@@ -24,6 +24,8 @@ public enum ErrorCode {
     ORDER_NOT_FOUND("Order not found!", HttpStatus.NOT_FOUND),
     FAVORITE_NOT_FOUND("Favorite not found!", HttpStatus.NOT_FOUND),
     NOTIFICATION_NOT_FOUND("Notification not found!", HttpStatus.NOT_FOUND),
+    CATEGORY_NOT_FOUND("Category not found!", HttpStatus.NOT_FOUND),
+    THEME_NOT_FOUND("Theme not found!", HttpStatus.NOT_FOUND),
     DISCOUNT_EXPIRED("Discount has expired!", HttpStatus.BAD_REQUEST),
     DISCOUNT_USAGE_LIMIT_REACHED("Discount has reached maximum usage!", HttpStatus.NOT_FOUND),
     GOOGLE_AUTH_FAILED("Google auth failed", HttpStatus.NOT_FOUND),
@@ -37,13 +39,11 @@ public enum ErrorCode {
     ALREADY_FOLLOW("You are already following this user", HttpStatus.BAD_REQUEST),
     ALREADY_CHECKED_IN("This order already checked in!", HttpStatus.BAD_REQUEST),
     NOT_FOLLOWING("You are not following this user", HttpStatus.BAD_REQUEST),
-    USER_ALREADY_HAS_BANK_ACCOUNT("User already has bank account!",HttpStatus.CONFLICT),
+    USER_ALREADY_HAS_BANK_ACCOUNT("User already has bank account!", HttpStatus.CONFLICT),
     USER_HAS_NO_BANK_ACCOUNT("User has no bank account!", HttpStatus.NOT_FOUND),
     REASON_NOT_FOUND("Reason not found!", HttpStatus.NOT_FOUND),
     ALREADY_COMPLAINED("You have already submitted a complaint for this order.", HttpStatus.BAD_REQUEST),
     ALREADY_DISBURSED("This event has already been disbursed.", HttpStatus.BAD_REQUEST);
-
-
 
     ErrorCode(String message, HttpStatusCode httpStatusCode) {
         this.message = message;

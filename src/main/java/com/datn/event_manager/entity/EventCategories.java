@@ -1,14 +1,10 @@
 package com.datn.event_manager.entity;
 
-import java.util.List;
-
-import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.ManyToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -21,18 +17,16 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE) 
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
-@Table(name = "category") 
-public class Category {
+@Table(name = "event_categories")
+public class EventCategories {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "category_id")
     Long categoryId;
 
-    @Column(name = "category_name", nullable = false)
     String categoryName;
 
-    @ManyToMany(mappedBy = "categories", fetch = FetchType.LAZY)
-    List<Event> events;
+    @OneToOne(mappedBy = "category")
+    Event event;
 }

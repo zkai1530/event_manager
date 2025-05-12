@@ -31,6 +31,7 @@ public class Message {
     public static final String CHECK_IN_SUCCESS = "Check in successfully!";
     public static final String GET_MYTICKET_SUCCESS = "Get my tickets successfully!";
     public static final String CONFIRM_DISBURSED = "Disbursement confirmed successfully!";
+    public static final String ADD_CATE_AND_THEME_SUCCESS = "Add category and theme was successfully!";
 
 }
 

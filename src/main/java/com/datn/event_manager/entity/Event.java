@@ -83,13 +83,13 @@ public class Event {
     @OneToMany(mappedBy = "event", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     List<Notification> notifications;
 
-    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
-    @JoinTable(
-        name = "event_category",
-        joinColumns = @JoinColumn(name = "event_id"),
-        inverseJoinColumns = @JoinColumn(name = "category_id")
-    )
-    List<Category> categories;
+    @OneToOne
+    @JoinColumn(name = "category_id")
+    EventCategories category;
+
+    @OneToOne
+    @JoinColumn(name = "theme_id")
+    EventThemes theme;
 
     @OneToMany(mappedBy = "event", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     List<FAQ> faqs;

@@ -1,6 +1,5 @@
 package com.datn.event_manager.controller;
 
-import java.io.IOException;
 import java.time.LocalDate;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -23,7 +22,6 @@ import com.datn.event_manager.dto.request.EventRequest;
 import com.datn.event_manager.dto.response.APIResponse;
 import com.datn.event_manager.dto.response.EventSearchResponse;
 import com.datn.event_manager.dto.response.Message;
-import com.datn.event_manager.service.Cloudinary.CloudinaryService;
 import com.datn.event_manager.service.Event.EventService;
 
 import lombok.AccessLevel;
@@ -74,7 +72,8 @@ public class EventController {
 
     // @GetMapping
     // public ResponseEntity<APIResponse> getEventByUser() {
-    //     return ResponseEntity.ok(new APIResponse(Message.RESOURCE_FOUND, eventService.getEventsByUser()));
+    // return ResponseEntity.ok(new APIResponse(Message.RESOURCE_FOUND,
+    // eventService.getEventsByUser()));
     // }
 
     @GetMapping
@@ -120,5 +119,20 @@ public class EventController {
         Page<EventSearchResponse> searchResult = eventService.searchByName(searchKeyword, location, isFree, startDate,
                 endDate, eventStatus, pageable);
         return ResponseEntity.ok(new APIResponse(Message.RESOURCE_FOUND, searchResult));
+    }
+
+    @GetMapping("/category-theme")
+    public ResponseEntity<APIResponse> getCategoryAndTheme() {
+        return ResponseEntity.ok(new APIResponse(Message.RESOURCE_FOUND, eventService.getCategoryAndTheme()));
+    }
+
+    @PostMapping("/category-theme/{eventId}/{categoryId}/{themeId}")
+    public ResponseEntity<APIResponse> addCategoryAndTheme(@PathVariable Long eventId,
+            @PathVariable Long categoryId,
+            @PathVariable Long themeId) {
+
+        eventService.addCategoryAndTheme(eventId, categoryId, themeId);
+        return ResponseEntity
+                .ok(new APIResponse(Message.ADD_CATE_AND_THEME_SUCCESS, null));
     }
 }

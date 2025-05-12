@@ -21,13 +21,16 @@ import com.datn.event_manager.controller.TicketController;
 import com.datn.event_manager.dto.request.EventLocationRequest;
 import com.datn.event_manager.dto.request.EventRequest;
 import com.datn.event_manager.dto.request.FAQRequest;
+import com.datn.event_manager.dto.response.CategoryAndThemeResponse;
 import com.datn.event_manager.dto.response.EventByUserResponse;
 import com.datn.event_manager.dto.response.EventResponse;
 import com.datn.event_manager.dto.response.EventSearchResponse;
 import com.datn.event_manager.dto.response.EventStatusResponse;
 import com.datn.event_manager.entity.Event;
+import com.datn.event_manager.entity.EventCategories;
 import com.datn.event_manager.entity.EventLocation;
 import com.datn.event_manager.entity.EventSchedule;
+import com.datn.event_manager.entity.EventThemes;
 import com.datn.event_manager.entity.FAQ;
 import com.datn.event_manager.entity.User;
 import com.datn.event_manager.enums.EventType;
@@ -53,6 +56,8 @@ public class EventServiceImpl implements EventService {
     EventRepository eventRepository;
     EventLocationRepository eventLocationRepository;
     EventScheduleRepository eventScheduleRepository;
+    EventThemesRepository eventThemesRepository;
+    EventCategoriesRepository eventCategoriesRepository;
     TicketRepository ticketRepository;
     EventMapper eventMapper;
     FAQRepository faqRepository;
@@ -495,6 +500,44 @@ public class EventServiceImpl implements EventService {
         Page<Event> events = eventRepository.searchByName(keyword, location, isFree, startDate, endDate, eventStatus,
                 pageable); // Thêm eventStatus
         return events.map(eventMapper::toEventSearchResponse);
+    }
+
+    @Override
+    public List<CategoryAndThemeResponse> getCategoryAndTheme() {
+        List<CategoryAndThemeResponse> categorysAndThemes = new ArrayList<>();
+
+        List<EventCategories> categories = eventCategoriesRepository.findAll();
+        for (EventCategories category : categories) {
+            categorysAndThemes.add(new CategoryAndThemeResponse(category.getCategoryId(), category.getCategoryName(), "category"));
+        }
+
+        List<EventThemes> themes = eventThemesRepository.findAll();
+        for (EventThemes theme : themes) {
+            categorysAndThemes.add(new CategoryAndThemeResponse(theme.getThemeId(), theme.getThemeName(), "theme"));
+        }
+
+        return categorysAndThemes;
+    }
+
+    @Override
+    public void addCategoryAndTheme(Long eventId, Long categoryId, Long themeId) {
+        User user = authenticationService.getUserFromToken();
+
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new AppException(ErrorCode.EVENT_NOT_FOUND));
+        // check user have permission ? (authorized?)
+        if (user.getUserId() != event.getUser().getUserId()) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
+        EventCategories eventCategories = eventCategoriesRepository.findById(categoryId).orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
+
+        EventThemes eventThemes = eventThemesRepository.findById(themeId)
+                .orElseThrow(() -> new AppException(ErrorCode.THEME_NOT_FOUND));
+
+        event.setCategory(eventCategories);
+        event.setTheme(eventThemes);
+        eventRepository.save(event);
     }
 
 }
