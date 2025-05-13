@@ -1,9 +1,7 @@
 package com.datn.event_manager.dto.response;
 
 import java.math.BigDecimal;
-import java.util.List;
 
-import com.datn.event_manager.entity.FAQ;
 import com.datn.event_manager.enums.EventType;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;

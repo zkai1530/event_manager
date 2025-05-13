@@ -20,5 +20,6 @@ public class OrderDetailResponse {
     Long orderId;
     String userName;
     LocalDateTime createdAt;
+    Boolean isCheckedIn;
     List<OrderTicketResponse1> orderTickets;
 }

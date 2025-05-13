@@ -1,5 +1,7 @@
 package com.datn.event_manager.service.Authentication;
 
+import java.security.Permission;
+import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.StringJoiner;
@@ -22,23 +24,30 @@ import org.springframework.web.client.RestTemplate;
 
 import com.datn.event_manager.dto.request.AuthenticationRequest;
 import com.datn.event_manager.dto.request.LogoutRequest;
+import com.datn.event_manager.dto.response.IntrospectResponse;
 import com.datn.event_manager.dto.response.LoginResponseDTO;
 import com.datn.event_manager.dto.response.google.GoogleTokenResponse;
 import com.datn.event_manager.dto.response.google.GoogleUserInfo;
+import com.datn.event_manager.entity.InvalidateToken;
 import com.datn.event_manager.entity.Role;
 import com.datn.event_manager.entity.User;
 import com.datn.event_manager.exception.AppException;
 import com.datn.event_manager.exception.ErrorCode;
+import com.datn.event_manager.repository.InvalidateTokenRepository;
 import com.datn.event_manager.repository.RoleRepository;
 import com.datn.event_manager.repository.UserRepository;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jose.JWSAlgorithm;
 import com.nimbusds.jose.JWSHeader;
 import com.nimbusds.jose.JWSObject;
+import com.nimbusds.jose.JWSVerifier;
 import com.nimbusds.jose.Payload;
 import com.nimbusds.jose.crypto.MACSigner;
+import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
 
+import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -54,6 +63,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     PasswordEncoder passwordEncoder;
     RestTemplate restTemplate;
     RoleRepository roleRepository;
+    InvalidateTokenRepository invalidateTokenRepository;
 
     @NonFinal
     @Value("${jwt.signerKey}")
@@ -88,7 +98,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
 
     }
-    
+
     @Override
     public LoginResponseDTO loginWithGoogle(String code) {
         // 1. Exchange code to take access_token
@@ -99,7 +109,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         // 3. Save user in DB
         User user = userRepository.findByEmail(userInfo.getEmail())
-        .orElse(null);
+                .orElse(null);
 
         if (user == null) {
             try {
@@ -118,8 +128,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                         .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
             }
         }
- 
-        return new LoginResponseDTO(generateToken(user), user.getEmail(), user.getAvatarUrl());
+
+        return new LoginResponseDTO(generateToken(user), user.getEmail(), user.getAvatarUrl(),
+                user.getRole().getRoleName());
     }
 
     private GoogleTokenResponse exchangeCodeForToken(String code) {
@@ -134,7 +145,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         body.add("grant_type", "authorization_code");
 
         HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(body, headers);
-        ResponseEntity<GoogleTokenResponse> response = restTemplate.postForEntity(TOKEN_URL, request, GoogleTokenResponse.class);
+        ResponseEntity<GoogleTokenResponse> response = restTemplate.postForEntity(TOKEN_URL, request,
+                GoogleTokenResponse.class);
 
         if (response.getStatusCode() == HttpStatus.OK) {
             return response.getBody();
@@ -147,7 +159,8 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         headers.setBearerAuth(accessToken);
 
         HttpEntity<String> entity = new HttpEntity<>(headers);
-        ResponseEntity<GoogleUserInfo> response = restTemplate.exchange(USER_INFO_URL, HttpMethod.GET, entity, GoogleUserInfo.class);
+        ResponseEntity<GoogleUserInfo> response = restTemplate.exchange(USER_INFO_URL, HttpMethod.GET, entity,
+                GoogleUserInfo.class);
 
         if (response.getStatusCode() == HttpStatus.OK) {
             return response.getBody();
@@ -186,8 +199,52 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     }
 
     @Override
-    public void logout(LogoutRequest request) {
-        
+    @Transactional
+    public IntrospectResponse introspect(String token) throws JOSEException, ParseException {
+        SignedJWT signedJWT = verifyToken(token);
+
+        User user = userRepository.findByEmail(signedJWT.getJWTClaimsSet().getSubject())
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        String role = user.getRole().getRoleName();
+        return IntrospectResponse.builder()
+                .valid(true)
+                .role(role)
+                .build();
+    }
+
+    @Override
+    public void logout(LogoutRequest request) throws JOSEException, ParseException {
+        var signToken = verifyToken(request.getToken());
+
+        String jit = signToken.getJWTClaimsSet().getJWTID();
+        Date expiryTime = signToken.getJWTClaimsSet().getIssueTime();
+
+        InvalidateToken invalidateToken = InvalidateToken.builder()
+                .tokenId(jit)
+                .expiryTime(expiryTime)
+                .build();
+
+        invalidateTokenRepository.save(invalidateToken);
+    }
+
+    private SignedJWT verifyToken(String token) throws JOSEException, ParseException {
+        JWSVerifier verifier = new MACVerifier(signerKey.getBytes());
+
+        SignedJWT signedJWT = SignedJWT.parse(token);
+
+        Date expriryDate = signedJWT.getJWTClaimsSet().getExpirationTime();
+
+        var verified = signedJWT.verify(verifier);
+
+        if (!(verified && expriryDate.after(new Date())))
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+
+        if (invalidateTokenRepository.existsById(signedJWT.getJWTClaimsSet().getJWTID())) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+
+        return signedJWT;
     }
 
     @Override

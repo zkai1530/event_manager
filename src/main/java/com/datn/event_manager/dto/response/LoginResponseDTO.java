@@ -16,4 +16,5 @@ public class LoginResponseDTO {
     String token;
     String email;
     String avatarUrl;
+    String roleName;
 }

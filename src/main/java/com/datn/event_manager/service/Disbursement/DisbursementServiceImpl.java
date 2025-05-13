@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import org.mapstruct.ap.internal.util.Message;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -31,6 +32,7 @@ import com.datn.event_manager.repository.OrderRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
 
 @Service
 @RequiredArgsConstructor
@@ -42,12 +44,16 @@ public class DisbursementServiceImpl implements DisbursementService {
     EventRepository eventRepository;
     EventMapper eventMapper;
 
+    @NonFinal
+    @Value("${bank.secret-key}")
+    String bankSecretKey;
+
     @PreAuthorize("hasRole('ADMIN')")
     @Override
     public Page<DisbursementEligibleEventResponse> getEligibleDisbursementEvents(Pageable pageable) {
         LocalDate currentDate = LocalDate.now();
         Page<Event> events = eventRepository.findEventsEligibleForDisbursement(currentDate, pageable);
-        return events.map(eventMapper::toEligibleEventResponse);
+        return events.map(event -> eventMapper.toEligibleEventResponse(event, bankSecretKey));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -65,14 +71,17 @@ public class DisbursementServiceImpl implements DisbursementService {
                     if (totalPrice == null)
                         totalPrice = BigDecimal.ZERO;
 
-                    // Tổng số vé đã bán (sold) và tổng check-in từ ticketSchedules đã fetch
+                    // Tổng số vé đã bán (sold) và tổng vé có sẵn và tổng check-in từ ticketSchedules đã fetch
                     List<TicketSchedule> ticketSchedules = schedule.getTicketSchedules() != null
                             ? schedule.getTicketSchedules()
                             : Collections.emptyList();
-                    long soldTickets = ticketSchedules.stream()
+                    Long soldTickets = ticketSchedules.stream()
                             .mapToLong(TicketSchedule::getSold)
                             .sum();
-                    long checkInCount = ticketSchedules.stream()
+                    Long totalAvailableQuantity = ticketSchedules.stream()
+                                                .mapToLong(TicketSchedule::getAvailableQuantity)
+                                                .sum();
+                    Long checkInCount = ticketSchedules.stream()
                             .mapToLong(TicketSchedule::getCheckedInCount)
                             .sum();
 
@@ -111,6 +120,7 @@ public class DisbursementServiceImpl implements DisbursementService {
                             totalPrice,
                             soldTickets,
                             complaintTickets,
+                            totalAvailableQuantity,
                             checkInCount,
                             complaintRatio,
                             checkInRatio,

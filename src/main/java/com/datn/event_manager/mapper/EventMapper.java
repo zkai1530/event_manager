@@ -7,6 +7,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.mapstruct.Context;
 import org.mapstruct.IterableMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -28,6 +29,7 @@ import com.datn.event_manager.entity.FavoriteEvent;
 import com.datn.event_manager.entity.Ticket;
 import com.datn.event_manager.entity.TicketSchedule;
 import com.datn.event_manager.enums.EventType;
+import com.datn.event_manager.utils.AESEncryptionUtil;
 
 @Mapper(componentModel = "spring", uses = { TicketMapper.class, ScheduleMapper.class })
 public interface EventMapper {
@@ -48,10 +50,21 @@ public interface EventMapper {
 
     @Named("toEligibleEventResponse")
     @Mapping(target = "eventName", source = "name")
-    DisbursementEligibleEventResponse toEligibleEventResponse(Event event);
+    @Mapping(target = "accountNumber", source = "user.bankAccount.accountNumber", qualifiedByName = "decryptAccountNumber")
+    @Mapping(target = "accountName", source = "user.bankAccount.accountName")
+    @Mapping(target = "bankShortName", source = "user.bankAccount.bankShortName")
+    DisbursementEligibleEventResponse toEligibleEventResponse(Event event, @Context String secretKey);
+
+    @Named("decryptAccountNumber")
+    default String decryptAccountNumber(String encryptedAccountNumber, @Context String secretKey) throws Exception {
+        if (encryptedAccountNumber != null) {
+            return AESEncryptionUtil.decrypt(encryptedAccountNumber, secretKey);
+        }
+        return null;
+    }
 
     @IterableMapping(qualifiedByName = "toEligibleEventResponse")
-    List<DisbursementEligibleEventResponse> toEligibleEventResponse(List<Event> events);
+    List<DisbursementEligibleEventResponse> toEligibleEventResponse(List<Event> events, @Context String secretKey);
 
     @Named("mapScheduleItem")
     default ScheduleItem mapScheduleItem(Event event) {

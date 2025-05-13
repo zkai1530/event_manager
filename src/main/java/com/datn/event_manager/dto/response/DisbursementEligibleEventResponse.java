@@ -16,4 +16,7 @@ public class DisbursementEligibleEventResponse {
     Long eventId;
     String eventName;
     String imageUrl;
+    String accountNumber;
+    String accountName;
+    String bankShortName;
 }

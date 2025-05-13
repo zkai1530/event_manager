@@ -1,6 +1,4 @@
-package com.datn.event_manager.dto.response.ticketsales;
-
-import java.math.BigDecimal;
+package com.datn.event_manager.dto.response;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -10,12 +8,11 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class OrderTicketResponse1 {
-    String ticketName;
-    Integer quantity;
-    BigDecimal priceAtPurchase;
+public class IntrospectResponse {
+    boolean valid;
+    String role;
 }

@@ -24,6 +24,7 @@ public class ScheduleDisbursementResponse {
     BigDecimal totalPrice;
     Long soldTickets;
     Long complaintTickets;
+    Long totalAvailableQuantity;
     Long checkInCount;
     double complaintRatio;
     double checkInRatio;
