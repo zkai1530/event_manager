@@ -32,21 +32,22 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
 
         Page<Order> findByUserAndStatus(User user, OrderStatus status, Pageable pageable);
 
-        List<Order> findAllByUser(User user);
+        // List<Order> findAllByUser(User user);
 
-        List<Order> findAllByUserAndStatus(User user, OrderStatus status);
+        // List<Order> findAllByUserAndStatus(User user, OrderStatus status);
 
-        @Query("SELECT o FROM Order o " +
-                        "WHERE o.user = :user " +
-                        "AND (:status IS NULL OR o.status = :status) " +
-                        "AND ((:isUpcoming = TRUE AND FUNCTION('TIMESTAMP', o.schedule.scheduleDate, o.schedule.startTime) > :now) "
-                        +
-                        "   OR (:isUpcoming = FALSE AND FUNCTION('TIMESTAMP', o.schedule.scheduleDate, o.schedule.startTime) < :now)) "
-                        +
-                        "ORDER BY o.schedule.scheduleDate DESC, o.schedule.startTime DESC")
+        @Query(value = """
+                            SELECT o.* FROM `order` o
+                            JOIN event_schedule es ON o.schedule_id = es.schedule_id
+                            WHERE o.user_id = :user
+                            AND (:status IS NULL OR o.status = :status)
+                            AND ((:isUpcoming = TRUE AND TIMESTAMP(es.schedule_date, es.start_time) > :now)
+                                 OR (:isUpcoming = FALSE AND TIMESTAMP(es.schedule_date, es.start_time) < :now))
+                            ORDER BY es.schedule_date DESC, es.start_time DESC
+                        """, nativeQuery = true)
         Page<Order> findOrdersByUserStatusAndTimeFilter(
-                        @Param("user") User user,
-                        @Param("status") OrderStatus status,
+                        @Param("user") String user, 
+                        @Param("status") String status,
                         @Param("isUpcoming") boolean isUpcoming,
                         @Param("now") LocalDateTime now,
                         Pageable pageable);

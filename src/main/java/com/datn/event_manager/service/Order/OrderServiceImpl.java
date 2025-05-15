@@ -295,7 +295,11 @@ public class OrderServiceImpl implements OrderService {
         boolean isUpcoming = "upcoming".equalsIgnoreCase(timeFilter);
         LocalDateTime now = LocalDateTime.now();
 
-        Page<Order> ordersPage = orderRepository.findOrdersByUserStatusAndTimeFilter(user, orderStatus, isUpcoming, now,
+        Page<Order> ordersPage = orderRepository.findOrdersByUserStatusAndTimeFilter(
+                user.getUserId(),
+                orderStatus != null ? orderStatus.name() : null,
+                isUpcoming,
+                now,
                 pageable);
 
         return ordersPage.map(order -> {
@@ -303,7 +307,7 @@ public class OrderServiceImpl implements OrderService {
             response.setComplaint(complaintRepository.existsByOrder(order));
             return response;
         });
-    }    
+    }
 
     @Override
     public PagedOrderResponse getSalesByScheduleId(Long scheduleId, Pageable pageable) {
