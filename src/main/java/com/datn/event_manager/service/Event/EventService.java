@@ -11,6 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.datn.event_manager.dto.request.EventRequest;
 import com.datn.event_manager.dto.response.CategoryAndThemeResponse;
 import com.datn.event_manager.dto.response.EventByUserResponse;
+import com.datn.event_manager.dto.response.EventHomepageResponse;
 import com.datn.event_manager.dto.response.EventResponse;
 import com.datn.event_manager.dto.response.EventSearchResponse;
 import com.datn.event_manager.dto.response.EventStatusResponse;
@@ -41,4 +42,8 @@ public interface EventService {
     List<CategoryAndThemeResponse> getCategoryAndTheme();
 
     void addCategoryAndTheme(Long eventId, Long categoryId, Long themeId);
+
+    List<EventHomepageResponse> getTrendingEvents();
+    List<EventHomepageResponse> getRandomEvents();
+    List<EventHomepageResponse> getEventsByDateRange(String period);
 }

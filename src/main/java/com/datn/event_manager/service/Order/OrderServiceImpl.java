@@ -2,6 +2,7 @@ package com.datn.event_manager.service.Order;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -286,49 +287,23 @@ public class OrderServiceImpl implements OrderService {
     public Page<MyTicketResponse> getMyTicketsByOrderStatus(String status, String timeFilter, Pageable pageable) {
         User user = authenticationService.getUserFromToken();
 
-        List<Order> allOrders;
-        if (status.equalsIgnoreCase("ALL")) {
-            allOrders = orderRepository.findAllByUser(user);
-        } else {
-            OrderStatus orderStatus = OrderStatus.valueOf(status.toUpperCase());
-            allOrders = orderRepository.findAllByUserAndStatus(user, orderStatus);
+        OrderStatus orderStatus = null;
+        if (!"ALL".equalsIgnoreCase(status)) {
+            orderStatus = OrderStatus.valueOf(status.toUpperCase());
         }
 
+        boolean isUpcoming = "upcoming".equalsIgnoreCase(timeFilter);
         LocalDateTime now = LocalDateTime.now();
-        boolean isUpcoming = timeFilter.equalsIgnoreCase("upcoming");
 
-        List<Order> filteredOrders = allOrders.stream()
-                .filter(order -> {
-                    if (order.getSchedule() == null || order.getSchedule().getScheduleDate() == null
-                            || order.getSchedule().getStartTime() == null) {
-                        return false;
-                    }
-                    try {
-                        LocalDateTime eventTime = order.getSchedule().getScheduleDate()
-                                .atTime(order.getSchedule().getStartTime());
+        Page<Order> ordersPage = orderRepository.findOrdersByUserStatusAndTimeFilter(user, orderStatus, isUpcoming, now,
+                pageable);
 
-                        return isUpcoming ? eventTime.isAfter(now) : eventTime.isBefore(now);
-                    } catch (Exception e) {
-                        return false;
-                    }
-                })
-                .collect(Collectors.toList());
-
-        Pageable filteredPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize());
-        int start = (int) filteredPageable.getOffset();
-        int end = Math.min((start + filteredPageable.getPageSize()), filteredOrders.size());
-        List<Order> pagedOrders = start < filteredOrders.size()
-                ? filteredOrders.subList(start, end)
-                : Collections.emptyList();
-
-        Page<Order> filteredPage = new PageImpl<>(pagedOrders, filteredPageable, filteredOrders.size());
-
-        return filteredPage.map(order -> {
+        return ordersPage.map(order -> {
             MyTicketResponse response = myTicketMapper.toMyTicketResponse(order);
             response.setComplaint(complaintRepository.existsByOrder(order));
             return response;
         });
-    }
+    }    
 
     @Override
     public PagedOrderResponse getSalesByScheduleId(Long scheduleId, Pageable pageable) {

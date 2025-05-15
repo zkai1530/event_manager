@@ -135,4 +135,19 @@ public class EventController {
         return ResponseEntity
                 .ok(new APIResponse(Message.ADD_CATE_AND_THEME_SUCCESS, null));
     }
+
+    @GetMapping("/trending")
+    public ResponseEntity<APIResponse> getTrendingEvents() {
+        return ResponseEntity.ok(new APIResponse(Message.RESOURCE_FOUND, eventService.getTrendingEvents()));
+    }
+
+    @GetMapping("/random")
+    public ResponseEntity<APIResponse> getRandomEvents() {
+        return ResponseEntity.ok(new APIResponse(Message.RESOURCE_FOUND, eventService.getRandomEvents()));
+    }
+
+    @GetMapping("/by-date")
+    public ResponseEntity<APIResponse> getTrendingEvents(@RequestParam String period) {
+        return ResponseEntity.ok(new APIResponse(Message.RESOURCE_FOUND, eventService.getEventsByDateRange(period)));
+    }
 }

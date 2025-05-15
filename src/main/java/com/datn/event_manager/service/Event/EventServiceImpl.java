@@ -1,10 +1,12 @@
 package com.datn.event_manager.service.Event;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.text.Normalizer;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -23,6 +25,7 @@ import com.datn.event_manager.dto.request.EventRequest;
 import com.datn.event_manager.dto.request.FAQRequest;
 import com.datn.event_manager.dto.response.CategoryAndThemeResponse;
 import com.datn.event_manager.dto.response.EventByUserResponse;
+import com.datn.event_manager.dto.response.EventHomepageResponse;
 import com.datn.event_manager.dto.response.EventResponse;
 import com.datn.event_manager.dto.response.EventSearchResponse;
 import com.datn.event_manager.dto.response.EventStatusResponse;
@@ -32,6 +35,7 @@ import com.datn.event_manager.entity.EventLocation;
 import com.datn.event_manager.entity.EventSchedule;
 import com.datn.event_manager.entity.EventThemes;
 import com.datn.event_manager.entity.FAQ;
+import com.datn.event_manager.entity.OrderTicket;
 import com.datn.event_manager.entity.User;
 import com.datn.event_manager.enums.EventType;
 import com.datn.event_manager.exception.AppException;
@@ -508,7 +512,8 @@ public class EventServiceImpl implements EventService {
 
         List<EventCategories> categories = eventCategoriesRepository.findAll();
         for (EventCategories category : categories) {
-            categorysAndThemes.add(new CategoryAndThemeResponse(category.getCategoryId(), category.getCategoryName(), "category"));
+            categorysAndThemes.add(
+                    new CategoryAndThemeResponse(category.getCategoryId(), category.getCategoryName(), "category"));
         }
 
         List<EventThemes> themes = eventThemesRepository.findAll();
@@ -520,6 +525,7 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    @Transactional
     public void addCategoryAndTheme(Long eventId, Long categoryId, Long themeId) {
         User user = authenticationService.getUserFromToken();
 
@@ -530,7 +536,8 @@ public class EventServiceImpl implements EventService {
             throw new AppException(ErrorCode.UNAUTHORIZED);
         }
 
-        EventCategories eventCategories = eventCategoriesRepository.findById(categoryId).orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
+        EventCategories eventCategories = eventCategoriesRepository.findById(categoryId)
+                .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
 
         EventThemes eventThemes = eventThemesRepository.findById(themeId)
                 .orElseThrow(() -> new AppException(ErrorCode.THEME_NOT_FOUND));
@@ -538,6 +545,70 @@ public class EventServiceImpl implements EventService {
         event.setCategory(eventCategories);
         event.setTheme(eventThemes);
         eventRepository.save(event);
+    }
+
+    @Override
+    public List<EventHomepageResponse> getTrendingEvents() {
+        List<Object[]> results = eventRepository.findTrendingEvents();
+        return results.stream()
+                .map(row -> EventHomepageResponse.builder()
+                        .eventId(((Number) row[0]).longValue()) 
+                        .name((String) row[1]) 
+                        .imageUrl((String) row[2])
+                        .slug((String) row[3])
+                        .scheduleDate(row[4] != null ? LocalDate.parse(row[4].toString()) : null) 
+                        .soldTickets(((Number) row[5]).longValue()) 
+                        .minPrice(row[6] != null ? new BigDecimal(row[6].toString()) : BigDecimal.ZERO)
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<EventHomepageResponse> getRandomEvents() {
+        List<Object[]> results = eventRepository.findRandomEvents();
+        Collections.shuffle(results);
+        return results.stream()
+                .limit(20)
+                .map(row -> EventHomepageResponse.builder()
+                        .eventId(((Number) row[0]).longValue())
+                        .name((String) row[1])
+                        .imageUrl((String) row[2])
+                        .slug((String) row[3])
+                        .scheduleDate(row[4] != null ? LocalDate.parse(row[4].toString()) : null)
+                        .soldTickets(((Number) row[5]).longValue())
+                        .minPrice(row[6] != null ? new BigDecimal(row[6].toString()) : BigDecimal.ZERO)
+                        .build())
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<EventHomepageResponse> getEventsByDateRange(String period) {
+        LocalDate now = LocalDate.now();
+        LocalDate startDate;
+        LocalDate endDate;
+
+        if ("weekend".equalsIgnoreCase(period)) {
+            startDate = now.with(TemporalAdjusters.nextOrSame(java.time.DayOfWeek.FRIDAY));
+            endDate = startDate.plusDays(2);
+        } else if ("month".equalsIgnoreCase(period)) {
+            startDate = now.with(TemporalAdjusters.firstDayOfMonth());
+            endDate = now.with(TemporalAdjusters.lastDayOfMonth());
+        } else {
+            throw new IllegalArgumentException("Period must be 'weekend' or 'month'");
+        }
+
+        List<Object[]> results = eventRepository.findEventsByDateRange(startDate, endDate);
+        return results.stream()
+                .map(row -> EventHomepageResponse.builder()
+                        .eventId(((Number) row[0]).longValue())
+                        .name((String) row[1])
+                        .imageUrl((String) row[2])
+                        .slug((String) row[3])
+                        .scheduleDate(row[4] != null ? LocalDate.parse(row[4].toString()) : null)
+                        .soldTickets(((Number) row[5]).longValue())
+                        .minPrice(row[6] != null ? new BigDecimal(row[6].toString()) : BigDecimal.ZERO)
+                        .build())
+                .collect(Collectors.toList());
     }
 
 }

@@ -121,4 +121,66 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
         @Query("SELECT COUNT(e) FROM Event e WHERE e.user = :user AND e.isSuspended = true")
         Long countSuspendedEvents(@Param("user") User user);
+
+        // homepage
+        @Query(value = """
+                            SELECT e.event_id, e.name, e.image_url, e.slug,
+                                   (SELECT MIN(es.schedule_date) FROM event_schedule es WHERE es.event_id = e.event_id AND es.schedule_date > NOW()) as schedule_date,
+                                   COALESCE((SELECT SUM(ot.quantity) FROM order_ticket ot JOIN `order` o ON ot.order_id = o.order_id
+                                            JOIN ticket t ON ot.ticket_id = t.ticket_id
+                                            JOIN ticket_schedule ts ON t.ticket_id = ts.ticket_id
+                                            JOIN event_schedule es2 ON ts.schedule_id = es2.schedule_id
+                                            WHERE es2.event_id = e.event_id), 0) as sold_tickets,
+                                   (SELECT MIN(t.price) FROM ticket t
+                                    JOIN ticket_schedule ts ON t.ticket_id = ts.ticket_id
+                                    JOIN event_schedule es3 ON ts.schedule_id = es3.schedule_id
+                                    WHERE es3.event_id = e.event_id) as min_price
+                            FROM `event` e
+                            WHERE e.is_published = 1
+                            AND EXISTS (SELECT 1 FROM event_schedule es WHERE es.event_id = e.event_id AND es.schedule_date > NOW())
+                            ORDER BY COALESCE((SELECT SUM(ot.quantity) FROM order_ticket ot JOIN `order` o ON ot.order_id = o.order_id
+                                              JOIN ticket t ON ot.ticket_id = t.ticket_id
+                                              JOIN ticket_schedule ts ON t.ticket_id = ts.ticket_id
+                                              JOIN event_schedule es2 ON ts.schedule_id = es2.schedule_id
+                                              WHERE es2.event_id = e.event_id), 0) DESC
+                            LIMIT 20
+                        """, nativeQuery = true)
+        List<Object[]> findTrendingEvents();
+
+        // 2. Random Events
+        @Query(value = """
+                            SELECT e.event_id, e.name, e.image_url, e.slug,
+                                   (SELECT MIN(es.schedule_date) FROM event_schedule es WHERE es.event_id = e.event_id AND es.schedule_date > NOW()) as schedule_date,
+                                   0 as sold_tickets,
+                                   (SELECT MIN(t.price) FROM ticket t
+                                    JOIN ticket_schedule ts ON t.ticket_id = ts.ticket_id
+                                    JOIN event_schedule es3 ON ts.schedule_id = es3.schedule_id
+                                    WHERE es3.event_id = e.event_id) as min_price
+                            FROM `event` e
+                            WHERE e.is_published = 1
+                            AND EXISTS (SELECT 1 FROM event_schedule es WHERE es.event_id = e.event_id AND es.schedule_date > NOW())
+                            ORDER BY RAND()
+                            LIMIT 20
+                        """, nativeQuery = true)
+        List<Object[]> findRandomEvents();
+
+        // 3. Events This Weekend or Month
+        @Query(value = """
+                            SELECT e.event_id, e.name, e.image_url, e.slug,
+                                   (SELECT MIN(es.schedule_date) FROM event_schedule es WHERE es.event_id = e.event_id AND es.schedule_date > NOW()) as schedule_date,
+                                   0 as sold_tickets,
+                                   (SELECT MIN(t.price) FROM ticket t
+                                    JOIN ticket_schedule ts ON t.ticket_id = ts.ticket_id
+                                    JOIN event_schedule es3 ON ts.schedule_id = es3.schedule_id
+                                    WHERE es3.event_id = e.event_id) as min_price
+                            FROM `event` e
+                            WHERE e.is_published = 1
+                            AND EXISTS (SELECT 1 FROM event_schedule es WHERE es.event_id = e.event_id AND es.schedule_date > NOW())
+                            AND EXISTS (SELECT 1 FROM event_schedule es2 WHERE es2.event_id = e.event_id AND es2.schedule_date BETWEEN ?1 AND ?2)
+                            GROUP BY e.event_id, e.name, e.image_url
+                            ORDER BY (SELECT MIN(es3.schedule_date) FROM event_schedule es3 WHERE es3.event_id = e.event_id AND es3.schedule_date BETWEEN ?1 AND ?2) ASC
+                            LIMIT 20
+                        """, nativeQuery = true)
+        List<Object[]> findEventsByDateRange(LocalDate startDate, LocalDate endDate);
+
 }

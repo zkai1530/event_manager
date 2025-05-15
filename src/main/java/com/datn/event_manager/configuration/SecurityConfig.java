@@ -25,7 +25,10 @@ public class SecurityConfig {
     private final String[] PUBLIC_GET_ENDPOINTS = {
             "/send-mail",
             "/event/{eventId}",
-            "/event/search/{keyword}/result"
+            "/event/search/{keyword}/result",
+            "/event/trending",
+            "/event/random",
+            "/event/by-date"
 
     };
     private final String[] PUBLIC_POST_ENDPOINTS = {

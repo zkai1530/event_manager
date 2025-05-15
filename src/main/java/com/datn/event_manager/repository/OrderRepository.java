@@ -1,6 +1,8 @@
 package com.datn.event_manager.repository;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,6 +35,21 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
         List<Order> findAllByUser(User user);
 
         List<Order> findAllByUserAndStatus(User user, OrderStatus status);
+
+        @Query("SELECT o FROM Order o " +
+                        "WHERE o.user = :user " +
+                        "AND (:status IS NULL OR o.status = :status) " +
+                        "AND ((:isUpcoming = TRUE AND FUNCTION('TIMESTAMP', o.schedule.scheduleDate, o.schedule.startTime) > :now) "
+                        +
+                        "   OR (:isUpcoming = FALSE AND FUNCTION('TIMESTAMP', o.schedule.scheduleDate, o.schedule.startTime) < :now)) "
+                        +
+                        "ORDER BY o.schedule.scheduleDate DESC, o.schedule.startTime DESC")
+        Page<Order> findOrdersByUserStatusAndTimeFilter(
+                        @Param("user") User user,
+                        @Param("status") OrderStatus status,
+                        @Param("isUpcoming") boolean isUpcoming,
+                        @Param("now") LocalDateTime now,
+                        Pageable pageable);
 
         @Query("SELECT o, u, ot, t " +
                         "FROM Order o " +
