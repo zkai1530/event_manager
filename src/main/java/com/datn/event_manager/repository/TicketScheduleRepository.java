@@ -43,4 +43,11 @@ public interface TicketScheduleRepository extends JpaRepository<TicketSchedule, 
             "GROUP BY ts.schedule.event.id, ts.schedule.event.name " +
             "ORDER BY SUM(ts.sold) DESC")
     Page<Object[]> findTopTicketsSoldByUser(@Param("user") User user, Pageable pageable);
+
+    //
+    @Query("SELECT ts.schedule.event.eventId, SUM(ts.sold), SUM(ts.availableQuantity) " +
+                    "FROM TicketSchedule ts " +
+                    "WHERE ts.schedule.event.eventId IN :eventIds " +
+                    "GROUP BY ts.schedule.event.eventId")
+    List<Object[]> findTicketStatsByEventIds(List<Long> eventIds);
 }

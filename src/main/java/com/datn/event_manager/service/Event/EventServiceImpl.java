@@ -9,6 +9,7 @@ import java.time.ZoneId;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -67,6 +69,7 @@ public class EventServiceImpl implements EventService {
     EventThemesRepository eventThemesRepository;
     EventCategoriesRepository eventCategoriesRepository;
     TicketRepository ticketRepository;
+    TicketScheduleRepository ticketScheduleRepository;
     EventMapper eventMapper;
     FAQRepository faqRepository;
     AuthenticationService authenticationService;
@@ -662,7 +665,7 @@ public class EventServiceImpl implements EventService {
                     event.getEventLocation().getAddress(),
                     event.getEventLocation().getCountry(),
                     totalSold,
-                    totalSold + totalAvailable,
+                    totalAvailable,
                     statusMessage);
         });
     }
@@ -692,5 +695,4 @@ public class EventServiceImpl implements EventService {
         }
         return "Chưa đăng";
     }
-
 }

@@ -47,7 +47,8 @@ public class EventSchedule {
     @Column(name = "end_time", nullable = false)
     LocalTime endTime;
 
-    @ManyToOne(fetch = FetchType.EAGER)
+    // @ManyToOne(fetch = FetchType.EAGER)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id")
     Event event;
 

@@ -15,7 +15,7 @@ import com.datn.event_manager.entity.Event;
 import com.datn.event_manager.entity.User;
 
 public interface EventRepository extends JpaRepository<Event, Long> {
-        List<Event> findAllByUser(User user);
+        // List<Event> findAllByUser(User user);
 
         Event findByUser(User user);
 
@@ -189,7 +189,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
         @Query("SELECT COALESCE(SUM(ts.sold), 0) FROM TicketSchedule ts " +
                         "JOIN ts.schedule s " +
                         "JOIN s.event e")
-        long getTotalTicketSales();
+        Long getTotalTicketSales();
 
         // * Đếm sự kiện completed: tấy cả EventSchedule đã diễn ra
         @Query("SELECT COUNT(DISTINCT e) FROM Event e " +
@@ -225,7 +225,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
                         "  AND (es2.scheduleDate > CURRENT_DATE OR (es2.scheduleDate = CURRENT_DATE AND es2.startTime > FUNCTION('CURRENT_TIME'))))))")
         Page<Event> findEventsByStatus(@Param("status") String status, Pageable pageable);
 
-        // * Lọc theo trạng thái và sắp xếp theo createdAt 
+        // * Lọc theo trạng thái và sắp xếp theo createdAt
         @Query("SELECT DISTINCT e FROM Event e " +
                         "WHERE (:status IS NULL OR " +
                         "(:status = 'published' AND e.isPublished = true AND e.isSuspended = false) OR " +
@@ -241,7 +241,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
                         "ORDER BY e.createdAt DESC")
         Page<Event> findEventsByStatusOrderByCreatedAtDesc(@Param("status") String status, Pageable pageable);
 
-        // * Lọc theo trạng thái và sắp xếp theo tổng số vé bán 
+        // * Lọc theo trạng thái và sắp xếp theo tổng số vé bán
         @Query("SELECT e FROM Event e " +
                         "WHERE (:status IS NULL OR " +
                         "(:status = 'published' AND e.isPublished = true AND e.isSuspended = false) OR " +
@@ -257,7 +257,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
                         "ORDER BY (SELECT COALESCE(SUM(ts.sold), 0) FROM TicketSchedule ts JOIN ts.schedule es WHERE es.event = e) DESC")
         Page<Event> findEventsByStatusOrderByTicketSalesDesc(@Param("status") String status, Pageable pageable);
 
-        // * Lấy tất cả và sắp xếp theo vé bán nhiều nhất 
+        // * Lấy tất cả và sắp xếp theo vé bán nhiều nhất
         @Query("SELECT e FROM Event e " +
                         "ORDER BY (SELECT COALESCE(SUM(ts.sold), 0) FROM TicketSchedule ts JOIN ts.schedule es WHERE es.event = e) DESC")
         Page<Event> findAllOrderByTicketSalesDesc(Pageable pageable);
