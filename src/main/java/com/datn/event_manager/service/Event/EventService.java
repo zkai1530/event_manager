@@ -50,5 +50,5 @@ public interface EventService {
     List<EventHomepageResponse> getEventsByDateRange(String period);
 
     Map<String, Object> getEventSummary();
-    Page<EventInAdminResponse> getFilteredEvents(String status, String sort, Pageable pageable);
+    // Page<EventInAdminResponse> getFilteredEvents(String status, String sort, Pageable pageable);
 }

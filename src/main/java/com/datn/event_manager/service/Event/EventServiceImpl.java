@@ -629,69 +629,69 @@ public class EventServiceImpl implements EventService {
         return result;
     }
 
-    @Override
-    public Page<EventInAdminResponse> getFilteredEvents(String status, String sort, Pageable pageable) {
-        Page<Event> eventsPage;
+    // @Override
+    // public Page<EventInAdminResponse> getFilteredEvents(String status, String sort, Pageable pageable) {
+    //     Page<Event> eventsPage;
 
-        if (status == null) {
-            eventsPage = eventRepository.findAllOrderByTicketSalesDesc(pageable);
-        } else if ("date_desc".equals(sort)) {
-            eventsPage = eventRepository.findEventsByStatusOrderByCreatedAtDesc(status, pageable);
-        } else if ("tickets".equals(sort)) {
-            eventsPage = eventRepository.findEventsByStatusOrderByTicketSalesDesc(status, pageable);
-        } else {
-            eventsPage = eventRepository.findEventsByStatus(status, pageable);
-        }
+    //     if (status == null) {
+    //         eventsPage = eventRepository.findAllOrderByTicketSalesDesc(pageable);
+    //     } else if ("date_desc".equals(sort)) {
+    //         eventsPage = eventRepository.findEventsByStatusOrderByCreatedAtDesc(status, pageable);
+    //     } else if ("tickets".equals(sort)) {
+    //         eventsPage = eventRepository.findEventsByStatusOrderByTicketSalesDesc(status, pageable);
+    //     } else {
+    //         eventsPage = eventRepository.findEventsByStatus(status, pageable);
+    //     }
 
-        return eventsPage.map(event -> {
-            int totalSold = event.getSchedules().stream()
-                    .flatMap(es -> es.getTicketSchedules().stream())
-                    .mapToInt(ts -> ts.getSold() != null ? ts.getSold().intValue() : 0)
-                    .sum();
-            int totalAvailable = event.getSchedules().stream()
-                    .flatMap(es -> es.getTicketSchedules().stream())
-                    .mapToInt(ts -> ts.getAvailableQuantity() != null ? ts.getAvailableQuantity().intValue() : 0)
-                    .sum();
-            String categoryName = event.getCategory() != null ? event.getCategory().getCategoryName()
-                    : "Không xác định";
-            String statusMessage = determineStatusMessage(event);
+    //     return eventsPage.map(event -> {
+    //         int totalSold = event.getSchedules().stream()
+    //                 .flatMap(es -> es.getTicketSchedules().stream())
+    //                 .mapToInt(ts -> ts.getSold() != null ? ts.getSold().intValue() : 0)
+    //                 .sum();
+    //         int totalAvailable = event.getSchedules().stream()
+    //                 .flatMap(es -> es.getTicketSchedules().stream())
+    //                 .mapToInt(ts -> ts.getAvailableQuantity() != null ? ts.getAvailableQuantity().intValue() : 0)
+    //                 .sum();
+    //         String categoryName = event.getCategory() != null ? event.getCategory().getCategoryName()
+    //                 : "Không xác định";
+    //         String statusMessage = determineStatusMessage(event);
 
-            return new EventInAdminResponse(
-                    event.getEventId(),
-                    event.getName(),
-                    categoryName,
-                    event.getEventLocation().getCity(),
-                    event.getEventLocation().getAddress(),
-                    event.getEventLocation().getCountry(),
-                    totalSold,
-                    totalAvailable,
-                    statusMessage);
-        });
-    }
+    //         return new EventInAdminResponse(
+    //                 event.getEventId(),
+    //                 event.getName(),
+    //                 categoryName,
+    //                 event.getEventLocation().getCity(),
+    //                 event.getEventLocation().getAddress(),
+    //                 event.getEventLocation().getCountry(),
+    //                 totalSold,
+    //                 totalAvailable,
+    //                 statusMessage);
+    //     });
+    // }
 
-    private String determineStatusMessage(Event event) {
-        LocalDateTime now = LocalDateTime.now();
-        if (event.getIsSuspended()) {
-            return "Đã ẩn";
-        }
-        if (event.getIsPublished()) {
-            boolean allCompleted = event.getSchedules().stream()
-                    .allMatch(es -> {
-                        LocalDateTime endDateTime = LocalDateTime.of(es.getScheduleDate(), es.getEndTime());
-                        return endDateTime.isBefore(now);
-                    });
-            boolean hasUpcoming = event.getSchedules().stream()
-                    .anyMatch(es -> {
-                        LocalDateTime startDateTime = LocalDateTime.of(es.getScheduleDate(), es.getStartTime());
-                        return startDateTime.isAfter(now);
-                    });
+    // private String determineStatusMessage(Event event) {
+    //     LocalDateTime now = LocalDateTime.now();
+    //     if (event.getIsSuspended()) {
+    //         return "Đã ẩn";
+    //     }
+    //     if (event.getIsPublished()) {
+    //         boolean allCompleted = event.getSchedules().stream()
+    //                 .allMatch(es -> {
+    //                     LocalDateTime endDateTime = LocalDateTime.of(es.getScheduleDate(), es.getEndTime());
+    //                     return endDateTime.isBefore(now);
+    //                 });
+    //         boolean hasUpcoming = event.getSchedules().stream()
+    //                 .anyMatch(es -> {
+    //                     LocalDateTime startDateTime = LocalDateTime.of(es.getScheduleDate(), es.getStartTime());
+    //                     return startDateTime.isAfter(now);
+    //                 });
 
-            if (allCompleted)
-                return "Đã diễn ra";
-            if (hasUpcoming)
-                return "Sắp diễn ra";
-            return "Đã đăng";
-        }
-        return "Chưa đăng";
-    }
+    //         if (allCompleted)
+    //             return "Đã diễn ra";
+    //         if (hasUpcoming)
+    //             return "Sắp diễn ra";
+    //         return "Đã đăng";
+    //     }
+    //     return "Chưa đăng";
+    // }
 }
