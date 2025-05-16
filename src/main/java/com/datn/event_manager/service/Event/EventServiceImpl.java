@@ -644,7 +644,6 @@ public class EventServiceImpl implements EventService {
         }
 
         return eventsPage.map(event -> {
-            // Tính tổng vé từ tất cả EventSchedule
             int totalSold = event.getSchedules().stream()
                     .flatMap(es -> es.getTicketSchedules().stream())
                     .mapToInt(ts -> ts.getSold() != null ? ts.getSold().intValue() : 0)
