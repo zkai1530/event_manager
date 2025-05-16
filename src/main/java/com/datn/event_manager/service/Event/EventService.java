@@ -2,6 +2,7 @@ package com.datn.event_manager.service.Event;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -12,6 +13,7 @@ import com.datn.event_manager.dto.request.EventRequest;
 import com.datn.event_manager.dto.response.CategoryAndThemeResponse;
 import com.datn.event_manager.dto.response.EventByUserResponse;
 import com.datn.event_manager.dto.response.EventHomepageResponse;
+import com.datn.event_manager.dto.response.EventInAdminResponse;
 import com.datn.event_manager.dto.response.EventResponse;
 import com.datn.event_manager.dto.response.EventSearchResponse;
 import com.datn.event_manager.dto.response.EventStatusResponse;
@@ -46,4 +48,7 @@ public interface EventService {
     List<EventHomepageResponse> getTrendingEvents();
     List<EventHomepageResponse> getRandomEvents();
     List<EventHomepageResponse> getEventsByDateRange(String period);
+
+    Map<String, Object> getEventSummary();
+    Page<EventInAdminResponse> getFilteredEvents(String status, String sort, Pageable pageable);
 }

@@ -9,7 +9,9 @@ import java.time.ZoneId;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
@@ -26,6 +28,7 @@ import com.datn.event_manager.dto.request.FAQRequest;
 import com.datn.event_manager.dto.response.CategoryAndThemeResponse;
 import com.datn.event_manager.dto.response.EventByUserResponse;
 import com.datn.event_manager.dto.response.EventHomepageResponse;
+import com.datn.event_manager.dto.response.EventInAdminResponse;
 import com.datn.event_manager.dto.response.EventResponse;
 import com.datn.event_manager.dto.response.EventSearchResponse;
 import com.datn.event_manager.dto.response.EventStatusResponse;
@@ -36,6 +39,7 @@ import com.datn.event_manager.entity.EventSchedule;
 import com.datn.event_manager.entity.EventThemes;
 import com.datn.event_manager.entity.FAQ;
 import com.datn.event_manager.entity.OrderTicket;
+import com.datn.event_manager.entity.TicketSchedule;
 import com.datn.event_manager.entity.User;
 import com.datn.event_manager.enums.EventType;
 import com.datn.event_manager.exception.AppException;
@@ -552,12 +556,12 @@ public class EventServiceImpl implements EventService {
         List<Object[]> results = eventRepository.findTrendingEvents();
         return results.stream()
                 .map(row -> EventHomepageResponse.builder()
-                        .eventId(((Number) row[0]).longValue()) 
-                        .name((String) row[1]) 
+                        .eventId(((Number) row[0]).longValue())
+                        .name((String) row[1])
                         .imageUrl((String) row[2])
                         .slug((String) row[3])
-                        .scheduleDate(row[4] != null ? LocalDate.parse(row[4].toString()) : null) 
-                        .soldTickets(((Number) row[5]).longValue()) 
+                        .scheduleDate(row[4] != null ? LocalDate.parse(row[4].toString()) : null)
+                        .soldTickets(((Number) row[5]).longValue())
                         .minPrice(row[6] != null ? new BigDecimal(row[6].toString()) : BigDecimal.ZERO)
                         .build())
                 .collect(Collectors.toList());
@@ -609,6 +613,84 @@ public class EventServiceImpl implements EventService {
                         .minPrice(row[6] != null ? new BigDecimal(row[6].toString()) : BigDecimal.ZERO)
                         .build())
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Map<String, Object> getEventSummary() {
+        Map<String, Object> result = new HashMap<>();
+        result.put("totalEvents", eventRepository.count());
+        result.put("completedEvents", eventRepository.countCompletedEvents());
+        result.put("upcomingEvents", eventRepository.countUpcomingEvents());
+        result.put("ticketSales", eventRepository.getTotalTicketSales());
+
+        return result;
+    }
+
+    @Override
+    public Page<EventInAdminResponse> getFilteredEvents(String status, String sort, Pageable pageable) {
+        Page<Event> eventsPage;
+
+        if (status == null) {
+            eventsPage = eventRepository.findAllOrderByTicketSalesDesc(pageable);
+        } else if ("date_desc".equals(sort)) {
+            eventsPage = eventRepository.findEventsByStatusOrderByCreatedAtDesc(status, pageable);
+        } else if ("tickets".equals(sort)) {
+            eventsPage = eventRepository.findEventsByStatusOrderByTicketSalesDesc(status, pageable);
+        } else {
+            eventsPage = eventRepository.findEventsByStatus(status, pageable);
+        }
+
+        return eventsPage.map(event -> {
+            // Tính tổng vé từ tất cả EventSchedule
+            int totalSold = event.getSchedules().stream()
+                    .flatMap(es -> es.getTicketSchedules().stream())
+                    .mapToInt(ts -> ts.getSold() != null ? ts.getSold().intValue() : 0)
+                    .sum();
+            int totalAvailable = event.getSchedules().stream()
+                    .flatMap(es -> es.getTicketSchedules().stream())
+                    .mapToInt(ts -> ts.getAvailableQuantity() != null ? ts.getAvailableQuantity().intValue() : 0)
+                    .sum();
+            String categoryName = event.getCategory() != null ? event.getCategory().getCategoryName()
+                    : "Không xác định";
+            String statusMessage = determineStatusMessage(event);
+
+            return new EventInAdminResponse(
+                    event.getEventId(),
+                    event.getName(),
+                    categoryName,
+                    event.getEventLocation().getCity(),
+                    event.getEventLocation().getAddress(),
+                    event.getEventLocation().getCountry(),
+                    totalSold,
+                    totalSold + totalAvailable,
+                    statusMessage);
+        });
+    }
+
+    private String determineStatusMessage(Event event) {
+        LocalDateTime now = LocalDateTime.now();
+        if (event.getIsSuspended()) {
+            return "Đã ẩn";
+        }
+        if (event.getIsPublished()) {
+            boolean allCompleted = event.getSchedules().stream()
+                    .allMatch(es -> {
+                        LocalDateTime endDateTime = LocalDateTime.of(es.getScheduleDate(), es.getEndTime());
+                        return endDateTime.isBefore(now);
+                    });
+            boolean hasUpcoming = event.getSchedules().stream()
+                    .anyMatch(es -> {
+                        LocalDateTime startDateTime = LocalDateTime.of(es.getScheduleDate(), es.getStartTime());
+                        return startDateTime.isAfter(now);
+                    });
+
+            if (allCompleted)
+                return "Đã diễn ra";
+            if (hasUpcoming)
+                return "Sắp diễn ra";
+            return "Đã đăng";
+        }
+        return "Chưa đăng";
     }
 
 }

@@ -183,4 +183,83 @@ public interface EventRepository extends JpaRepository<Event, Long> {
                         """, nativeQuery = true)
         List<Object[]> findEventsByDateRange(LocalDate startDate, LocalDate endDate);
 
+        // admin event management
+        long count();
+
+        @Query("SELECT COALESCE(SUM(ts.sold), 0) FROM TicketSchedule ts " +
+                        "JOIN ts.schedule s " +
+                        "JOIN s.event e")
+        long getTotalTicketSales();
+
+        // * Đếm sự kiện completed: tấy cả EventSchedule đã diễn ra
+        @Query("SELECT COUNT(DISTINCT e) FROM Event e " +
+                        "WHERE e.isPublished = true " +
+                        "AND e.isSuspended = false " +
+                        "AND NOT EXISTS (" +
+                        "  SELECT 1 FROM EventSchedule es " +
+                        "  WHERE es.event = e " +
+                        "  AND es.scheduleDate > CURRENT_DATE " +
+                        "  OR (es.scheduleDate = CURRENT_DATE AND es.endTime >= FUNCTION('CURRENT_TIME')))")
+        long countCompletedEvents();
+
+        // * Đếm sự kiện upcoming: có ít nhất 1 EventSchedule sắp diễn ra
+        @Query("SELECT COUNT(DISTINCT e) FROM Event e " +
+                        "JOIN e.schedules es " +
+                        "WHERE e.isPublished = true " +
+                        "AND e.isSuspended = false " +
+                        "AND (es.scheduleDate > CURRENT_DATE " +
+                        "OR (es.scheduleDate = CURRENT_DATE AND es.startTime > FUNCTION('CURRENT_TIME')))")
+        long countUpcomingEvents();
+
+        // * Lọc theo trạng thái với phân trang
+        @Query("SELECT DISTINCT e FROM Event e " +
+                        "WHERE (:status IS NULL OR " +
+                        "(:status = 'published' AND e.isPublished = true AND e.isSuspended = false) OR " +
+                        "(:status = 'hidden' AND e.isSuspended = true) OR " +
+                        "(:status = 'completed' AND e.isPublished = true AND e.isSuspended = false AND NOT EXISTS (" +
+                        "  SELECT 1 FROM EventSchedule es2 WHERE es2.event = e " +
+                        "  AND (es2.scheduleDate > CURRENT_DATE OR (es2.scheduleDate = CURRENT_DATE AND es2.endTime >= FUNCTION('CURRENT_TIME'))))) OR "
+                        +
+                        "(:status = 'upcoming' AND e.isPublished = true AND e.isSuspended = false AND EXISTS (" +
+                        "  SELECT 1 FROM EventSchedule es2 WHERE es2.event = e " +
+                        "  AND (es2.scheduleDate > CURRENT_DATE OR (es2.scheduleDate = CURRENT_DATE AND es2.startTime > FUNCTION('CURRENT_TIME'))))))")
+        Page<Event> findEventsByStatus(@Param("status") String status, Pageable pageable);
+
+        // * Lọc theo trạng thái và sắp xếp theo createdAt 
+        @Query("SELECT DISTINCT e FROM Event e " +
+                        "WHERE (:status IS NULL OR " +
+                        "(:status = 'published' AND e.isPublished = true AND e.isSuspended = false) OR " +
+                        "(:status = 'hidden' AND e.isSuspended = true) OR " +
+                        "(:status = 'completed' AND e.isPublished = true AND e.isSuspended = false AND NOT EXISTS (" +
+                        "  SELECT 1 FROM EventSchedule es2 WHERE es2.event = e " +
+                        "  AND (es2.scheduleDate > CURRENT_DATE OR (es2.scheduleDate = CURRENT_DATE AND es2.endTime >= FUNCTION('CURRENT_TIME'))))) OR "
+                        +
+                        "(:status = 'upcoming' AND e.isPublished = true AND e.isSuspended = false AND EXISTS (" +
+                        "  SELECT 1 FROM EventSchedule es2 WHERE es2.event = e " +
+                        "  AND (es2.scheduleDate > CURRENT_DATE OR (es2.scheduleDate = CURRENT_DATE AND es2.startTime > FUNCTION('CURRENT_TIME')))))) "
+                        +
+                        "ORDER BY e.createdAt DESC")
+        Page<Event> findEventsByStatusOrderByCreatedAtDesc(@Param("status") String status, Pageable pageable);
+
+        // * Lọc theo trạng thái và sắp xếp theo tổng số vé bán 
+        @Query("SELECT e FROM Event e " +
+                        "WHERE (:status IS NULL OR " +
+                        "(:status = 'published' AND e.isPublished = true AND e.isSuspended = false) OR " +
+                        "(:status = 'hidden' AND e.isSuspended = true) OR " +
+                        "(:status = 'completed' AND e.isPublished = true AND e.isSuspended = false AND NOT EXISTS (" +
+                        "  SELECT 1 FROM EventSchedule es2 WHERE es2.event = e " +
+                        "  AND (es2.scheduleDate > CURRENT_DATE OR (es2.scheduleDate = CURRENT_DATE AND es2.endTime >= FUNCTION('CURRENT_TIME'))))) OR "
+                        +
+                        "(:status = 'upcoming' AND e.isPublished = true AND e.isSuspended = false AND EXISTS (" +
+                        "  SELECT 1 FROM EventSchedule es2 WHERE es2.event = e " +
+                        "  AND (es2.scheduleDate > CURRENT_DATE OR (es2.scheduleDate = CURRENT_DATE AND es2.startTime > FUNCTION('CURRENT_TIME')))))) "
+                        +
+                        "ORDER BY (SELECT COALESCE(SUM(ts.sold), 0) FROM TicketSchedule ts JOIN ts.schedule es WHERE es.event = e) DESC")
+        Page<Event> findEventsByStatusOrderByTicketSalesDesc(@Param("status") String status, Pageable pageable);
+
+        // * Lấy tất cả và sắp xếp theo vé bán nhiều nhất 
+        @Query("SELECT e FROM Event e " +
+                        "ORDER BY (SELECT COALESCE(SUM(ts.sold), 0) FROM TicketSchedule ts JOIN ts.schedule es WHERE es.event = e) DESC")
+        Page<Event> findAllOrderByTicketSalesDesc(Pageable pageable);
+
 }

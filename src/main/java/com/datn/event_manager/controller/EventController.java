@@ -150,4 +150,19 @@ public class EventController {
     public ResponseEntity<APIResponse> getTrendingEvents(@RequestParam String period) {
         return ResponseEntity.ok(new APIResponse(Message.RESOURCE_FOUND, eventService.getEventsByDateRange(period)));
     }
+
+    @GetMapping("/admin/summary")
+    public ResponseEntity<APIResponse> getEventSummary() {
+        return ResponseEntity.ok(new APIResponse(Message.RESOURCE_FOUND, eventService.getEventSummary()));
+    }
+
+    @GetMapping("/admin/filtered")
+    public ResponseEntity<APIResponse> getFilteredEvents(
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) String sort,
+            @RequestParam(required = false, defaultValue = "0") int page) {
+        Pageable pageable = PageRequest.of(page, LIST_EVENT_PER_PAGE);
+        return ResponseEntity
+                .ok(new APIResponse(Message.RESOURCE_FOUND, eventService.getFilteredEvents(status, sort, pageable)));
+    }
 }
