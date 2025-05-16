@@ -44,6 +44,10 @@ public class EventController {
     @Value("${list-events-by-user-per-page}")
     int LIST_EVENT_PER_PAGE;
 
+    @NonFinal
+    @Value("${myticket-per-page}")
+    int MYTICKET_PER_PAGE;
+
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<APIResponse> createEvent(@RequestPart("eventRequest") EventRequest eventRequest,
             @RequestPart(value = "image", required = false) MultipartFile file) {
@@ -161,7 +165,7 @@ public class EventController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) String sort,
             @RequestParam(required = false, defaultValue = "0") int page) {
-        Pageable pageable = PageRequest.of(page, LIST_EVENT_PER_PAGE);
+        Pageable pageable = PageRequest.of(page, MYTICKET_PER_PAGE);
         return ResponseEntity
                 .ok(new APIResponse(Message.RESOURCE_FOUND, eventService.getFilteredEvents(status, sort, pageable)));
     }
