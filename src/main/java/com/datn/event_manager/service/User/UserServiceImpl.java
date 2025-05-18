@@ -93,6 +93,7 @@ public class UserServiceImpl implements UserService {
                     .build();
         });
     }
+    
 
     @Override
     public UserResponse getUserInfo() {
