@@ -2,9 +2,13 @@ package com.datn.event_manager.service.Complaint;
 
 import java.time.LocalDateTime;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import com.datn.event_manager.dto.request.ComplaintRequest;
+import com.datn.event_manager.dto.response.ComplaintResponse;
 import com.datn.event_manager.entity.CancelReason;
 import com.datn.event_manager.entity.Complaint;
 import com.datn.event_manager.entity.Order;
@@ -63,6 +67,12 @@ public class ComplaintServiceImpl implements ComplaintService {
                 .createdAt(LocalDateTime.now())
                 .build();
         complaintRepository.save(complaint);
+    }
+
+    @Override
+    @PreAuthorize("hasRole('ADMIN')")
+    public Page<ComplaintResponse> getAllComplaint(Pageable pageable) {
+        return complaintRepository.findAllComplaints(pageable);
     }
 
 }

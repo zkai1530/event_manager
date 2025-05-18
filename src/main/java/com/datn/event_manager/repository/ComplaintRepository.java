@@ -2,10 +2,13 @@ package com.datn.event_manager.repository;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.datn.event_manager.dto.response.ComplaintResponse;
 import com.datn.event_manager.entity.Complaint;
 import com.datn.event_manager.entity.EventSchedule;
 import com.datn.event_manager.entity.Order;
@@ -31,4 +34,13 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
             "WHERE c.order.schedule.event.user = :user " +
             "GROUP BY c.reason.reasonName")
     List<Object[]> findComplaintsByReason(@Param("user") User user);
+
+    // lấy hết complaintt
+    @Query("SELECT new com.datn.event_manager.dto.response.ComplaintResponse(" +
+            "c.complaintId, c.order.orderId, c.order.user.name, c.order.user.email, " +
+            "c.order.schedule.event.eventId, c.order.schedule.event.name, " +
+            "c.reason.reasonName, c.status, c.createdAt) " +
+            "FROM Complaint c")
+    Page<ComplaintResponse> findAllComplaints(Pageable pageable);
+
 }
