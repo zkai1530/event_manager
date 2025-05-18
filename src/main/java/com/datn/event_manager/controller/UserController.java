@@ -60,4 +60,12 @@ public class UserController {
     public ResponseEntity<APIResponse> updateUserInfo(@RequestBody UserUpdateRequest request) {
         return ResponseEntity.ok(new APIResponse(Message.SUCCESS_REQUEST, userService.updateUserInfo(request)));
     }
+
+    @GetMapping("/search")
+    public ResponseEntity<APIResponse> searchUserByNameOrEmail(@RequestParam String keyword,
+            @RequestParam(required = false, defaultValue = "0") int page) {
+        Pageable pageable = PageRequest.of(page, LIST_USERS);
+        return ResponseEntity.ok(new APIResponse(Message.RESOURCE_FOUND, userService.searchUserByNameOrEmail(
+                keyword, pageable)));
+    }
 }

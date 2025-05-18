@@ -93,7 +93,6 @@ public class UserServiceImpl implements UserService {
                     .build();
         });
     }
-    
 
     @Override
     public UserResponse getUserInfo() {
@@ -113,5 +112,29 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
 
         return userMapper.toUserResponse(user);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @Override
+    public Page<UserManageResponse> searchUserByNameOrEmail(String keyword, Pageable pageable) {
+        Page<UserManageResponse> usersManageResponse = userRepository.searchUsersByNameOrEmail(keyword, pageable);
+        return usersManageResponse.map(userResponse -> {
+            User user = userRepository.findByEmail(userResponse.getEmail())
+                    .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+            int sold = ticketScheduleRepository.sumTotalSoldTicketsByUser(user).intValue();
+            int purchased = orderRepository.sumTotalPurchasedTicketsByUser(user).intValue();
+            int events = eventRepository.countByUser(user).intValue();
+            return UserManageResponse.builder()
+                    .email(userResponse.getEmail())
+                    .name(userResponse.getName())
+                    .phoneNumber(userResponse.getPhoneNumber())
+                    .avatarUrl(userResponse.getAvatarUrl())
+                    .roleName(userResponse.getRoleName())
+                    .isActive(userResponse.getIsActive())
+                    .totalSoldTickets(sold)
+                    .totalPurchasedTickets(purchased)
+                    .totalEvents(events)
+                    .build();
+        });
     }
 }

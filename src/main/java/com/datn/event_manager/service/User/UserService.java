@@ -20,4 +20,6 @@ public interface UserService {
     public UserResponse getUserInfo();
 
     public UserResponse updateUserInfo(UserUpdateRequest request);
+
+    public Page<UserManageResponse> searchUserByNameOrEmail(String keyword, Pageable pageable);
 }
