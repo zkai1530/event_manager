@@ -85,4 +85,10 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                         "COALESCE(SUM(CASE WHEN o.status = 'CANCELED' THEN 1 ELSE 0 END), 0) " +
                         "FROM Order o WHERE o.schedule.event.user = :user")
         Object countTicketPaymentStatusByUser(@Param("user") User user);
+
+        // tổng vé đã mua
+        @Query("SELECT COALESCE(SUM(ot.quantity), 0) " +
+                        "FROM Order o JOIN o.orderTickets ot " +
+                        "WHERE o.user = :user AND o.status = com.datn.event_manager.entity.Order.OrderStatus.PAID")
+        Long sumTotalPurchasedTicketsByUser(@Param("user") User user);
 }

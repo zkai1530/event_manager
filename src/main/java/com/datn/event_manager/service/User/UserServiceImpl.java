@@ -3,11 +3,14 @@ package com.datn.event_manager.service.User;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.datn.event_manager.dto.request.AuthenticationRequest;
 import com.datn.event_manager.dto.request.UserUpdateRequest;
+import com.datn.event_manager.dto.response.UserManageResponse;
 import com.datn.event_manager.dto.response.UserResponse;
 import com.datn.event_manager.entity.Role;
 import com.datn.event_manager.entity.User;
@@ -15,7 +18,10 @@ import com.datn.event_manager.entity.User.UserMode;
 import com.datn.event_manager.exception.AppException;
 import com.datn.event_manager.exception.ErrorCode;
 import com.datn.event_manager.mapper.UserMapper;
+import com.datn.event_manager.repository.EventRepository;
+import com.datn.event_manager.repository.OrderRepository;
 import com.datn.event_manager.repository.RoleRepository;
+import com.datn.event_manager.repository.TicketScheduleRepository;
 import com.datn.event_manager.repository.UserRepository;
 import com.datn.event_manager.service.Authentication.AuthenticationService;
 
@@ -32,6 +38,9 @@ public class UserServiceImpl implements UserService {
     UserRepository userRepository;
     RoleRepository roleRepository;
     AuthenticationService authenticationService;
+    TicketScheduleRepository ticketScheduleRepository;
+    OrderRepository orderRepository;
+    EventRepository eventRepository;
     UserMapper userMapper;
     PasswordEncoder passwordEncoder;
 
@@ -62,10 +71,27 @@ public class UserServiceImpl implements UserService {
 
     @PreAuthorize("hasRole('ADMIN')")
     @Override
-    public List<UserResponse> getAllUsers() {
+    public Page<UserManageResponse> getAllUsers(Pageable pageable) {
         // return user with role is USER
-        List<User> users = userRepository.findAllUserByRoleName("USER");
-        return userMapper.toUserResponseList(users);
+        Page<UserManageResponse> usersManageResponse = userRepository.findAllUsers(pageable);
+        return usersManageResponse.map(userResponse -> {
+            User user = userRepository.findByEmail(userResponse.getEmail())
+                    .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+            int sold = ticketScheduleRepository.sumTotalSoldTicketsByUser(user).intValue();
+            int purchased = orderRepository.sumTotalPurchasedTicketsByUser(user).intValue();
+            int events = eventRepository.countByUser(user).intValue();
+            return UserManageResponse.builder()
+                    .email(userResponse.getEmail())
+                    .name(userResponse.getName())
+                    .phoneNumber(userResponse.getPhoneNumber())
+                    .avatarUrl(userResponse.getAvatarUrl())
+                    .roleName(userResponse.getRoleName())
+                    .isActive(userResponse.getIsActive())
+                    .totalSoldTickets(sold)
+                    .totalPurchasedTickets(purchased)
+                    .totalEvents(events)
+                    .build();
+        });
     }
 
     @Override
