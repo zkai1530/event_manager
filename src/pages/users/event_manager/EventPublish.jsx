@@ -67,20 +67,60 @@ const EventPublish = () => {
     fetchBanks();
   }, []);
 
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     if (!eventId || !token) return;
+  //     setLoading(true);
+  //     try {
+  //       const [eventData, bankData] = await Promise.all([
+  //         getEventInfoById(eventId),
+  //         getMyBankAccount(token),
+  //       ]);
+
+  //       setEventInfo(eventData);
+
+  //       setBankAccount(bankData || null);
+  //       if (bankData) {
+  //         setFormData({
+  //           bankName: bankData.bankName || "",
+  //           bankShortName: bankData.bankShortName || "",
+  //           accountNumber: bankData.accountNumber || "",
+  //           accountName: bankData.accountName || "",
+  //           logo: bankData.logo || "",
+  //           event_type: "",
+  //           category: "",
+  //         });
+  //         const matchedBank = banks.find(
+  //           (bank) => bank.name === bankData.bankName,
+  //         );
+  //         if (matchedBank) {
+  //           setSelectedBank({
+  //             value: matchedBank.name,
+  //             label: `${matchedBank.name} (${matchedBank.shortName})`,
+  //           });
+  //         }
+  //       }
+  //     } catch (err) {
+  //       setError("Lỗi khi tải thông tin sự kiện hoặc tài khoản ngân hàng.");
+  //       console.error("fetchData", err.response?.data || err);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+  //   fetchData();
+  // }, [eventId, token, banks]);
+
   useEffect(() => {
     const fetchData = async () => {
       if (!eventId || !token) return;
       setLoading(true);
       try {
-        const [eventData, bankData] = await Promise.all([
-          getEventInfoById(eventId),
-          getMyBankAccount(token),
-        ]);
-
+        const eventData = await getEventInfoById(eventId);
         setEventInfo(eventData);
 
-        setBankAccount(bankData || null);
+        const bankData = await getMyBankAccount(token);
         if (bankData) {
+          setBankAccount(bankData);
           setFormData({
             bankName: bankData.bankName || "",
             bankShortName: bankData.bankShortName || "",
@@ -99,9 +139,10 @@ const EventPublish = () => {
               label: `${matchedBank.name} (${matchedBank.shortName})`,
             });
           }
+        } else {
+          setBankAccount(null);
         }
       } catch (err) {
-        setError("Lỗi khi tải thông tin sự kiện hoặc tài khoản ngân hàng.");
         console.error("fetchData", err.response?.data || err);
       } finally {
         setLoading(false);
@@ -170,7 +211,7 @@ const EventPublish = () => {
   };
 
   const handleCategoryChange = (selectedOption) => {
-    setSelectedTheme(selectedOption); 
+    setSelectedTheme(selectedOption);
   };
 
   const handlePublish = async (e) => {
@@ -182,19 +223,19 @@ const EventPublish = () => {
     setError("");
     try {
       setLoading(true);
-      const response = await addCateAndTheme(
-        eventId,
-        selectedCategory?.value || null,
-        selectedTheme?.value || null,
-        token,
-      );
-      if (response.message === "Add category and theme was successfully!") {
-        setEventInfo((prev) => ({
-          ...prev,
-          categoryId: selectedCategory?.value || null,
-          themeId: selectedTheme?.value || null,
-        }));
-      }
+      // const response = await addCateAndTheme(
+      //   eventId,
+      //   selectedCategory?.value || null,
+      //   selectedTheme?.value || null,
+      //   token,
+      // );
+      // if (response.message === "Add category and theme was successfully!") {
+      //   setEventInfo((prev) => ({
+      //     ...prev,
+      //     categoryId: selectedCategory?.value || null,
+      //     themeId: selectedTheme?.value || null,
+      //   }));
+      // }
       const data = await publishEvent(eventId, token);
       if (data.message === "Event published successfully!") {
         Swal.fire({

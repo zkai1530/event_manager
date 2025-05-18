@@ -29,7 +29,7 @@ const UserLayout = () => {
           <Outlet />
         </div>
       </div>
-      <div className="z-100">
+      <div className="">
         <Footer />
       </div>
     </div>

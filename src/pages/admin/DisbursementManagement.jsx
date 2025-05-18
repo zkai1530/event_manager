@@ -8,6 +8,7 @@ import {
 import { FaCheckCircle, FaExclamationTriangle } from "react-icons/fa";
 import { FormatPrice } from "@/utils/formatPrice";
 import { IoMdClose } from "react-icons/io";
+import Swal from "sweetalert2";
 
 const DisbursementManagement = () => {
   const [events, setEvents] = useState([]);
@@ -17,6 +18,7 @@ const DisbursementManagement = () => {
   const [modalSchedule, setModalSchedule] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [qrData, setQrData] = useState(null);
+  const [isImageLoading, setIsImageLoading] = useState(false);
   const token = localStorage.getItem("token");
 
   // Fetch danh sách sự kiện đủ điều kiện giải ngân
@@ -53,21 +55,24 @@ const DisbursementManagement = () => {
       setIsLoading(false);
     }
   };
+  console.log(schedules);
 
-  const handleOpenModal = () => {
-    // Giả sử dữ liệu từ API hoặc có sẵn
-    const bankId = "vietinbank";
-    const accountNo = "113366668888";
-    const accountName = "QUY VAC XIN PHONG CHONG COVID";
-    const amount = 79000;
+  const handleOpenModal = (event, schedule) => {
+    if (!event.accountNumber || !event.accountName || !event.bankShortName) {
+      alert("Thông tin tài khoản không đầy đủ!");
+      return;
+    }
+
+    const bankId = event.bankShortName.toLowerCase();
+    const accountNo = event.accountNumber;
+    const accountName = event.accountName;
+    const amount = schedule.totalPrice;
     const addInfo = "Admin giải ngân";
 
-    // Tạo URL mã QR
-    const qrUrl = `https://img.vietqr.io/image/${bankId}-${accountNo}-compact2.jpg?amount=${amount}&addInfo=${encodeURIComponent(
-      addInfo,
-    )}&accountName=${encodeURIComponent(accountName)}`;
+    const qrUrl = `https://img.vietqr.io/image/${bankId}-${accountNo}-compact2.jpg?amount=${amount}&addInfo=${encodeURIComponent(addInfo)}&accountName=${encodeURIComponent(accountName)}`;
 
     setQrData({ qrUrl, amount, addInfo, accountName });
+    setIsImageLoading(true);
     setIsModalOpen(true);
   };
 
@@ -81,12 +86,35 @@ const DisbursementManagement = () => {
     setModalSchedule(modalSchedule ? null : schedule);
   };
 
+  const handleConfirmDisbursement = () => {
+    Swal.fire({
+      title: "Xác nhận đã giải ngân?",
+      text: "Bạn sẽ không thể hoàn tác hành động này!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "Xác nhận!",
+      cancelButtonText: "Hủy",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        Swal.fire({
+          title: "Deleted!",
+          text: "Your file has been deleted.",
+          icon: "success",
+        });
+        setIsModalOpen(false);
+      }
+    });
+    
+  };
+
   return (
     <div className="min-h-screen rounded-xl p-2">
       {/* Header */}
-      <h1 className="text-main-bold mb-6 text-3xl font-bold">
-        Tổng quan Giải ngân
-      </h1>
+      <header className="bg-main mb-5 p-4 text-white shadow-sm">
+        <h1 className="text-2xl font-bold">Tổng quan giải ngân</h1>
+      </header>
 
       {/* Danh sách sự kiện */}
       <div className="space-y-2">
@@ -160,7 +188,7 @@ const DisbursementManagement = () => {
                           scope="col"
                           className="w-[20%] px-6 py-3 text-start text-xs font-medium text-white uppercase"
                         >
-                          Sự kiện
+                          Thời gian diễn ra
                         </th>
                         <th
                           scope="col"
@@ -239,8 +267,8 @@ const DisbursementManagement = () => {
                           </td>
                           <td className="px-4 py-2 text-end text-sm">
                             <button
-                              className="text-blue-600 hover:text-blue-800"
-                              onClick={handleOpenModal}
+                              className="cursor-pointer text-blue-600 hover:text-blue-800"
+                              onClick={() => handleOpenModal(event, schedule)}
                             >
                               Giải ngân
                             </button>
@@ -309,28 +337,38 @@ const DisbursementManagement = () => {
         </div>
       )}
 
+      {/* Modal disbursement */}
       {isModalOpen && qrData && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[rgba(57,54,79,0.8)]">
           <div className="relative flex h-[90vh] w-[700px] flex-col rounded-lg bg-white p-6 shadow-lg">
             <h2 className="mb-4 text-lg font-bold">Mã QR Giải Ngân</h2>
             <div className="flex flex-col items-center">
+              {isImageLoading && (
+                <div className="mb-4 flex h-96 w-96 items-center justify-center">
+                  <div className="border-t-main-bold flex h-23 w-23 animate-spin items-center justify-center rounded-full border-6 border-transparent">
+                    <div className="border-t-emphasis flex h-16 w-16 animate-spin items-center justify-center rounded-full border-6 border-transparent" />
+                  </div>
+                </div>
+              )}
               <img
                 src={qrData.qrUrl}
                 alt="QR Code"
-                className="mb-4 h-96 w-96 object-contain" 
+                className={`mb-4 h-96 w-96 object-contain ${isImageLoading ? "hidden" : "block"}`}
+                onLoad={() => setIsImageLoading(false)}
+                onError={() => setIsImageLoading(false)}
               />
               <p className="mb-4 text-sm">Nội dung: {qrData.addInfo}</p>
             </div>
             <div className="flex justify-end gap-2">
               <button
                 onClick={handleCloseModal}
-                className="rounded-full bg-gray-300 px-4 py-2"
+                className="cursor-pointer rounded-full bg-red-400 px-4 py-2 text-white"
               >
                 Hủy
               </button>
               <button
-                onClick={handleCloseModal} // Chỉ đóng modal, chưa gọi API
-                className="rounded-full bg-blue-600 px-4 py-2 text-white"
+                onClick={handleConfirmDisbursement}
+                className="bg-main-bold cursor-pointer rounded-full px-4 py-2 text-white"
               >
                 Xong
               </button>

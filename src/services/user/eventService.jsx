@@ -151,14 +151,48 @@ export const getCateAndTheme = async (token) => {
 export const addCateAndTheme = async (eventId, cateId, themeId, token) => {
   console.log(token);
   try {
-    const response = await axios.post(`/event/category-theme/${eventId}/${cateId}/${themeId}`, null, {
-      headers: {
-        Authorization: `Bearer ${token}`,
+    const response = await axios.post(
+      `/event/category-theme/${eventId}/${cateId}/${themeId}`,
+      null,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       },
-    });
+    );
     return response.data;
   } catch (error) {
     console.error("addCateAndTheme", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const getTrendingEvents = async () => {
+  try {
+    const response = await axios.get(`/event/trending`);
+    return response.data.data;
+  } catch (error) {
+    console.error("getTrendingEvents", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const getRandomEvents = async () => {
+  try {
+    const response = await axios.get(`/event/random`);
+    return response.data.data;
+  } catch (error) {
+    console.error("getRandomEvents", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const getEventsByDate = async (period) => {
+  try {
+    const response = await axios.get(`/event/by-date?period=${period}`);
+    return response.data.data;
+  } catch (error) {
+    console.error("getEventsByDate", error.response?.data || error.message);
     throw error;
   }
 };

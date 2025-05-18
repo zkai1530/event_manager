@@ -16,7 +16,7 @@ import { NavUser } from "./nav-user";
 // Menu items.
 const data = {
   user: {
-    name: "shadcn",
+    name: "zkai",
     email: "m@example.com",
     avatar: "/avatars/shadcn.jpg",
   },
@@ -28,12 +28,12 @@ const data = {
     },
     {
       title: "Quản lý người dùng",
-      url: "/admin/calendar",
+      url: "/admin/user-management",
       icon: Calendar,
     },
     {
       title: "Quản lý sự kiện",
-      url: "/admin/calendar",
+      url: "/admin/event-management",
       icon: Calendar,
     },
     {
@@ -43,7 +43,7 @@ const data = {
     },
     {
       title: "Quản lý khiếu nại",
-      url: "/admin/search",
+      url: "/admin/complaint-management",
       icon: Search,
     },
     {

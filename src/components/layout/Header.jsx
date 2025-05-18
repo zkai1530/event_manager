@@ -172,7 +172,7 @@ const Header = () => {
             to={"/user/favorite-event"}
             className="hover:text-primary flex flex-col items-center"
           >
-            <FaRegHeart size={18} className="text-gray-800" />
+            <FaRegHeart size={18} className="FaRegHeart text-gray-800" />
             <span className="text-[10px] font-semibold text-gray-500 sm:text-xs">
               Yêu thích
             </span>

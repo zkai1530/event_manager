@@ -25,22 +25,24 @@ const TicketSalesPage = () => {
   if (!data)
     return (
       <div className="py-10 text-center text-lg font-medium text-gray-600">
-        Loading...
+        {/* Loading... */}
       </div>
     );
 
-  // Calculate Net Sales
+  // tính Net Sales
   const netSales = data.orders.reduce((total, order) => {
     return (
       total +
       order.orderTickets.reduce(
-        (sum, ot) => sum + ot.quantity * ot.priceAtPurchase,
+        // (sum, ot) => sum + ot.quantity * ot.priceAtPurchase,
+        // 0,
+        (sum, ot) => sum + ot.priceAtPurchase,
         0,
       )
     );
   }, 0);
 
-  // Calculate total tickets sold
+  // tính tổng vé bán ra
   const totalTicketsSold = data.ticketSchedules.reduce(
     (total, ticket) => total + ticket.sold,
     0,
@@ -144,7 +146,8 @@ const TicketSalesPage = () => {
                   <td className="py-2 text-center font-semibold text-gray-900">
                     {FormatPrice(
                       order.orderTickets.reduce(
-                        (sum, ot) => sum + ot.quantity * ot.priceAtPurchase,
+                        // (sum, ot) => sum + ot.quantity * ot.priceAtPurchase,
+                        (sum, ot) => sum + ot.priceAtPurchase,
                         0,
                       ),
                     )}

@@ -70,7 +70,7 @@ const OrganizerHeader = () => {
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-300">
               <span className="text-white">K</span>
             </div>
-            <span className="text-textDark hidden lg:block">zkai@lgk.com</span>
+            <span className="text-textDark hidden lg:block">Tài khoản</span>
 
             {dropdownOpen && (
               <div className="absolute top-full right-0 z-10 mt-2 w-48 rounded-md border border-gray-200 bg-white shadow-lg">

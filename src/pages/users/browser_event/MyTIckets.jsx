@@ -6,6 +6,7 @@ import {
   reportOrder,
 } from "services/user/orderService";
 import Swal from "sweetalert2";
+import "animate.css";
 
 const MyTickets = () => {
   const { status = "all", timeFilter = "upcoming" } = useParams();
@@ -340,8 +341,8 @@ const MyTickets = () => {
 
       {/* Modal */}
       {selectedTicket && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[rgba(57,54,79,0.8)]">
-          <div className="relative w-[600px] rounded-lg bg-white p-6 shadow-lg">
+        <div className="animate__animated animate__fadeIn animate__faster fixed inset-0 z-[100] flex items-center justify-center bg-[rgba(57,54,79,0.8)]">
+          <div className="animate__animated animate__zoomIn animate__faster relative w-[600px] rounded-lg bg-white p-6 shadow-lg">
             <button
               onClick={closeModal}
               className="absolute top-4 right-4 cursor-pointer text-gray-600 hover:text-gray-800"
@@ -396,8 +397,8 @@ const MyTickets = () => {
       )}
 
       {showReportModal && selectedTicketForReport && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[rgba(57,54,79,0.8)]">
-          <div className="relative flex flex-col rounded-lg bg-white p-6 shadow-lg">
+        <div className="animate__animated animate__fadeIn animate__faster fixed inset-0 z-[100] flex items-center justify-center bg-[rgba(57,54,79,0.8)]">
+          <div className="animate__animated animate__zoomIn animate__faster relative flex flex-col rounded-lg bg-white p-6 shadow-lg">
             <div className="w-full max-w-md rounded-lg bg-white p-3">
               <h2 className="mb-4 text-lg font-bold">Báo cáo đơn hàng</h2>
               <div className="mb-4 flex flex-col gap-3">
