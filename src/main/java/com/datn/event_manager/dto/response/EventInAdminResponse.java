@@ -8,9 +8,6 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
 @Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class EventInAdminResponse {
     Long eventId;
@@ -23,16 +20,16 @@ public class EventInAdminResponse {
     int ticketTotal;
     String status;
 
-    public EventInAdminResponse(Long eventId, String name, String categoryName, String city, String address,
-            String country, Long ticketSold, Long ticketTotal, String status) {
-        this.eventId = eventId;
-        this.name = name;
-        this.categoryName = categoryName;
-        this.city = city;
-        this.address = address;
-        this.country = country;
-        this.ticketSold = ticketSold != null ? ticketSold.intValue() : 0;
-        this.ticketTotal = ticketTotal != null ? ticketTotal.intValue() : 0;
-        this.status = status;
+    public EventInAdminResponse(Object eventId, Object name, Object categoryName, Object city, Object address,
+            Object country, Object ticketSold, Object ticketTotal, Object status) {
+        this.eventId = eventId != null ? Long.valueOf(eventId.toString()) : null;
+        this.name = name != null ? name.toString() : null;
+        this.categoryName = categoryName != null ? categoryName.toString() : "Không xác định";
+        this.city = city != null ? city.toString() : null;
+        this.address = address != null ? address.toString() : null;
+        this.country = country != null ? country.toString() : null;
+        this.ticketSold = ticketSold != null ? Integer.parseInt(ticketSold.toString()) : 0;
+        this.ticketTotal = ticketTotal != null ? Integer.parseInt(ticketTotal.toString()) : 0;
+        this.status = status != null ? status.toString() : null;
     }
 }

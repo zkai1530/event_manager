@@ -412,132 +412,176 @@ public interface EventRepository extends JpaRepository<Event, Long> {
         // Page<Event> findAllOrderByTicketSalesDesc(Pageable pageable);
 
         // Lọc theo trạng thái
-        @Query("SELECT new com.datn.event_manager.dto.response.EventInAdminResponse(" +
-                        "e.eventId, e.name, COALESCE(c.categoryName, 'Không xác định'), " +
-                        "el.city, el.address, el.country, " +
-                        "CAST(COALESCE((SELECT SUM(COALESCE(ts.sold, 0)) FROM TicketSchedule ts JOIN ts.schedule es WHERE es.event = e), 0) AS INTEGER), "
+        @Query(value = "SELECT e.event_id AS eventId, e.name, COALESCE(c.category_name, 'Không xác định') AS categoryName, "
                         +
-                        "CAST(COALESCE((SELECT SUM(COALESCE(ts.availableQuantity, 0)) FROM TicketSchedule ts JOIN ts.schedule es WHERE es.event = e), 0) AS INTEGER), "
+                        "el.city, el.address, el.country, " +
+                        "COALESCE((SELECT SUM(COALESCE(ts.sold, 0)) FROM ticket_schedule ts JOIN event_schedule es ON ts.schedule_id = es.schedule_id WHERE es.event_id = e.event_id), 0) AS ticketSold, "
+                        +
+                        "COALESCE((SELECT SUM(COALESCE(ts.available_quantity, 0)) FROM ticket_schedule ts JOIN event_schedule es ON ts.schedule_id = es.schedule_id WHERE es.event_id = e.event_id), 0) AS ticketTotal, "
                         +
                         "CASE " +
-                        "  WHEN e.isSuspended = true THEN 'Đã ẩn' " +
-                        "  WHEN e.isPublished = false THEN 'Chưa đăng' " +
-                        "  WHEN EXISTS (SELECT 1 FROM EventSchedule es WHERE es.event = e AND " +
-                        "    (es.scheduleDate > CURRENT_DATE OR (es.scheduleDate = CURRENT_DATE AND es.startTime > FUNCTION('CURRENT_TIME')))) THEN 'Sắp diễn ra' "
+                        "  WHEN e.is_suspended = TRUE THEN 'Đã ẩn' " +
+                        "  WHEN e.is_published = FALSE THEN 'Chưa đăng' " +
+                        "  WHEN EXISTS (SELECT 1 FROM event_schedule es WHERE es.event_id = e.event_id AND " +
+                        "    (es.schedule_date > CURDATE() OR (es.schedule_date = CURDATE() AND es.start_time > CURTIME()))) THEN 'Sắp diễn ra' "
                         +
-                        "  WHEN NOT EXISTS (SELECT 1 FROM EventSchedule es WHERE es.event = e AND " +
-                        "    (es.scheduleDate > CURRENT_DATE OR (es.scheduleDate = CURRENT_DATE AND es.endTime >= FUNCTION('CURRENT_TIME')))) THEN 'Đã diễn ra' "
+                        "  WHEN NOT EXISTS (SELECT 1 FROM event_schedule es WHERE es.event_id = e.event_id AND " +
+                        "    (es.schedule_date > CURDATE() OR (es.schedule_date = CURDATE() AND es.end_time >= CURTIME()))) THEN 'Đã diễn ra' "
                         +
-                        "  ELSE 'Đã đăng' END) " +
-                        "FROM Event e " +
-                        "LEFT JOIN e.category c " +
-                        "LEFT JOIN e.eventLocation el " +
+                        "  ELSE 'Đã đăng' END AS status " +
+                        "FROM event e " +
+                        "LEFT JOIN event_categories c ON e.category_id = c.category_id " +
+                        "LEFT JOIN event_location el ON e.event_id = el.event_id " +
                         "WHERE (:status IS NULL OR " +
-                        "  (:status = 'published' AND e.isPublished = true AND e.isSuspended = false) OR " +
-                        "  (:status = 'hidden' AND e.isSuspended = true) OR " +
-                        "  (:status = 'completed' AND e.isPublished = true AND e.isSuspended = false AND NOT EXISTS (" +
-                        "    SELECT 1 FROM EventSchedule es2 WHERE es2.event = e AND " +
-                        "    (es2.scheduleDate > CURRENT_DATE OR (es2.scheduleDate = CURRENT_DATE AND es2.endTime >= FUNCTION('CURRENT_TIME'))))) OR "
+                        "  (:status = 'published' AND e.is_published = TRUE AND e.is_suspended = FALSE) OR " +
+                        "  (:status = 'hidden' AND e.is_suspended = TRUE) OR " +
+                        "  (:status = 'completed' AND e.is_published = TRUE AND e.is_suspended = FALSE AND NOT EXISTS ("
                         +
-                        "  (:status = 'upcoming' AND e.isPublished = true AND e.isSuspended = false AND EXISTS (" +
-                        "    SELECT 1 FROM EventSchedule es2 WHERE es2.event = e AND " +
-                        "    (es2.scheduleDate > CURRENT_DATE OR (es2.scheduleDate = CURRENT_DATE AND es2.startTime > FUNCTION('CURRENT_TIME'))))))")
+                        "    SELECT 1 FROM event_schedule es2 WHERE es2.event_id = e.event_id AND " +
+                        "    (es2.schedule_date > CURDATE() OR (es2.schedule_date = CURDATE() AND es2.end_time >= CURTIME())))) OR "
+                        +
+                        "  (:status = 'upcoming' AND e.is_published = TRUE AND e.is_suspended = FALSE AND EXISTS (" +
+                        "    SELECT 1 FROM event_schedule es2 WHERE es2.event_id = e.event_id AND " +
+                        "    (es2.schedule_date > CURDATE() OR (es2.schedule_date = CURDATE() AND es2.start_time > CURTIME())))))", countQuery = "SELECT COUNT(*) FROM event e "
+                                        +
+                                        "WHERE (:status IS NULL OR " +
+                                        "  (:status = 'published' AND e.is_published = TRUE AND e.is_suspended = FALSE) OR "
+                                        +
+                                        "  (:status = 'hidden' AND e.is_suspended = TRUE) OR " +
+                                        "  (:status = 'completed' AND e.is_published = TRUE AND e.is_suspended = FALSE AND NOT EXISTS ("
+                                        +
+                                        "    SELECT 1 FROM event_schedule es2 WHERE es2.event_id = e.event_id AND " +
+                                        "    (es2.schedule_date > CURDATE() OR (es2.schedule_date = CURDATE() AND es2.end_time >= CURTIME())))) OR "
+                                        +
+                                        "  (:status = 'upcoming' AND e.is_published = TRUE AND e.is_suspended = FALSE AND EXISTS ("
+                                        +
+                                        "    SELECT 1 FROM event_schedule es2 WHERE es2.event_id = e.event_id AND " +
+                                        "    (es2.schedule_date > CURDATE() OR (es2.schedule_date = CURDATE() AND es2.start_time > CURTIME())))))", nativeQuery = true)
         Page<EventInAdminResponse> findEventsByStatus(@Param("status") String status, Pageable pageable);
 
         // Lọc theo trạng thái, sắp xếp theo createdAt
-        @Query("SELECT new com.datn.event_manager.dto.response.EventInAdminResponse(" +
-                        "e.eventId, e.name, COALESCE(c.categoryName, 'Không xác định'), " +
-                        "el.city, el.address, el.country, " +
-                        "CAST(COALESCE((SELECT SUM(COALESCE(ts.sold, 0)) FROM TicketSchedule ts JOIN ts.schedule es WHERE es.event = e), 0) AS INTEGER), "
+        @Query(value = "SELECT e.event_id AS eventId, e.name, COALESCE(c.category_name, 'Không xác định') AS categoryName, "
                         +
-                        "CAST(COALESCE((SELECT SUM(COALESCE(ts.availableQuantity, 0)) FROM TicketSchedule ts JOIN ts.schedule es WHERE es.event = e), 0) AS INTEGER), "
+                        "el.city, el.address, el.country, " +
+                        "COALESCE((SELECT SUM(COALESCE(ts.sold, 0)) FROM ticket_schedule ts JOIN event_schedule es ON ts.schedule_id = es.schedule_id WHERE es.event_id = e.event_id), 0) AS ticketSold, "
+                        +
+                        "COALESCE((SELECT SUM(COALESCE(ts.available_quantity, 0)) FROM ticket_schedule ts JOIN event_schedule es ON ts.schedule_id = es.schedule_id WHERE es.event_id = e.event_id), 0) AS ticketTotal, "
                         +
                         "CASE " +
-                        "  WHEN e.isSuspended = true THEN 'Đã ẩn' " +
-                        "  WHEN e.isPublished = false THEN 'Chưa đăng' " +
-                        "  WHEN EXISTS (SELECT 1 FROM EventSchedule es WHERE es.event = e AND " +
-                        "    (es.scheduleDate > CURRENT_DATE OR (es.scheduleDate = CURRENT_DATE AND es.startTime > FUNCTION('CURRENT_TIME')))) THEN 'Sắp diễn ra' "
+                        "  WHEN e.is_suspended = TRUE THEN 'Đã ẩn' " +
+                        "  WHEN e.is_published = FALSE THEN 'Chưa đăng' " +
+                        "  WHEN EXISTS (SELECT 1 FROM event_schedule es WHERE es.event_id = e.event_id AND " +
+                        "    (es.schedule_date > CURDATE() OR (es.schedule_date = CURDATE() AND es.start_time > CURTIME()))) THEN 'Sắp diễn ra' "
                         +
-                        "  WHEN NOT EXISTS (SELECT 1 FROM EventSchedule es WHERE es.event = e AND " +
-                        "    (es.scheduleDate > CURRENT_DATE OR (es.scheduleDate = CURRENT_DATE AND es.endTime >= FUNCTION('CURRENT_TIME')))) THEN 'Đã diễn ra' "
+                        "  WHEN NOT EXISTS (SELECT 1 FROM event_schedule es WHERE es.event_id = e.event_id AND " +
+                        "    (es.schedule_date > CURDATE() OR (es.schedule_date = CURDATE() AND es.end_time >= CURTIME()))) THEN 'Đã diễn ra' "
                         +
-                        "  ELSE 'Đã đăng' END) " +
-                        "FROM Event e " +
-                        "LEFT JOIN e.category c " +
-                        "LEFT JOIN e.eventLocation el " +
+                        "  ELSE 'Đã đăng' END AS status " +
+                        "FROM event e " +
+                        "LEFT JOIN event_categories c ON e.category_id = c.category_id " +
+                        "LEFT JOIN event_location el ON e.event_id = el.event_id " +
                         "WHERE (:status IS NULL OR " +
-                        "  (:status = 'published' AND e.isPublished = true AND e.isSuspended = false) OR " +
-                        "  (:status = 'hidden' AND e.isSuspended = true) OR " +
-                        "  (:status = 'completed' AND e.isPublished = true AND e.isSuspended = false AND NOT EXISTS (" +
-                        "    SELECT 1 FROM EventSchedule es2 WHERE es2.event = e AND " +
-                        "    (es2.scheduleDate > CURRENT_DATE OR (es2.scheduleDate = CURRENT_DATE AND es2.endTime >= FUNCTION('CURRENT_TIME'))))) OR "
+                        "  (:status = 'published' AND e.is_published = TRUE AND e.is_suspended = FALSE) OR " +
+                        "  (:status = 'hidden' AND e.is_suspended = TRUE) OR " +
+                        "  (:status = 'completed' AND e.is_published = TRUE AND e.is_suspended = FALSE AND NOT EXISTS ("
                         +
-                        "  (:status = 'upcoming' AND e.isPublished = true AND e.isSuspended = false AND EXISTS (" +
-                        "    SELECT 1 FROM EventSchedule es2 WHERE es2.event = e AND " +
-                        "    (es2.scheduleDate > CURRENT_DATE OR (es2.scheduleDate = CURRENT_DATE AND es2.startTime > FUNCTION('CURRENT_TIME')))))) "
+                        "    SELECT 1 FROM event_schedule es2 WHERE es2.event_id = e.event_id AND " +
+                        "    (es2.schedule_date > CURDATE() OR (es2.schedule_date = CURDATE() AND es2.end_time >= CURTIME())))) OR "
                         +
-                        "ORDER BY e.createdAt DESC")
+                        "  (:status = 'upcoming' AND e.is_published = TRUE AND e.is_suspended = FALSE AND EXISTS (" +
+                        "    SELECT 1 FROM event_schedule es2 WHERE es2.event_id = e.event_id AND " +
+                        "    (es2.schedule_date > CURDATE() OR (es2.schedule_date = CURDATE() AND es2.start_time > CURTIME()))))) "
+                        +
+                        "ORDER BY e.created_at DESC", countQuery = "SELECT COUNT(*) FROM event e " +
+                                        "WHERE (:status IS NULL OR " +
+                                        "  (:status = 'published' AND e.is_published = TRUE AND e.is_suspended = FALSE) OR "
+                                        +
+                                        "  (:status = 'hidden' AND e.is_suspended = TRUE) OR " +
+                                        "  (:status = 'completed' AND e.is_published = TRUE AND e.is_suspended = FALSE AND NOT EXISTS ("
+                                        +
+                                        "    SELECT 1 FROM event_schedule es2 WHERE es2.event_id = e.event_id AND " +
+                                        "    (es2.schedule_date > CURDATE() OR (es2.schedule_date = CURDATE() AND es2.end_time >= CURTIME())))) OR "
+                                        +
+                                        "  (:status = 'upcoming' AND e.is_published = TRUE AND e.is_suspended = FALSE AND EXISTS ("
+                                        +
+                                        "    SELECT 1 FROM event_schedule es2 WHERE es2.event_id = e.event_id AND " +
+                                        "    (es2.schedule_date > CURDATE() OR (es2.schedule_date = CURDATE() AND es2.start_time > CURTIME())))))", nativeQuery = true)
         Page<EventInAdminResponse> findEventsByStatusOrderByCreatedAtDesc(@Param("status") String status,
                         Pageable pageable);
 
         // Lọc theo trạng thái, sắp xếp theo totalSold
-        @Query("SELECT new com.datn.event_manager.dto.response.EventInAdminResponse(" +
-                        "e.eventId, e.name, COALESCE(c.categoryName, 'Không xác định'), " +
-                        "el.city, el.address, el.country, " +
-                        "CAST(COALESCE((SELECT SUM(COALESCE(ts.sold, 0)) FROM TicketSchedule ts JOIN ts.schedule es WHERE es.event = e), 0) AS INTEGER), "
+        @Query(value = "SELECT e.event_id AS eventId, e.name, COALESCE(c.category_name, 'Không xác định') AS categoryName, "
                         +
-                        "CAST(COALESCE((SELECT SUM(COALESCE(ts.availableQuantity, 0)) FROM TicketSchedule ts JOIN ts.schedule es WHERE es.event = e), 0) AS INTEGER), "
+                        "el.city, el.address, el.country, " +
+                        "COALESCE((SELECT SUM(COALESCE(ts.sold, 0)) FROM ticket_schedule ts JOIN event_schedule es ON ts.schedule_id = es.schedule_id WHERE es.event_id = e.event_id), 0) AS ticketSold, "
+                        +
+                        "COALESCE((SELECT SUM(COALESCE(ts.available_quantity, 0)) FROM ticket_schedule ts JOIN event_schedule es ON ts.schedule_id = es.schedule_id WHERE es.event_id = e.event_id), 0) AS ticketTotal, "
                         +
                         "CASE " +
-                        "  WHEN e.isSuspended = true THEN 'Đã ẩn' " +
-                        "  WHEN e.isPublished = false THEN 'Chưa đăng' " +
-                        "  WHEN EXISTS (SELECT 1 FROM EventSchedule es WHERE es.event = e AND " +
-                        "    (es.scheduleDate > CURRENT_DATE OR (es.scheduleDate = CURRENT_DATE AND es.startTime > FUNCTION('CURRENT_TIME')))) THEN 'Sắp diễn ra' "
+                        "  WHEN e.is_suspended = TRUE THEN 'Đã ẩn' " +
+                        "  WHEN e.is_published = FALSE THEN 'Chưa đăng' " +
+                        "  WHEN EXISTS (SELECT 1 FROM event_schedule es WHERE es.event_id = e.event_id AND " +
+                        "    (es.schedule_date > CURDATE() OR (es.schedule_date = CURDATE() AND es.start_time > CURTIME()))) THEN 'Sắp diễn ra' "
                         +
-                        "  WHEN NOT EXISTS (SELECT 1 FROM EventSchedule es WHERE es.event = e AND " +
-                        "    (es.scheduleDate > CURRENT_DATE OR (es.scheduleDate = CURRENT_DATE AND es.endTime >= FUNCTION('CURRENT_TIME')))) THEN 'Đã diễn ra' "
+                        "  WHEN NOT EXISTS (SELECT 1 FROM event_schedule es WHERE es.event_id = e.event_id AND " +
+                        "    (es.schedule_date > CURDATE() OR (es.schedule_date = CURDATE() AND es.end_time >= CURTIME()))) THEN 'Đã diễn ra' "
                         +
-                        "  ELSE 'Đã đăng' END) " +
-                        "FROM Event e " +
-                        "LEFT JOIN e.category c " +
-                        "LEFT JOIN e.eventLocation el " +
+                        "  ELSE 'Đã đăng' END AS status " +
+                        "FROM event e " +
+                        "LEFT JOIN event_categories c ON e.category_id = c.category_id " +
+                        "LEFT JOIN event_location el ON e.event_id = el.event_id " +
                         "WHERE (:status IS NULL OR " +
-                        "  (:status = 'published' AND e.isPublished = true AND e.isSuspended = false) OR " +
-                        "  (:status = 'hidden' AND e.isSuspended = true) OR " +
-                        "  (:status = 'completed' AND e.isPublished = true AND e.isSuspended = false AND NOT EXISTS (" +
-                        "    SELECT 1 FROM EventSchedule es2 WHERE es2.event = e AND " +
-                        "    (es2.scheduleDate > CURRENT_DATE OR (es2.scheduleDate = CURRENT_DATE AND es2.endTime >= FUNCTION('CURRENT_TIME'))))) OR "
+                        "  (:status = 'published' AND e.is_published = TRUE AND e.is_suspended = FALSE) OR " +
+                        "  (:status = 'hidden' AND e.is_suspended = TRUE) OR " +
+                        "  (:status = 'completed' AND e.is_published = TRUE AND e.is_suspended = FALSE AND NOT EXISTS ("
                         +
-                        "  (:status = 'upcoming' AND e.isPublished = true AND e.isSuspended = false AND EXISTS (" +
-                        "    SELECT 1 FROM EventSchedule es2 WHERE es2.event = e AND " +
-                        "    (es2.scheduleDate > CURRENT_DATE OR (es2.scheduleDate = CURRENT_DATE AND es2.startTime > FUNCTION('CURRENT_TIME')))))) "
+                        "    SELECT 1 FROM event_schedule es2 WHERE es2.event_id = e.event_id AND " +
+                        "    (es2.schedule_date > CURDATE() OR (es2.schedule_date = CURDATE() AND es2.end_time >= CURTIME())))) OR "
                         +
-                        "ORDER BY (SELECT SUM(COALESCE(ts.sold, 0)) FROM TicketSchedule ts JOIN ts.schedule es WHERE es.event = e) DESC")
+                        "  (:status = 'upcoming' AND e.is_published = TRUE AND e.is_suspended = FALSE AND EXISTS (" +
+                        "    SELECT 1 FROM event_schedule es2 WHERE es2.event_id = e.event_id AND " +
+                        "    (es2.schedule_date > CURDATE() OR (es2.schedule_date = CURDATE() AND es2.start_time > CURTIME()))))) "
+                        +
+                        "ORDER BY (SELECT SUM(COALESCE(ts.sold, 0)) FROM ticket_schedule ts JOIN event_schedule es ON ts.schedule_id = es.schedule_id WHERE es.event_id = e.event_id) DESC", countQuery = "SELECT COUNT(*) FROM event e "
+                                        +
+                                        "WHERE (:status IS NULL OR " +
+                                        "  (:status = 'published' AND e.is_published = TRUE AND e.is_suspended = FALSE) OR "
+                                        +
+                                        "  (:status = 'hidden' AND e.is_suspended = TRUE) OR " +
+                                        "  (:status = 'completed' AND e.is_published = TRUE AND e.is_suspended = FALSE AND NOT EXISTS ("
+                                        +
+                                        "    SELECT 1 FROM event_schedule es2 WHERE es2.event_id = e.event_id AND " +
+                                        "    (es2.schedule_date > CURDATE() OR (es2.schedule_date = CURDATE() AND es2.end_time >= CURTIME())))) OR "
+                                        +
+                                        "  (:status = 'upcoming' AND e.is_published = TRUE AND e.is_suspended = FALSE AND EXISTS ("
+                                        +
+                                        "    SELECT 1 FROM event_schedule es2 WHERE es2.event_id = e.event_id AND " +
+                                        "    (es2.schedule_date > CURDATE() OR (es2.schedule_date = CURDATE() AND es2.start_time > CURTIME())))))", nativeQuery = true)
         Page<EventInAdminResponse> findEventsByStatusOrderByTicketSalesDesc(@Param("status") String status,
                         Pageable pageable);
 
         // Tất cả sự kiện, sắp xếp theo totalSold
-        @Query("SELECT new com.datn.event_manager.dto.response.EventInAdminResponse(" +
-                        "e.eventId, e.name, COALESCE(c.categoryName, 'Không xác định'), " +
-                        "el.city, el.address, el.country, " +
-                        "CAST(COALESCE((SELECT SUM(COALESCE(ts.sold, 0)) FROM TicketSchedule ts JOIN ts.schedule es WHERE es.event = e), 0) AS INTEGER), "
+        @Query(value = "SELECT e.event_id AS eventId, e.name, COALESCE(c.category_name, 'Không xác định') AS categoryName, "
                         +
-                        "CAST(COALESCE((SELECT SUM(COALESCE(ts.availableQuantity, 0)) FROM TicketSchedule ts JOIN ts.schedule es WHERE es.event = e), 0) AS INTEGER), "
+                        "el.city, el.address, el.country, " +
+                        "COALESCE((SELECT SUM(COALESCE(ts.sold, 0)) FROM ticket_schedule ts JOIN event_schedule es ON ts.schedule_id = es.schedule_id WHERE es.event_id = e.event_id), 0) AS ticketSold, "
+                        +
+                        "COALESCE((SELECT SUM(COALESCE(ts.available_quantity, 0)) FROM ticket_schedule ts JOIN event_schedule es ON ts.schedule_id = es.schedule_id WHERE es.event_id = e.event_id), 0) AS ticketTotal, "
                         +
                         "CASE " +
-                        "  WHEN e.isSuspended = true THEN 'Đã ẩn' " +
-                        "  WHEN e.isPublished = false THEN 'Chưa đăng' " +
-                        "  WHEN EXISTS (SELECT 1 FROM EventSchedule es WHERE es.event = e AND " +
-                        "    (es.scheduleDate > CURRENT_DATE OR (es.scheduleDate = CURRENT_DATE AND es.startTime > FUNCTION('CURRENT_TIME')))) THEN 'Sắp diễn ra' "
+                        "  WHEN e.is_suspended = TRUE THEN 'Đã ẩn' " +
+                        "  WHEN e.is_published = FALSE THEN 'Chưa đăng' " +
+                        "  WHEN EXISTS (SELECT 1 FROM event_schedule es WHERE es.event_id = e.event_id AND " +
+                        "    (es.schedule_date > CURDATE() OR (es.schedule_date = CURDATE() AND es.start_time > CURTIME()))) THEN 'Sắp diễn ra' "
                         +
-                        "  WHEN NOT EXISTS (SELECT 1 FROM EventSchedule es WHERE es.event = e AND " +
-                        "    (es.scheduleDate > CURRENT_DATE OR (es.scheduleDate = CURRENT_DATE AND es.endTime >= FUNCTION('CURRENT_TIME')))) THEN 'Đã diễn ra' "
+                        "  WHEN NOT EXISTS (SELECT 1 FROM event_schedule es WHERE es.event_id = e.event_id AND " +
+                        "    (es.schedule_date > CURDATE() OR (es.schedule_date = CURDATE() AND es.end_time >= CURTIME()))) THEN 'Đã diễn ra' "
                         +
-                        "  ELSE 'Đã đăng' END) " +
-                        "FROM Event e " +
-                        "LEFT JOIN e.category c " +
-                        "LEFT JOIN e.eventLocation el " +
-                        "ORDER BY (SELECT SUM(COALESCE(ts.sold, 0)) FROM TicketSchedule ts JOIN ts.schedule es WHERE es.event = e) DESC")
+                        "  ELSE 'Đã đăng' END AS status " +
+                        "FROM event e " +
+                        "LEFT JOIN event_categories c ON e.category_id = c.category_id " +
+                        "LEFT JOIN event_location el ON e.event_id = el.event_id " +
+                        "ORDER BY (SELECT SUM(COALESCE(ts.sold, 0)) FROM ticket_schedule ts JOIN event_schedule es ON ts.schedule_id = es.schedule_id WHERE es.event_id = e.event_id) DESC", countQuery = "SELECT COUNT(*) FROM event e", nativeQuery = true)
         Page<EventInAdminResponse> findAllOrderByTicketSalesDesc(Pageable pageable);
 
 }
