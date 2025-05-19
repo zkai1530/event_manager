@@ -17,6 +17,7 @@ import com.datn.event_manager.dto.response.EventInAdminResponse;
 import com.datn.event_manager.dto.response.EventResponse;
 import com.datn.event_manager.dto.response.EventSearchResponse;
 import com.datn.event_manager.dto.response.EventStatusResponse;
+import com.datn.event_manager.dto.response.admin_statistic.ThemeEventCountResponse;
 
 public interface EventService {
     String createEvent(EventRequest eventRequest, MultipartFile file);
@@ -50,5 +51,8 @@ public interface EventService {
     List<EventHomepageResponse> getEventsByDateRange(String period);
 
     Map<String, Object> getEventSummary();
-    // Page<EventInAdminResponse> getFilteredEvents(String status, String sort, Pageable pageable);
+    
+    Page<EventInAdminResponse> getFilteredEvents(String status, String sort, Pageable pageable);
+
+    List<ThemeEventCountResponse> countEventsByTheme();
 }

@@ -22,4 +22,17 @@ public class EventInAdminResponse {
     int ticketSold;
     int ticketTotal;
     String status;
+
+    public EventInAdminResponse(Long eventId, String name, String categoryName, String city, String address,
+            String country, Long ticketSold, Long ticketTotal, String status) {
+        this.eventId = eventId;
+        this.name = name;
+        this.categoryName = categoryName;
+        this.city = city;
+        this.address = address;
+        this.country = country;
+        this.ticketSold = ticketSold != null ? ticketSold.intValue() : 0;
+        this.ticketTotal = ticketTotal != null ? ticketTotal.intValue() : 0;
+        this.status = status;
+    }
 }

@@ -34,6 +34,7 @@ import com.datn.event_manager.dto.response.EventInAdminResponse;
 import com.datn.event_manager.dto.response.EventResponse;
 import com.datn.event_manager.dto.response.EventSearchResponse;
 import com.datn.event_manager.dto.response.EventStatusResponse;
+import com.datn.event_manager.dto.response.admin_statistic.ThemeEventCountResponse;
 import com.datn.event_manager.entity.Event;
 import com.datn.event_manager.entity.EventCategories;
 import com.datn.event_manager.entity.EventLocation;
@@ -629,6 +630,11 @@ public class EventServiceImpl implements EventService {
         return result;
     }
 
+    @Override
+    public List<ThemeEventCountResponse> countEventsByTheme() {
+        return eventThemesRepository.countEventsByTheme();
+    }
+
     // @Override
     // public Page<EventInAdminResponse> getFilteredEvents(String status, String sort, Pageable pageable) {
     //     Page<Event> eventsPage;
@@ -694,4 +700,17 @@ public class EventServiceImpl implements EventService {
     //     }
     //     return "Chưa đăng";
     // }
+
+    @Override
+    public Page<EventInAdminResponse> getFilteredEvents(String status, String sort, Pageable pageable) {
+        if (status == null) {
+            return eventRepository.findAllOrderByTicketSalesDesc(pageable);
+        } else if ("date_desc".equals(sort)) {
+            return eventRepository.findEventsByStatusOrderByCreatedAtDesc(status, pageable);
+        } else if ("tickets".equals(sort)) {
+            return eventRepository.findEventsByStatusOrderByTicketSalesDesc(status, pageable);
+        } else {
+            return eventRepository.findEventsByStatus(status, pageable);
+        }
+    }
 }

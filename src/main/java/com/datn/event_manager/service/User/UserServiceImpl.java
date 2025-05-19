@@ -113,6 +113,7 @@ public class UserServiceImpl implements UserService {
 
         return userMapper.toUserResponse(user);
     }
+    
 
     @PreAuthorize("hasRole('ADMIN')")
     @Override
