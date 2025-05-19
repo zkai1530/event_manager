@@ -12,6 +12,7 @@ import lombok.experimental.FieldDefaults;
 public class EventInAdminResponse {
     Long eventId;
     String name;
+    String imageUrl;
     String categoryName;
     String city;
     String address;
@@ -20,10 +21,11 @@ public class EventInAdminResponse {
     int ticketTotal;
     String status;
 
-    public EventInAdminResponse(Object eventId, Object name, Object categoryName, Object city, Object address,
+    public EventInAdminResponse(Object eventId, Object name, Object imageUrl, Object categoryName, Object city, Object address,
             Object country, Object ticketSold, Object ticketTotal, Object status) {
         this.eventId = eventId != null ? Long.valueOf(eventId.toString()) : null;
         this.name = name != null ? name.toString() : null;
+        this.imageUrl = imageUrl != null ? imageUrl.toString() : null;
         this.categoryName = categoryName != null ? categoryName.toString() : "Không xác định";
         this.city = city != null ? city.toString() : null;
         this.address = address != null ? address.toString() : null;
