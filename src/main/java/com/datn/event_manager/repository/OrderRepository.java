@@ -46,7 +46,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                             ORDER BY es.schedule_date DESC, es.start_time DESC
                         """, nativeQuery = true)
         Page<Order> findOrdersByUserStatusAndTimeFilter(
-                        @Param("user") String user, 
+                        @Param("user") String user,
                         @Param("status") String status,
                         @Param("isUpcoming") boolean isUpcoming,
                         @Param("now") LocalDateTime now,
@@ -91,4 +91,26 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                         "FROM Order o JOIN o.orderTickets ot " +
                         "WHERE o.user = :user AND o.status = com.datn.event_manager.entity.Order.OrderStatus.PAID")
         Long sumTotalPurchasedTicketsByUser(@Param("user") User user);
+
+        // admin dashboard
+        @Query("SELECT SUM(o.totalPrice) FROM Order o WHERE o.status = 'PAID'")
+        BigDecimal getTotalRevenue();
+
+        // * doanh thu theo tháng
+        @Query("SELECT FUNCTION('MONTH', o.createdAt) AS month, SUM(o.totalPrice) AS revenue " +
+                        "FROM Order o " +
+                        "WHERE o.status = 'PAID' AND FUNCTION('YEAR', o.createdAt) = :year " +
+                        "GROUP BY FUNCTION('MONTH', o.createdAt)")
+        List<Object[]> getRevenueByYear(@Param("year") int year);
+
+        // * top 5 sự kiện nhiều doanh thu theo khoảng ngày
+        @Query("SELECT e.name, e.imageUrl, SUM(o.totalPrice) " +
+                        "FROM Order o " +
+                        "JOIN o.schedule es " +
+                        "JOIN es.event e " +
+                        "WHERE o.status = 'PAID' AND FUNCTION('DATE', o.createdAt) BETWEEN :startDate AND :endDate " +
+                        "GROUP BY e.eventId, e.name, e.imageUrl " +
+                        "ORDER BY SUM(o.totalPrice) DESC")
+        Page<Object[]> getTop5EventsByRevenue(@Param("startDate") LocalDate startDate,
+                        @Param("endDate") LocalDate endDate, Pageable pageable);
 }

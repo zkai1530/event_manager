@@ -384,4 +384,14 @@ public interface EventRepository extends JpaRepository<Event, Long> {
                         "ORDER BY (SELECT SUM(COALESCE(ts.sold, 0)) FROM ticket_schedule ts JOIN event_schedule es ON ts.schedule_id = es.schedule_id WHERE es.event_id = e.event_id) DESC", countQuery = "SELECT COUNT(*) FROM event e", nativeQuery = true)
         Page<EventInAdminResponse> findAllOrderByTicketSalesDesc(Pageable pageable);
 
+
+        // admin dashboard
+        Long countByIsSuspendedTrue();
+
+        // * đếm số sự kiện đã đăng theo tháng
+        @Query("SELECT FUNCTION('MONTH', e.publishedAt) AS month, COUNT(e) AS count " +
+                        "FROM Event e WHERE e.publishedAt IS NOT NULL AND FUNCTION('YEAR', e.publishedAt) = :year " +
+                        "GROUP BY FUNCTION('MONTH', e.publishedAt)")
+        List<Object[]> countEventsPublishedByYear(int year);
+
 }

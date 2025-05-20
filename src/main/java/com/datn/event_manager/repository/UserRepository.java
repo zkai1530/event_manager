@@ -31,4 +31,8 @@ public interface UserRepository extends JpaRepository<User, String> {
             "FROM User u WHERE u.role.roleName = 'USER' " +
             "AND (LOWER(u.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')))")
     Page<UserManageResponse> searchUsersByNameOrEmail(@Param("keyword") String keyword, Pageable pageable);
+
+    // admin dashboard
+    Long countByIsActiveFalse();
+
 }

@@ -471,6 +471,7 @@ public class EventServiceImpl implements EventService {
         }
 
         event.setIsPublished(true);
+        event.setPublishedAt(LocalDateTime.now());
         eventRepository.save(event);
 
         notificationService.notifyFollowersOnEventCreation(eventId, user.getUserId());
@@ -492,6 +493,7 @@ public class EventServiceImpl implements EventService {
         }
 
         event.setIsPublished(false);
+        event.setPublishedAt(null);
         eventRepository.save(event);
     }
 
