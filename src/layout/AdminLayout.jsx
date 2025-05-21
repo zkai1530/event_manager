@@ -6,8 +6,8 @@ const AdminLayout = () => {
   return (
     <SidebarProvider>
       <AppSidebar />
-      <main className="w-full px-5 bg-sidebar">
-        <div className="sticky top-0 z-10 bg-sidebar">
+      <main className="w-full px-5 bg-white">
+        <div className="sticky top-0 z-10 bg-white">
           <SidebarTrigger
             className="cursor-pointer"
             onClick={() => {}}

@@ -1,4 +1,4 @@
-import { Calendar, Home, Inbox, Search, Settings } from "lucide-react";
+import { BanknoteArrowDown, Calendar, ChartNoAxesCombined, Home, MessageCircleWarning, Users } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -29,7 +29,7 @@ const data = {
     {
       title: "Quản lý người dùng",
       url: "/admin/user-management",
-      icon: Calendar,
+      icon: Users,
     },
     {
       title: "Quản lý sự kiện",
@@ -39,17 +39,17 @@ const data = {
     {
       title: "Quản lý giải ngân",
       url: "/admin/disbursement",
-      icon: Inbox,
+      icon: BanknoteArrowDown,
     },
     {
       title: "Quản lý khiếu nại",
       url: "/admin/complaint-management",
-      icon: Search,
+      icon: MessageCircleWarning,
     },
     {
       title: "Thống kê",
       url: "/admin/settings",
-      icon: Settings,
+      icon: ChartNoAxesCombined,
     },
   ],
 };
@@ -62,10 +62,10 @@ export function AppSidebar() {
   }, [window.location.pathname]);
 
   return (
-    <Sidebar variant="floating" collapsible="icon" className="bg-sidebar">
+    <Sidebar variant="floating" collapsible="icon" className="bg-white">
       <SidebarContent className="rounded-lg bg-white">
         <SidebarGroup className="">
-          <SidebarGroupLabel className="">Application</SidebarGroupLabel>
+          <SidebarGroupLabel className="">Event Management</SidebarGroupLabel>
           <SidebarGroupContent className="">
             <SidebarMenu className="">
               {data.items.map((item) => (
