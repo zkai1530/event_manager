@@ -394,4 +394,28 @@ public interface EventRepository extends JpaRepository<Event, Long> {
                         "GROUP BY FUNCTION('MONTH', e.publishedAt)")
         List<Object[]> countEventsPublishedByYear(int year);
 
+        // * đếm số sự kiện đã diễn ra và chưa diễn ra theo tháng
+        @Query(value = "SELECT " +
+                        "    MONTH(es.schedule_date) AS month, " +
+                        "    COUNT(DISTINCT CASE WHEN NOT EXISTS (" +
+                        "        SELECT 1 FROM event_schedule es2 " +
+                        "        WHERE es2.event_id = e.event_id " +
+                        "        AND (es2.schedule_date > CURRENT_DATE " +
+                        "             OR (es2.schedule_date = CURRENT_DATE AND es2.end_time >= CURRENT_TIME))" +
+                        "    ) THEN e.event_id END) AS completed_events, " +
+                        "    COUNT(DISTINCT CASE WHEN EXISTS (" +
+                        "        SELECT 1 FROM event_schedule es2 " +
+                        "        WHERE es2.event_id = e.event_id " +
+                        "        AND (es2.schedule_date > CURRENT_DATE " +
+                        "             OR (es2.schedule_date = CURRENT_DATE AND es2.start_time > CURRENT_TIME))" +
+                        "    ) THEN e.event_id END) AS upcoming_events " +
+                        "FROM event e " +
+                        "JOIN event_schedule es ON e.event_id = es.event_id " +
+                        "WHERE YEAR(es.schedule_date) = :year " +
+                        "    AND e.is_published = true " +
+                        "    AND e.is_suspended = false " +
+                        "GROUP BY MONTH(es.schedule_date) " +
+                        "ORDER BY MONTH(es.schedule_date)", nativeQuery = true)
+        List<Object[]> countEventsByMonth(@Param("year") int year);
+
 }

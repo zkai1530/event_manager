@@ -44,6 +44,19 @@ public class AdminStatisticController {
     @GetMapping("/dashboard/top-events")
     public ResponseEntity<APIResponse> getTop5EventsByRevenue(@RequestParam LocalDate startDate, LocalDate endDate) {
         return ResponseEntity
-                .ok(new APIResponse(Message.RESOURCE_FOUND, adminStatisticService.getTop5EventsByRevenue(startDate, endDate)));
+                .ok(new APIResponse(Message.RESOURCE_FOUND,
+                        adminStatisticService.getTop5EventsByRevenue(startDate, endDate)));
+    }
+
+    @GetMapping("/dashboard/event-counts-by-month")
+    public ResponseEntity<APIResponse> getEventCountsByMonth(@RequestParam int year) {
+        return ResponseEntity
+                .ok(new APIResponse(Message.RESOURCE_FOUND, adminStatisticService.getEventCountsByMonth(year)));
+    }
+
+    @GetMapping("/dashboard/recent-orders")
+    public ResponseEntity<APIResponse> getRecentOrders() {
+        return ResponseEntity
+                .ok(new APIResponse(Message.RESOURCE_FOUND, adminStatisticService.getRecentOrders()));
     }
 }

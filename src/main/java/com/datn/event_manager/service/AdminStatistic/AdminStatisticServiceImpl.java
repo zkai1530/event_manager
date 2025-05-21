@@ -2,9 +2,11 @@ package com.datn.event_manager.service.AdminStatistic;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -122,6 +124,55 @@ public class AdminStatisticServiceImpl implements AdminStatisticService {
                 .toList();
         result.put("topEvents", events);
         return result;
+    }
+
+    @Override
+    public List<Map<String, Object>> getEventCountsByMonth(int year) {
+        List<Object[]> results = eventRepository.countEventsByMonth(year);
+
+        // để 12 tháng có giá trị 0
+        List<Map<String, Object>> monthlyCounts = new ArrayList<>();
+        for (int month = 1; month <= 12; month++) {
+            Map<String, Object> monthData = new HashMap<>();
+            monthData.put("month", month);
+            monthData.put("completedEvents", 0L);
+            monthData.put("upcomingEvents", 0L);
+            monthlyCounts.add(monthData);
+        }
+
+        // đưa kết quả vào các tháng có dữ liệu
+        for (Object[] result : results) {
+            int month = ((Number) result[0]).intValue();
+            long completedEvents = ((Number) result[1]).longValue();
+            long upcomingEvents = ((Number) result[2]).longValue();
+            Map<String, Object> monthData = monthlyCounts.get(month - 1);
+            monthData.put("completedEvents", completedEvents);
+            monthData.put("upcomingEvents", upcomingEvents);
+        }
+
+        return monthlyCounts;
+    }
+
+    @Override
+    public List<Map<String, Object>> getRecentOrders() {
+        List<Object[]> results = orderRepository.findRecentOrders();
+        return results.stream()
+                .map(row -> {
+                    Map<String, Object> orderData = new HashMap<>();
+                    orderData.put("avatarUrl", row[0]);
+                    orderData.put("userName", row[1]);
+                    orderData.put("email", row[2]);
+                    orderData.put("totalPrice", row[3]);
+                    orderData.put("status", row[4]);
+                    orderData.put("eventName", row[5]);
+                    orderData.put("scheduleDate", row[6]);
+                    orderData.put("startTime", row[7]);
+                    orderData.put("endTime", row[8]);
+                    orderData.put("eventImageUrl", row[9]);
+                    orderData.put("createAt", row[10]);
+                    return orderData;
+                })
+                .collect(Collectors.toList());
     }
 
 }

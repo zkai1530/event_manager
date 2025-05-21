@@ -113,4 +113,25 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                         "ORDER BY SUM(o.totalPrice) DESC")
         Page<Object[]> getTop5EventsByRevenue(@Param("startDate") LocalDate startDate,
                         @Param("endDate") LocalDate endDate, Pageable pageable);
-}
+
+          // admin dashboard
+          @Query(value = "SELECT " +
+                    "    u.avatar_url AS avatar_url, " +
+                    "    u.name AS user_name, " +
+                    "    u.email AS email, " +
+                    "    o.total_price AS total_price, " +
+                    "    o.status AS status, " +
+                    "    e.name AS event_name, " +
+                    "    es.schedule_date AS schedule_date, " +
+                    "    es.start_time AS start_time, " +
+                    "    es.end_time AS end_time, " +
+                    "    e.image_url AS event_image_url, " +
+                    "    o.created_at AS created_at " +
+                    "FROM `order` o " +
+                    "JOIN user u ON o.user_id = u.user_id " +
+                    "JOIN event_schedule es ON o.schedule_id = es.schedule_id " +
+                    "JOIN event e ON es.event_id = e.event_id " +
+                    "ORDER BY o.created_at DESC " +
+                    "LIMIT 5", nativeQuery = true)
+          List<Object[]> findRecentOrders();
+     }
