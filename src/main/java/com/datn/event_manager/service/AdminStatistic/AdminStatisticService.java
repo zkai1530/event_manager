@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 public interface AdminStatisticService {
+    // dashboard
     Map<String, Object> getDashboardOverview();
 
     Map<String, Object> getEventsPublishedByYear(int year);
@@ -16,4 +17,11 @@ public interface AdminStatisticService {
     List<Map<String, Object>> getEventCountsByMonth(int year);
 
     List<Map<String, Object>> getRecentOrders();
+
+    // statistic
+    Map<String, Long> getComplaintCountByReason();
+
+    Map<String, Long> getOrderCountByStatus(int year, int month);
+
+    Map<Integer, Double> getCanceledOrderRateByMonth(int year);
 }

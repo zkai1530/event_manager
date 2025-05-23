@@ -13,6 +13,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
+import com.datn.event_manager.entity.CancelReason;
+import com.datn.event_manager.entity.Order.OrderStatus;
+import com.datn.event_manager.repository.CancelReasonRepository;
 import com.datn.event_manager.repository.ComplaintRepository;
 import com.datn.event_manager.repository.EventRepository;
 import com.datn.event_manager.repository.OrderRepository;
@@ -34,6 +37,7 @@ public class AdminStatisticServiceImpl implements AdminStatisticService {
     OrderRepository orderRepository;
     UserRepository userRepository;
     ComplaintRepository complaintRepository;
+    CancelReasonRepository cancelReasonRepository;
 
     @Override
     @PreAuthorize("hasRole('ADMIN')")
@@ -173,6 +177,63 @@ public class AdminStatisticServiceImpl implements AdminStatisticService {
                     return orderData;
                 })
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public Map<String, Long> getComplaintCountByReason() {
+        Map<String, Long> complaintCounts = new HashMap<>();
+
+        // để các reason có giá trị 0
+        List<CancelReason> reasons = cancelReasonRepository.findAll();
+        for (CancelReason reason : reasons) {
+            complaintCounts.put(reason.getReasonName(), 0L);
+        }
+
+        List<Object[]> results = complaintRepository.countComplaintsByReason();
+        for (Object[] result : results) {
+            String reasonName = (String) result[0];
+            Long count = (Long) result[1];
+            complaintCounts.put(reasonName, count);
+        }
+
+        return complaintCounts;
+    }
+
+    @Override
+    public Map<String, Long> getOrderCountByStatus(int year, int month) {
+        Map<String, Long> orderCounts = new HashMap<>();
+        orderCounts.put("PAID", 0L);
+        orderCounts.put("PENDING", 0L);
+        orderCounts.put("CANCELED", 0L);
+
+        List<Object[]> results = orderRepository.countOrdersByStatus(year, month);
+        for (Object[] result : results) {
+            OrderStatus status = (OrderStatus) result[0];
+            Long count = (Long) result[1];
+            orderCounts.put(status.name(), count);
+        }
+        return orderCounts;
+    }
+
+    @Override
+    public Map<Integer, Double> getCanceledOrderRateByMonth(int year) {
+        Map<Integer, Double> rates = new HashMap<>();
+
+        // để 12 tháng có giá trị 0
+        for (int i = 1; i <= 12; i++) {
+            rates.put(i, 0.0);
+        }
+
+        List<Object[]> results = orderRepository.countOrdersAndCanceledByMonth(year);
+        for (Object[] result : results) {
+            Integer month = (Integer) result[0];
+            Long totalOrders = (Long) result[1];
+            Long canceledOrders = (Long) result[2];
+            
+            Double ratio = totalOrders > 0 ? (canceledOrders * 100.0 / totalOrders) : 0.0;
+            rates.put(month, ratio);
+        }
+        return rates;
     }
 
 }

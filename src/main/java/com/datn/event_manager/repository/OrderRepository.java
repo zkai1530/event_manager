@@ -134,4 +134,12 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                     "ORDER BY o.created_at DESC " +
                     "LIMIT 5", nativeQuery = true)
           List<Object[]> findRecentOrders();
+
+          // admin statistic
+          @Query("SELECT o.status, COUNT(o) FROM Order o WHERE YEAR(o.createdAt) = :year AND MONTH(o.createdAt) = :month GROUP BY o.status")
+          List<Object[]> countOrdersByStatus(@Param("year") int year, @Param("month") int month);
+
+          @Query("SELECT MONTH(o.createdAt), COUNT(o), SUM(CASE WHEN o.status = 'CANCELED' THEN 1 ELSE 0 END) " +
+                    "FROM Order o WHERE YEAR(o.createdAt) = :year GROUP BY MONTH(o.createdAt)")
+          List<Object[]> countOrdersAndCanceledByMonth(@Param("year") int year);
      }

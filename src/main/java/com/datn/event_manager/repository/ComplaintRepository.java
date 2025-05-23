@@ -43,4 +43,8 @@ public interface ComplaintRepository extends JpaRepository<Complaint, Long> {
             "FROM Complaint c")
     Page<ComplaintResponse> findAllComplaints(Pageable pageable);
 
+    // admin statistic
+    @Query("SELECT c.reason.reasonName, COUNT(c) FROM Complaint c GROUP BY c.reason.reasonName")
+    List<Object[]> countComplaintsByReason();
+
 }

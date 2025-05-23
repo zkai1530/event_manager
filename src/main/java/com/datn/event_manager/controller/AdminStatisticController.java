@@ -59,4 +59,23 @@ public class AdminStatisticController {
         return ResponseEntity
                 .ok(new APIResponse(Message.RESOURCE_FOUND, adminStatisticService.getRecentOrders()));
     }
+
+    @GetMapping("/complaint-count-by-reason")
+    public ResponseEntity<APIResponse> getComplaintCountByReason() {
+        return ResponseEntity
+                .ok(new APIResponse(Message.RESOURCE_FOUND, adminStatisticService.getComplaintCountByReason()));
+    }
+
+    @GetMapping("/order-status-count")
+    public ResponseEntity<APIResponse> getOrderCountByStatus(@RequestParam("year") int year,
+            @RequestParam("month") int month) {
+        return ResponseEntity
+                .ok(new APIResponse(Message.RESOURCE_FOUND, adminStatisticService.getOrderCountByStatus(year, month)));
+    }
+
+    @GetMapping("/canceled-order-rate")
+    public ResponseEntity<APIResponse> getCanceledOrderRateByMonth(@RequestParam("year") int year) {
+        return ResponseEntity
+                .ok(new APIResponse(Message.RESOURCE_FOUND, adminStatisticService.getCanceledOrderRateByMonth(year)));
+    }
 }
