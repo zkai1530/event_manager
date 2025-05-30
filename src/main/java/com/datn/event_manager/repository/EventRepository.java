@@ -43,7 +43,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
                         "LEFT JOIN event_schedule es ON e.event_id = es.event_id " +
                         "LEFT JOIN ticket_schedule ts ON es.schedule_id = ts.schedule_id " +
                         "LEFT JOIN ticket t ON ts.ticket_id = t.ticket_id " +
-                        "WHERE e.name LIKE CONCAT('%', :keyword, '%') AND e.is_published = true " +
+                        "WHERE e.name LIKE CONCAT('%', :keyword, '%') AND e.is_published = true AND e.is_suspended = false " +
                         "AND (:location = 'Toàn quốc' OR el.city = :location OR el.address LIKE CONCAT('%', :location, '%')) "
                         +
                         "AND (:isFree = false OR t.price = 0) " +

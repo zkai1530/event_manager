@@ -22,12 +22,12 @@ public interface UserRepository extends JpaRepository<User, String> {
     List<String> findFollowersByUserId(String userId);
 
     @Query("SELECT new com.datn.event_manager.dto.response.UserManageResponse(" +
-            "u.email, u.name, u.phoneNumber, u.avatarUrl, u.role.roleName, u.isActive, 0, 0, 0) " +
+            "u.userId, u.email, u.name, u.phoneNumber, u.avatarUrl, u.role.roleName, u.isActive, 0, 0, 0) " +
             "FROM User u WHERE u.role.roleName = 'USER'")
     Page<UserManageResponse> findAllUsers(Pageable pageable);
 
     @Query("SELECT new com.datn.event_manager.dto.response.UserManageResponse(" +
-            "u.email, u.name, u.phoneNumber, u.avatarUrl, u.role.roleName, u.isActive, 0, 0, 0) " +
+            "u.userId, u.email, u.name, u.phoneNumber, u.avatarUrl, u.role.roleName, u.isActive, 0, 0, 0) " +
             "FROM User u WHERE u.role.roleName = 'USER' " +
             "AND (LOWER(u.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(u.email) LIKE LOWER(CONCAT('%', :keyword, '%')))")
     Page<UserManageResponse> searchUsersByNameOrEmail(@Param("keyword") String keyword, Pageable pageable);

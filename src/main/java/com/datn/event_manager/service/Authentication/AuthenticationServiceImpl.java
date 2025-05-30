@@ -89,6 +89,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
+        if (!user.getIsActive()) {
+            throw new AppException(ErrorCode.USER_ALREADY_BLOCKED);
+        }
+
         Boolean authenticated = passwordEncoder.matches(request.getPassword(), user.getPassword());
 
         if (!authenticated) {
@@ -127,6 +131,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 user = userRepository.findByEmail(userInfo.getEmail())
                         .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
             }
+        }
+
+        if (!user.getIsActive()) {
+            throw new AppException(ErrorCode.USER_ALREADY_BLOCKED);
         }
 
         return new LoginResponseDTO(generateToken(user), user.getEmail(), user.getAvatarUrl(),
@@ -253,6 +261,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         log.info(context.getAuthentication().getName());
         String email = context.getAuthentication().getName(); // subject in JWT
         User user = userRepository.findByEmail(email).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        if (!user.getIsActive()) {
+            throw new AppException(ErrorCode.USER_ALREADY_BLOCKED);
+        }
         return user;
     }
 

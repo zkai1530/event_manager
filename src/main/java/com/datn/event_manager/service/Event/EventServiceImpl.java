@@ -19,6 +19,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -70,7 +71,6 @@ public class EventServiceImpl implements EventService {
     EventThemesRepository eventThemesRepository;
     EventCategoriesRepository eventCategoriesRepository;
     TicketRepository ticketRepository;
-    TicketScheduleRepository ticketScheduleRepository;
     EventMapper eventMapper;
     FAQRepository faqRepository;
     AuthenticationService authenticationService;
@@ -171,6 +171,11 @@ public class EventServiceImpl implements EventService {
     public EventResponse getEventById(Long eventId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new AppException(ErrorCode.EVENT_NOT_FOUND));
+
+        if (event.getIsSuspended() || !event.getIsPublished()) {
+            throw new AppException(ErrorCode.EVENT_NOT_FOUND);
+        }
+
         return eventMapper.toEventResponse(event);
     }
 
@@ -648,5 +653,40 @@ public class EventServiceImpl implements EventService {
         } else {
             return eventRepository.findEventsByStatus(status, pageable);
         }
+    }
+
+    @Override
+    @PreAuthorize("hasRole('ADMIN')")
+    public void hiddenEvent(Long eventId) {
+        Event event = eventRepository.findById(eventId).orElseThrow(() -> new AppException(ErrorCode.EVENT_NOT_FOUND));
+        if (event.getIsSuspended() == true) {
+            throw new AppException(ErrorCode.EVENT_ALREADY_HIDDEN);
+        }
+        event.setIsSuspended(true);
+        eventRepository.save(event);
+    }
+
+    @Override
+    @PreAuthorize("hasRole('ADMIN')")
+    public void unhiddenEvent(Long eventId) {
+        Event event = eventRepository.findById(eventId).orElseThrow(() -> new AppException(ErrorCode.EVENT_NOT_FOUND));
+        if (event.getIsSuspended() == false) {
+            throw new AppException(ErrorCode.EVENT_ALREADY_VISIBLE);
+        }
+        event.setIsSuspended(false);
+        eventRepository.save(event);
+    }
+
+    @Override
+    public void deleteEvent(Long eventId) {
+        Event event = eventRepository.findById(eventId).orElseThrow(() -> new AppException(ErrorCode.EVENT_NOT_FOUND));
+
+        // check user have permission ? (authorized?)
+        User user = authenticationService.getUserFromToken();
+        if (user.getUserId() != event.getUser().getUserId()) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
+        eventRepository.delete(event);
     }
 }

@@ -5,6 +5,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -67,5 +68,17 @@ public class UserController {
         Pageable pageable = PageRequest.of(page, LIST_USERS);
         return ResponseEntity.ok(new APIResponse(Message.RESOURCE_FOUND, userService.searchUserByNameOrEmail(
                 keyword, pageable)));
+    }
+
+    @PatchMapping("/block/{userId}")
+    public ResponseEntity<APIResponse> blockUser(@PathVariable String userId) {
+        userService.blockUser(userId);
+        return ResponseEntity.ok(new APIResponse(Message.BLOCK_USER, null));
+    }
+
+    @PatchMapping("/unblock/{userId}")
+    public ResponseEntity<APIResponse> unblockUser(@PathVariable String userId) {
+        userService.unblockUser(userId);
+        return ResponseEntity.ok(new APIResponse(Message.UNBLOCK_USER, null));
     }
 }

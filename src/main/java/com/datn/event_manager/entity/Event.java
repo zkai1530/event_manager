@@ -54,7 +54,7 @@ public class Event {
     @Column(unique = true)
     String slug;
 
-    @OneToOne(mappedBy = "event")
+    @OneToOne(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     EventLocation eventLocation;
 
     @Enumerated(EnumType.STRING)

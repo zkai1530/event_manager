@@ -81,6 +81,7 @@ public class UserServiceImpl implements UserService {
             int purchased = orderRepository.sumTotalPurchasedTicketsByUser(user).intValue();
             int events = eventRepository.countByUser(user).intValue();
             return UserManageResponse.builder()
+                    .userId(userResponse.getUserId())
                     .email(userResponse.getEmail())
                     .name(userResponse.getName())
                     .phoneNumber(userResponse.getPhoneNumber())
@@ -113,7 +114,6 @@ public class UserServiceImpl implements UserService {
 
         return userMapper.toUserResponse(user);
     }
-    
 
     @PreAuthorize("hasRole('ADMIN')")
     @Override
@@ -126,6 +126,7 @@ public class UserServiceImpl implements UserService {
             int purchased = orderRepository.sumTotalPurchasedTicketsByUser(user).intValue();
             int events = eventRepository.countByUser(user).intValue();
             return UserManageResponse.builder()
+                    .userId(userResponse.getUserId())
                     .email(userResponse.getEmail())
                     .name(userResponse.getName())
                     .phoneNumber(userResponse.getPhoneNumber())
@@ -137,5 +138,27 @@ public class UserServiceImpl implements UserService {
                     .totalEvents(events)
                     .build();
         });
+    }
+
+    @Override
+    @PreAuthorize("hasRole('ADMIN')")
+    public void blockUser(String userId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        if (user.getIsActive() == false) {
+            throw new AppException(ErrorCode.USER_ALREADY_BLOCKED);
+        }
+        user.setIsActive(false);
+        userRepository.save(user);
+    }
+
+    @Override
+    @PreAuthorize("hasRole('ADMIN')")
+    public void unblockUser(String userId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        if (user.getIsActive() == true) {
+            throw new AppException(ErrorCode.USER_ALREADY_ACTIVE);
+        }
+        user.setIsActive(true);
+        userRepository.save(user);
     }
 }

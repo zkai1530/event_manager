@@ -22,4 +22,8 @@ public interface UserService {
     public UserResponse updateUserInfo(UserUpdateRequest request);
 
     public Page<UserManageResponse> searchUserByNameOrEmail(String keyword, Pageable pageable);
+
+    public void blockUser(String userId);
+
+    public void unblockUser(String userId);
 }

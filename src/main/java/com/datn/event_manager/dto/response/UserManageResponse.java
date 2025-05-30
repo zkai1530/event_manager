@@ -13,6 +13,7 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class UserManageResponse {
+    String userId;
     String email;
     String name;
     String phoneNumber;

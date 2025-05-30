@@ -8,10 +8,15 @@ public class Message {
     public static final String TOKEN_REFRESH = "Token has been refreshed!";
     public static final String VALID_TOKEN = "Valid token!";
     public static final String SUCCESS_REQUEST = "Request was successful!";
+    public static final String BLOCK_USER = "User has been successfully blocked!";
+    public static final String UNBLOCK_USER = "User has been successfully unblocked!";
     public static final String CREATE_EVENT_SUCCESS = "Create event was successfully!";
     public static final String UPDATE_EVENT_SUCCESS = "Update event was successfully!";
+    public static final String DELETE_EVENT_SUCCESS = "Delete event was successfully!";
     public static final String EVENT_PUBLISHED_SUCCESSFULLY = "Event published successfully!";
     public static final String EVENT_UNPUBLISHED_SUCCESSFULLY = "Event unpublished successfully!";
+    public static final String HIDE_EVENT = "Event has been successfully hidden!";
+    public static final String UNHIDE_EVENT = "Event has been successfully unhidden!";
     public static final String CREATE_TICKET_SUCCESS = "Create ticket was successfully!";
     public static final String UPDATE_TICKET_SUCCESS = "Update ticket was successfully!";
     public static final String DELETE_TICKET_SUCCESS = "Delete ticket was successfully!";

@@ -8,7 +8,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -173,5 +175,23 @@ public class EventController {
     @GetMapping("/admin/event-theme-count")
     public ResponseEntity<APIResponse> countEventsByTheme() {
         return ResponseEntity.ok(new APIResponse(Message.RESOURCE_FOUND, eventService.countEventsByTheme()));
+    }
+
+    @PatchMapping("/admin/hidden/{eventId}")
+    public ResponseEntity<APIResponse> hiddenEvent(@PathVariable Long eventId) {
+        eventService.hiddenEvent(eventId);
+        return ResponseEntity.ok(new APIResponse(Message.HIDE_EVENT, null));
+    }
+
+    @PatchMapping("/admin/unhidden/{eventId}")
+    public ResponseEntity<APIResponse> unhiddenEvent(@PathVariable Long eventId) {
+        eventService.unhiddenEvent(eventId);
+        return ResponseEntity.ok(new APIResponse(Message.UNHIDE_EVENT, null));
+    }
+
+    @DeleteMapping("/{eventId}")
+    public ResponseEntity<APIResponse> deleteEvent(@PathVariable Long eventId) {
+        eventService.deleteEvent(eventId);
+        return ResponseEntity.ok(new APIResponse(Message.DELETE_EVENT_SUCCESS, null));
     }
 }

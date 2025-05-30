@@ -55,4 +55,12 @@ public interface EventService {
     Page<EventInAdminResponse> getFilteredEvents(String status, String sort, Pageable pageable);
 
     List<ThemeEventCountResponse> countEventsByTheme();
+
+    void hiddenEvent(Long eventId);
+
+    void unhiddenEvent(Long eventId);
+
+    void deleteEvent(Long eventId);
+
+    
 }

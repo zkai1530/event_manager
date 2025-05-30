@@ -11,10 +11,14 @@ public enum ErrorCode {
     USER_EXISTED("User is existed!", HttpStatus.CONFLICT),
     UNAUTHORIZED("Access Denied! (unauthorized)", HttpStatus.FORBIDDEN), // when token don't have permission
     UNAUTHENTICATED("Unauthenticated", HttpStatus.UNAUTHORIZED), // when token isn't existed
+    USER_ALREADY_BLOCKED("User is already blocked!", HttpStatus.BAD_REQUEST),
+    USER_ALREADY_ACTIVE("User is already active!", HttpStatus.BAD_REQUEST),
     MISSING_REQUIRED_FIELDS("Missing field!", HttpStatus.BAD_REQUEST),
     EVENT_NOT_FOUND("Event not found!", HttpStatus.NOT_FOUND),
     EVENT_ALREADY_PUBLISHED("Event is already published!", HttpStatus.BAD_REQUEST),
     EVENT_ALREADY_UNPUBLISHED("Event is already unpublished!", HttpStatus.BAD_REQUEST),
+    EVENT_ALREADY_HIDDEN("Event is already hidden!", HttpStatus.BAD_REQUEST),
+    EVENT_ALREADY_VISIBLE("Event is already visible!", HttpStatus.BAD_REQUEST),
     TICKET_NOT_FOUND("Ticket not found!", HttpStatus.NOT_FOUND),
     TICKET_QUANTITY_EXCEEDS_AVAILABLE("Ticket quantity exceeds available!", HttpStatus.BAD_REQUEST),
     TICKET_NOT_AVAILABLE("Ticket not available!", HttpStatus.BAD_REQUEST),
