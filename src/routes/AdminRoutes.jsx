@@ -6,6 +6,7 @@ import DisbursementManagement from "@/pages/admin/DisbursementManagement";
 import EventManagement from "@/pages/admin/EventManagement";
 import ComplaintManagement from "@/pages/admin/ComplaintManagement";
 import UserManagement from "@/pages/admin/UserManagement";
+import AdminStatistics from "@/pages/admin/AdminStatistics";
 
 const AdminRoutes = () => {
   // const { user } = useAuth();
@@ -13,6 +14,13 @@ const AdminRoutes = () => {
   // if (!user || user.role !== "admin") {
   //   return <Navigate to="/user/dashboard" />;
   // }
+
+  const { role } = useAuth();
+
+  if (role === null) return null; // Chờ role
+  if (role !== "ADMIN") {
+    return <Navigate to="/login" replace />;
+  }
 
   return (
     <Routes>
@@ -22,6 +30,7 @@ const AdminRoutes = () => {
         <Route path="event-management" element={<EventManagement />} />
         <Route path="complaint-management" element={<ComplaintManagement />} />
         <Route path="user-management" element={<UserManagement />} />
+        <Route path="statistics" element={<AdminStatistics />} />
       </Route>
     </Routes>
   );

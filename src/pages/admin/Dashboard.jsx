@@ -46,9 +46,9 @@ import {
 } from "recharts";
 import Loading1 from "@/components/ui/Loading1";
 import { FormatPrice } from "@/utils/formatPrice";
+import { formatRevenue } from "@/utils/formatRevenue";
 
 const Dashboard = () => {
-  const [dashboardData, setDashboardData] = useState(null);
   const token = localStorage.getItem("token");
   const [revenueData, setRevenueData] = useState([]);
   const [topEventsData, setTopEventsData] = useState([]);
@@ -62,10 +62,74 @@ const Dashboard = () => {
     new Date().getFullYear(),
   );
 
+  const dashboardData = [
+    {
+      value: 0,
+      description: "Tổng sự kiện",
+      icon: BarChart2,
+      badge: "Sự kiện",
+    },
+    {
+      value: 0,
+      description: "Tổng doanh thu",
+      icon: Banknote,
+      badge: "Doanh thu",
+      format: formatRevenue, // Giữ formatRevenue
+    },
+    {
+      value: 0,
+      description: "Tổng vé bán được",
+      icon: Ticket,
+      badge: "Đơn hàng",
+    },
+    {
+      value: 0,
+      description: "Tỷ lệ check-in",
+      icon: CheckCircle2,
+      badge: "Check-in",
+      format: (val) => `${val.toFixed(1)}%`, // Giữ format %
+    },
+    {
+      value: 0,
+      description: "Người dùng đã đăng ký",
+      icon: UserCheck,
+      badge: "Người dùng",
+    },
+    {
+      value: 0,
+      description: "Tổng khiếu nại",
+      icon: AlertTriangle,
+      badge: "Khiếu nại",
+    },
+    {
+      value: 0,
+      description: "Tài khoản vi phạm",
+      icon: Lock,
+      badge: "Bị khóa",
+    },
+    {
+      value: 0,
+      description: "Sự kiện bị nghi gian lận",
+      icon: ShieldAlert,
+      badge: "Gian lận",
+    },
+  ];
+
+  const [cardData, setCardData] = useState(dashboardData);
+
   useEffect(() => {
     getDashboardOverview(token)
       .then((data) => {
-        setDashboardData(data);
+        setCardData([
+          { ...dashboardData[0], value: data.totalEvents },
+          { ...dashboardData[1], value: data.totalRevenue },
+          { ...dashboardData[2], value: data.totalTicketsSold },
+          { ...dashboardData[3], value: data.checkInRate },
+          { ...dashboardData[4], value: data.totalUsers },
+          { ...dashboardData[5], value: data.totalComplaints },
+          { ...dashboardData[6], value: data.totalBlockedUsers },
+          { ...dashboardData[7], value: data.totalHiddenEvents },
+        ]);
       })
       .catch((err) => console.error(err?.response?.data));
 
@@ -82,63 +146,7 @@ const Dashboard = () => {
         card.style.transform = "translateY(15px)";
       }
     });
-  }, []);
-
-  // Dữ liệu card
-  const cardData = dashboardData
-    ? [
-        {
-          value: dashboardData.totalEvents,
-          description: "Tổng sự kiện",
-          icon: BarChart2,
-          badge: "Sự kiện",
-        },
-        {
-          value: dashboardData.totalRevenue,
-          description: "Tổng doanh thu",
-          icon: Banknote,
-          badge: "Doanh thu",
-          format: (val) => `${val.toLocaleString()} đ`,
-        },
-        {
-          value: dashboardData.totalTicketsSold,
-          description: "Tổng vé bán được",
-          icon: Ticket,
-          badge: "Đơn hàng",
-        },
-        {
-          value: dashboardData.checkInRate,
-          description: "Tỷ lệ check-in",
-          icon: CheckCircle2,
-          badge: "Check-in",
-          format: (val) => `${val.toFixed(1)}%`,
-        },
-        {
-          value: dashboardData.totalUsers,
-          description: "Người dùng đã đăng ký",
-          icon: UserCheck,
-          badge: "Người dùng",
-        },
-        {
-          value: dashboardData.totalComplaints,
-          description: "Tổng khiếu nại",
-          icon: AlertTriangle,
-          badge: "Khiếu nại",
-        },
-        {
-          value: dashboardData.totalBlockedUsers,
-          description: "Tài khoản vi phạm",
-          icon: Lock,
-          badge: "Bị khóa",
-        },
-        {
-          value: dashboardData.totalHiddenEvents,
-          description: "Sự kiện bị nghi gian lận",
-          icon: ShieldAlert,
-          badge: "Gian lận",
-        },
-      ]
-    : [];
+  }, [token]);
 
   useEffect(() => {
     const fetchRevenueData = async () => {
@@ -240,7 +248,7 @@ const Dashboard = () => {
                     {badge}
                   </span>
                 </div>
-                <div className="">
+                <div>
                   <h2 className="text-3xl font-bold text-gray-800">
                     <AnimatedCounter targetValue={value} format={format} />
                   </h2>
@@ -318,7 +326,7 @@ const Dashboard = () => {
                     tickLine={false}
                     axisLine={false}
                     tickMargin={8}
-                    tickFormatter={(value) => `${value.toLocaleString()} VNĐ`}
+                    tickFormatter={(value) => formatRevenue(value)}
                     tickCount={5}
                   />
                   <ChartTooltip
@@ -348,7 +356,11 @@ const Dashboard = () => {
                 </LineChart>
               </ChartContainer>
             ) : (
-              <div className="text-center text-gray-500">Không có dữ liệu</div>
+              <div className="text-center text-gray-500">
+                <div className="flex items-center justify-center">
+                  <Loading1 isLoading={true} />
+                </div>
+              </div>
             )}
           </CardContent>
           <CardFooter className="flex-col gap-2 text-sm">
@@ -379,7 +391,7 @@ const Dashboard = () => {
                 },
               }}
               style={{
-                height: `${250}px`,
+                height: `${300}px`,
               }}
             >
               <BarChart
@@ -567,7 +579,11 @@ const Dashboard = () => {
                 </BarChart>
               </ChartContainer>
             ) : (
-              <div className="text-center text-gray-500">No data available</div>
+              <div className="text-center text-gray-500">
+                <div className="flex items-center justify-center">
+                  <Loading1 isLoading={true} />
+                </div>
+              </div>
             )}
           </CardContent>
           <CardFooter className="flex-col items-start gap-2 text-sm">

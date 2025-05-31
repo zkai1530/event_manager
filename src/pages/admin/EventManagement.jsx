@@ -4,7 +4,7 @@ import {
   getEventSummary,
   getEvents,
 } from "@/services/admin/eventService";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FaBan } from "react-icons/fa";
 import {
   Bar,
@@ -29,6 +29,8 @@ import {
 } from "@/components/ui/chart";
 import { TrendingUp } from "lucide-react";
 import AnimatedCounter from "@/components/ui/AnimatedCounter";
+import Pagination from "@/components/ui/Pagination";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const EventManagement = () => {
   const [eventSummary, setEventSummary] = useState({
@@ -43,6 +45,26 @@ const EventManagement = () => {
   const [page, setPage] = useState(0);
   const token = localStorage.getItem("token");
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingEventList, setIsLoadingEventList] = useState(false);
+  const [totalPages, setTotalPages] = useState(0);
+  const [currentPage, setCurrentPage] = useState(0);
+  const tableRef = useRef(null);
+  const location = useLocation();
+
+  useEffect(() => {
+    const fetchSummary = async () => {
+      try {
+        const summaryData = await getEventSummary(token);
+        setEventSummary(summaryData);
+      } catch (error) {
+        console.error("fetchSummary:", error?.response?.data || error.message);
+      }
+    };
+
+    if (token) {
+      fetchSummary();
+    }
+  }, [token]);
 
   useEffect(() => {
     const fetchEventsByTheme = async () => {
@@ -71,33 +93,43 @@ const EventManagement = () => {
   }, [token]);
 
   useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const pageFromUrl = parseInt(params.get("page") || "1", 10);
+
+    if (pageFromUrl !== currentPage) {
+      setCurrentPage(pageFromUrl);
+    }
+
     const fetchData = async () => {
-      setIsLoading(true);
+      setIsLoadingEventList(true);
       try {
-        const summaryData = await getEventSummary(token);
-        setEventSummary(summaryData);
         // Gọi getEvents
         const eventsData = await getEvents(
           token,
           filters.status || "",
           filters.sort || "tickets",
-          page || 0,
+          pageFromUrl - 1,
         );
         setEvents(eventsData.content || []);
+        setTotalPages(eventsData.totalPages || 0);
       } catch (error) {
         console.error(
           "Error fetching data",
           error?.response?.data || error.message,
         );
       } finally {
-        setIsLoading(false);
+        setIsLoadingEventList(false);
       }
     };
 
     if (token) {
       fetchData();
     }
-  }, [token, filters, page]);
+  }, [token, filters, page, location.search, currentPage]);
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+  };
 
   const chartConfig = {
     eventCount: {
@@ -350,7 +382,10 @@ const EventManagement = () => {
         {/* Danh sách sự kiện dạng bảng */}
         <div className="mt-8 mb-8 overflow-hidden rounded-lg bg-white shadow">
           <div className="">
-            <table className="table-layout-fixed w-full max-w-full divide-y divide-gray-200">
+            <table
+              className="table-layout-fixed w-full max-w-full divide-y divide-gray-200"
+              ref={tableRef}
+            >
               <thead className="bg-main">
                 <tr>
                   <th
@@ -423,7 +458,7 @@ const EventManagement = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 bg-white">
-                {isLoading ? (
+                {isLoadingEventList ? (
                   <tr>
                     <td
                       colSpan={6}
@@ -451,9 +486,7 @@ const EventManagement = () => {
                           <div className="h-10 w-10 flex-shrink-0">
                             <img
                               className="h-10 w-10 rounded-full object-cover"
-                              src={
-                                event.thumbnail || "/api/placeholder/100/100"
-                              }
+                              src={event.imageUrl}
                               alt="Thumbnail"
                             />
                           </div>
@@ -545,6 +578,13 @@ const EventManagement = () => {
                 )}
               </tbody>
             </table>
+            <Pagination
+              totalPages={totalPages}
+              onPageChange={(newPage) => {
+                handlePageChange(newPage);
+                tableRef.current?.scrollIntoView({ behavior: "smooth" });
+              }}
+            />
           </div>
         </div>
       </div>

@@ -17,6 +17,12 @@ import { useParams } from "react-router-dom";
 import { getEventInfoById } from "services/user/eventService";
 import TicketSelectionModal from "components/modal/TicketSelectionModal";
 import Loading from "@/components/ui/Loading";
+import {
+  followUser,
+  isFollowUser,
+  unfollowUser,
+} from "@/services/user/userService";
+import Swal from "sweetalert2";
 
 const EventDetails = () => {
   const [eventData, setEventData] = useState(null);
@@ -24,6 +30,8 @@ const EventDetails = () => {
   const [openFAQStates, setOpenFAQStates] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showTicketModal, setShowTicketModal] = useState(false);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const token = localStorage.getItem("token");
   const { slug } = useParams();
   const eventId = slug.split("-").pop();
 
@@ -224,6 +232,62 @@ const EventDetails = () => {
   const handleSwiperEvents = (swiper) => {
     setIsBeginning(swiper.isBeginning);
     setIsEnd(swiper.isEnd);
+  };
+
+  // check đã follow chưa
+  useEffect(() => {
+    if (!eventData?.userId || !token) return;
+
+    const checkFollowStatus = async () => {
+      try {
+        const isFollowed = await isFollowUser(eventData?.userId, token);
+        setIsFollowing(isFollowed);
+      } catch (error) {
+        console.error(
+          "checkFollowStatus ",
+          error.response?.data || error.message,
+        );
+      }
+    };
+
+    checkFollowStatus();
+  }, [token, eventData?.userId]);
+
+  // follow/unfollow
+  const handleFollowToggle = async (userId) => {
+    setIsLoading(true);
+    try {
+      let response;
+      if (isFollowing) {
+        response = await unfollowUser(userId, token);
+        if (response.message === "Unfollow was successfully!") {
+          Swal.fire({
+            position: "top-end",
+            icon: "success",
+            title: "Huỷ theo dõi thành công",
+            showConfirmButton: false,
+            timer: 1500,
+          });
+          setIsFollowing(false);
+        }
+      } else {
+        response = await followUser(userId, token);
+        if (response.message === "Follow was successfully!") {
+          Swal.fire({
+            position: "top-end",
+            icon: "success",
+            title: "Theo dõi thành công",
+            showConfirmButton: false,
+            timer: 1500,
+          });
+          setIsFollowing(true);
+        }
+      }
+    } catch (error) {
+      console.error("Follow/Unfollow failed ", error.response.data);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (eventData && !eventData.isPublished) {
@@ -496,6 +560,35 @@ const EventDetails = () => {
                       )}
                     </Swiper>
                   </div>
+                </div>
+              </div>
+
+              {/* follow */}
+              <div className="mt-6 flex items-center justify-between rounded-2xl bg-gray-50 px-6 py-4">
+                <div className="flex">
+                  <img
+                    src="https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F421605069%2F124277772125%2F1%2Foriginal.20230110-131810?w=512&auto=format%2Ccompress&q=75&sharp=10&rect=0%2C957%2C5584%2C5584&s=22e88d96b7224c217e38ceecc5209b86"
+                    alt=""
+                    className="h-12 w-12 rounded-full object-cover"
+                  />
+                  <div className="ml-4 flex items-center space-x-3">
+                    <p>
+                      Tạo bởi <strong>Lâm Thanh Diện</strong>{" "}
+                    </p>
+                    <div className="h-1 w-1 rounded-full bg-gray-400"></div>
+                    <p>
+                      {" "}
+                      <strong>1</strong> người theo dõi
+                    </p>
+                  </div>
+                </div>
+                <div
+                  className={`${isFollowing ? "bg-gray-500" : "bg-main"} cursor-pointer rounded-lg px-4 py-2`}
+                  onClick={() => handleFollowToggle(eventData.userId)}
+                >
+                  <button className="cursor-pointer font-semibold text-white">
+                    {isFollowing ? "Huỷ theo dõi" : "Theo dõi"}
+                  </button>
                 </div>
               </div>
               {/* event description */}

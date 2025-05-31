@@ -2,7 +2,12 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Swal from "sweetalert2";
 import axios from "axios";
-import { getAllUsers, searchUser } from "@/services/admin/userService";
+import {
+  blockUser,
+  getAllUsers,
+  searchUser,
+  unblockUser,
+} from "@/services/admin/userService";
 import Loading1 from "@/components/ui/Loading1";
 
 const UserManagement = () => {
@@ -44,10 +49,10 @@ const UserManagement = () => {
   }, [page, searchText, refresh]);
 
   // Block user
-  const handleBlockUser = async (email) => {
+  const handleBlockUser = async (user) => {
     const result = await Swal.fire({
       title: "Chặn người dùng?",
-      text: `Bạn có chắc muốn chặn ${email}?`,
+      text: `Bạn có chắc muốn chặn ${user.email}?`,
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#9d2ff7",
@@ -58,14 +63,17 @@ const UserManagement = () => {
 
     if (result.isConfirmed) {
       try {
-        await axios.put(`/api/users/block/${email}`);
-        Swal.fire({
-          title: "Thành công!",
-          text: `Đã chặn ${email}.`,
-          icon: "success",
-        });
-        setRefresh((prev) => !prev);
+        const response = await blockUser(token, user.userId);
+        if (response.message === "User has been successfully blocked!") {
+          Swal.fire({
+            title: "Thành công!",
+            text: `Đã chặn ${user.email}.`,
+            icon: "success",
+          });
+          setRefresh((prev) => !prev);
+        }
       } catch (error) {
+        console.error("blockUser ", error.response.data);
         Swal.fire({
           title: "Lỗi!",
           text: "Không thể chặn người dùng.",
@@ -76,10 +84,10 @@ const UserManagement = () => {
   };
 
   // Unblock user
-  const handleUnblockUser = async (email) => {
+  const handleUnblockUser = async (user) => {
     const result = await Swal.fire({
       title: "Bỏ chặn người dùng?",
-      text: `Bạn có chắc muốn bỏ chặn ${email}?`,
+      text: `Bạn có chắc muốn bỏ chặn ${user.email}?`,
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#9d2ff7",
@@ -90,13 +98,15 @@ const UserManagement = () => {
 
     if (result.isConfirmed) {
       try {
-        await axios.put(`/api/users/unblock/${email}`);
-        Swal.fire({
-          title: "Thành công!",
-          text: `Đã bỏ chặn ${email}.`,
-          icon: "success",
-        });
-        setRefresh((prev) => !prev);
+        const response = await unblockUser(token, user.userId);
+        if (response.message === "User has been successfully blocked!") {
+          Swal.fire({
+            title: "Thành công!",
+            text: `Đã bỏ chặn ${user.email}.`,
+            icon: "success",
+          });
+          setRefresh((prev) => !prev);
+        }
       } catch (error) {
         Swal.fire({
           title: "Lỗi!",
@@ -260,8 +270,8 @@ const UserManagement = () => {
                             checked={user.isActive}
                             onChange={() =>
                               user.isActive
-                                ? handleBlockUser(user.email)
-                                : handleUnblockUser(user.email)
+                                ? handleBlockUser(user)
+                                : handleUnblockUser(user)
                             }
                             className="peer sr-only"
                           />

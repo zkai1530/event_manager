@@ -1,4 +1,11 @@
-import { BanknoteArrowDown, Calendar, ChartNoAxesCombined, Home, MessageCircleWarning, Users } from "lucide-react";
+import {
+  BanknoteArrowDown,
+  Calendar,
+  ChartNoAxesCombined,
+  Home,
+  MessageCircleWarning,
+  Users,
+} from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -48,7 +55,7 @@ const data = {
     },
     {
       title: "Thống kê",
-      url: "/admin/settings",
+      url: "/admin/statistics",
       icon: ChartNoAxesCombined,
     },
   ],
@@ -72,7 +79,7 @@ export function AppSidebar() {
                 <SidebarMenuItem className="" key={item.title}>
                   <SidebarMenuButton
                     tooltip={item.title}
-                    className={`${
+                    className={`${  
                       activeItem === item.url
                         ? "bg-main text-white"
                         : "text-gray-700"

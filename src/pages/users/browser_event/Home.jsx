@@ -25,6 +25,7 @@ import {
   getTrendingEvents,
 } from "@/services/user/eventService";
 import { FormatPrice } from "@/utils/formatPrice";
+import { useNavigate } from "react-router-dom";
 
 // Dữ liệu mẫu
 const featuredEvents = [
@@ -61,69 +62,6 @@ const featuredEvents = [
     category: "Triển lãm",
   },
 ];
-const trendingEvents = [
-  {
-    id: 12,
-    name: "Lễ hội ánh sáng 2025",
-    image:
-      "https://images.tkbcdn.com/2/608/332/ts/ds/d5/4d/cd/3953cb59682e6ec1bd327b3184df5d2d.jpg",
-    date: "15/07/2025",
-    location: "Công viên Lê Văn Tám, TP.HCM",
-    price: "200.000",
-    category: "Festival",
-    tag: "Xu hướng",
-  },
-  {
-    id: 13,
-    name: "Hội thảo AI & Tương Lai",
-    image:
-      "https://images.tkbcdn.com/2/608/332/ts/ds/d5/4d/cd/3953cb59682e6ec1bd327b3184df5d2d.jpg",
-    date: "20/07/2025",
-    location: "Trung tâm Hội nghị Riverside, Hà Nội",
-    price: "600.000",
-    category: "Hội nghị",
-  },
-  {
-    id: 14,
-    name: "Triển lãm Nghệ thuật Đương Đại",
-    image:
-      "https://images.tkbcdn.com/2/608/332/ts/ds/d5/4d/cd/3953cb59682e6ec1bd327b3184df5d2d.jpg",
-    date: "25/07/2025",
-    location: "Bảo tàng Mỹ thuật TP.HCM",
-    price: "120.000",
-    category: "Triển lãm",
-  },
-  {
-    id: 15,
-    name: "Đêm nhạc Acoustic Unplugged",
-    image:
-      "https://images.tkbcdn.com/2/608/332/ts/ds/d5/4d/cd/3953cb59682e6ec1bd327b3184df5d2d.jpg",
-    date: "30/07/2025",
-    location: "The Rooftop Bar, Đà Nẵng",
-    price: "300.000",
-    category: "Âm nhạc",
-  },
-  {
-    id: 16,
-    name: "Đê nhạc Acoustic Unplugged",
-    image:
-      "https://images.tkbcdn.com/2/608/332/ts/ds/d5/4d/cd/3953cb59682e6ec1bd327b3184df5d2d.jpg",
-    date: "30/07/2025",
-    location: "The Rooftop Bar, Đà Nẵng",
-    price: "300.000",
-    category: "Âm nhạc",
-  },
-  {
-    id: 16,
-    name: "Đê nhạc Acoustic Unplugged",
-    image:
-      "https://images.tkbcdn.com/2/608/332/ts/ds/d5/4d/cd/3953cb59682e6ec1bd327b3184df5d2d.jpg",
-    date: "30/07/2025",
-    location: "The Rooftop Bar, Đà Nẵng",
-    price: "300.000",
-    category: "Âm nhạc",
-  },
-];
 
 const categories = [
   { id: 1, name: "Âm nhạc", icon: "🎵", count: 42 },
@@ -134,94 +72,6 @@ const categories = [
   { id: 6, name: "Festival", icon: "🎪", count: 16 },
   { id: 7, name: "Giải trí", icon: "🎭", count: 31 },
   { id: 8, name: "Ẩm thực", icon: "🍽️", count: 14 },
-];
-
-const popularEvents = [
-  {
-    id: 4,
-    name: "Workshop Thiết kế UI/UX cho người mới bắt đầu",
-    image:
-      "https://images.tkbcdn.com/2/608/332/ts/ds/d5/4d/cd/3953cb59682e6ec1bd327b3184df5d2d.jpg",
-    date: "02/06/2025",
-    location: "Dreamplex Coworking Space, TP.HCM",
-    price: "500.000",
-    category: "Workshop",
-    tag: "Bán chạy",
-  },
-  {
-    id: 5,
-    name: "Giải vô địch Bóng đá Quốc gia 2025",
-    image:
-      "https://images.tkbcdn.com/2/608/332/ts/ds/d5/4d/cd/3953cb59682e6ec1bd327b3184df5d2d.jpg",
-    date: "05/06/2025",
-    location: "Sân vận động Mỹ Đình, Hà Nội",
-    price: "150.000",
-    category: "Thể thao",
-  },
-  {
-    id: 6,
-    name: "Festival Ẩm thực Quốc tế Việt Nam",
-    image:
-      "https://images.tkbcdn.com/2/608/332/ts/ds/d5/4d/cd/3953cb59682e6ec1bd327b3184df5d2d.jpg",
-    date: "12/06/2025",
-    location: "Công viên 23/9, TP.HCM",
-    price: "80.000",
-    category: "Festival",
-  },
-  {
-    id: 7,
-    name: "Hòa nhạc Dàn nhạc Giao hưởng Việt Nam",
-    image:
-      "https://images.tkbcdn.com/2/608/332/ts/ds/d5/4d/cd/3953cb59682e6ec1bd327b3184df5d2d.jpg",
-    date: "20/06/2025",
-    location: "Nhà hát Lớn Hà Nội",
-    price: "350.000",
-    category: "Âm nhạc",
-  },
-];
-
-const upcomingEvents = [
-  {
-    id: 8,
-    name: "TEDx Saigon 2025",
-    image:
-      "https://images.tkbcdn.com/2/608/332/ts/ds/d5/4d/cd/3953cb59682e6ec1bd327b3184df5d2d.jpg",
-    date: "25/06/2025",
-    location: "Hội trường Thống Nhất, TP.HCM",
-    price: "450.000",
-    category: "Hội nghị",
-  },
-  {
-    id: 9,
-    name: "Workshop Digital Marketing 2025",
-    image:
-      "https://images.tkbcdn.com/2/608/332/ts/ds/d5/4d/cd/3953cb59682e6ec1bd327b3184df5d2d.jpg",
-    date: "30/06/2025",
-    location: "SIHUB, TP.HCM",
-    price: "350.000",
-    category: "Workshop",
-  },
-  {
-    id: 10,
-    name: "Tour Du lịch Văn hóa và Ẩm thực",
-    image:
-      "https://images.tkbcdn.com/2/608/332/ts/ds/d5/4d/cd/3953cb59682e6ec1bd327b3184df5d2d.jpg",
-    date: "05/07/2025",
-    location: "Chợ Bến Thành, TP.HCM",
-    price: "550.000",
-    category: "Ẩm thực",
-    tag: "Khuyến mãi",
-  },
-  {
-    id: 11,
-    name: "Comedy Night với Hoài Linh",
-    image:
-      "https://images.tkbcdn.com/2/608/332/ts/ds/d5/4d/cd/3953cb59682e6ec1bd327b3184df5d2d.jpg",
-    date: "10/07/2025",
-    location: "Nhà Văn hóa Thanh niên, TP.HCM",
-    price: "250.000",
-    category: "Giải trí",
-  },
 ];
 
 const cities = [
@@ -244,6 +94,8 @@ export default function HomePage() {
   const [popularEvents, setPopularEvents] = useState([]);
   const [upcomingEvents, setUpcomingEvents] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -460,7 +312,8 @@ export default function HomePage() {
           {popularEvents.map((event) => (
             <SwiperSlide key={event.id}>
               <div
-                className={`group relative overflow-hidden rounded-xl bg-white shadow transition-all duration-1500 hover:shadow-lg ${popularInView ? "translate-y-0 opacity-100" : "-translate-x-20 opacity-0"}`}
+                className={`group relative cursor-pointer overflow-hidden rounded-xl bg-white shadow transition-all duration-1500 hover:shadow-lg ${popularInView ? "translate-y-0 opacity-100" : "-translate-x-20 opacity-0"}`}
+                onClick={() => navigate(`/details/${event.slug}`)}
               >
                 <div className="relative overflow-hidden">
                   <img
@@ -539,7 +392,8 @@ export default function HomePage() {
               {trendingEvents.map((event) => (
                 <SwiperSlide key={event.eventId}>
                   <div
-                    className={`group relative overflow-hidden rounded-xl bg-white shadow transition-all duration-1500 hover:shadow-lg $${trendingInView ? "scale-100 opacity-100" : "scale-95 opacity-0"}`}
+                    className={`group relative cursor-pointer overflow-hidden rounded-xl bg-white shadow transition-all duration-1500 hover:shadow-lg $${trendingInView ? "scale-100 opacity-100" : "scale-95 opacity-0"}`}
+                    onClick={() => navigate(`/details/${event.slug}`)}
                   >
                     <div className="relative overflow-hidden">
                       <img
@@ -650,7 +504,8 @@ export default function HomePage() {
               {upcomingEvents.map((event) => (
                 <SwiperSlide key={event.eventId}>
                   <div
-                    className={`group relative overflow-hidden rounded-xl bg-white shadow transition-all duration-1500 hover:shadow-lg ${upcomingInView ? "translate-x-0 opacity-100" : "-translate-x-20 opacity-0"}`}
+                    className={`group relative cursor-pointer overflow-hidden rounded-xl bg-white shadow transition-all duration-1500 hover:shadow-lg ${upcomingInView ? "translate-x-0 opacity-100" : "-translate-x-20 opacity-0"}`}
+                    onClick={() => navigate(`/details/${event.slug}`)}
                   >
                     <div className="relative overflow-hidden">
                       <img

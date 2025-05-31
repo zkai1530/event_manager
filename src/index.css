@@ -18,7 +18,8 @@
   --color-main-semilight: #b2fff7;
   --color-secondary1: #ffc966;
   --color-secondary1-light: #ffe89d;
-  --color-admin: #4fc9da;
+  /* --color-admin: #4fc9da; */
+  --color-admin: #11e0b1;
   --color-emphasis: #ff7f50;
   /* --text-abc: 10rem; fontsize */
   /* --breakpoint-abc: 300px; width >= 300px */

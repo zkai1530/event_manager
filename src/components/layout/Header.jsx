@@ -18,6 +18,7 @@ import { getUserInfo } from "services/user/userService";
 
 const Header = () => {
   const token = localStorage.getItem("token");
+  const { logout } = useAuth();
   const [avatar, setAvatar] = useState();
   const [searchQuery, setSearchQuery] = useState("");
   const [location, setLocation] = useState("Hồ Chí Minh city");
@@ -54,7 +55,7 @@ const Header = () => {
     { id: 1, label: "Sự kiện của tôi", link: "/organizations/events/all" },
     { id: 2, label: "Vé của tôi", link: "/user/my-tickets/all/upcoming" },
     { id: 3, label: "Tài khoản", link: "/user/account" },
-    { id: 4, label: "Đăng xuất", link: "/logout" },
+    { id: 4, label: "Đăng xuất", link: "#", onClick: () => logout() },
   ];
 
   const handleSearch = (e) => {
@@ -274,12 +275,21 @@ const Header = () => {
                 <ul className="py-1">
                   {dropdownItems.map((item) => (
                     <li key={item.id}>
-                      <Link
-                        to={item.link}
-                        className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
-                      >
-                        {item.label}
-                      </Link>
+                      {item.onClick ? (
+                        <button
+                          onClick={item.onClick}
+                          className="block w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 cursor-pointer"
+                        >
+                          {item.label}
+                        </button>
+                      ) : (
+                        <Link
+                          to={item.link}
+                          className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
+                        >
+                          {item.label}
+                        </Link>
+                      )}
                     </li>
                   ))}
                 </ul>

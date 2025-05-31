@@ -232,7 +232,8 @@ const DisbursementManagement = () => {
                             {FormatPrice(schedule.totalPrice.toString())}
                           </td>
                           <td className="px-4 py-2 text-center text-sm text-gray-800">
-                            {schedule.soldTickets} vé
+                            {schedule.soldTickets} /{" "}
+                            {schedule.totalAvailableQuantity} vé
                           </td>
                           <td className="relative flex items-center justify-center px-4 py-2 text-center text-sm text-gray-800">
                             {schedule.fraud ? (

@@ -26,3 +26,27 @@ export const searchUser = async (token, keyword, page) => {
     throw error;
   }
 };
+
+export const blockUser = async (token, userId) => {
+  try {
+    const response = await axios.patch(`user/block/${userId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("blockUser", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const unblockUser = async (token, userId) => {
+  try {
+    const response = await axios.patch(`user/unblock/${userId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.data.data;
+  } catch (error) {
+    console.error("unblockUser", error.response?.data || error.message);
+    throw error;
+  }
+};
