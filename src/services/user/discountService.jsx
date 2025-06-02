@@ -31,3 +31,18 @@ export const updateDiscount = async (discountId, data, token) => {
     throw error;
   }
 };
+
+export const deleteDiscount = async (discountId, token) => {
+  try {
+    const response = await axios.delete(`/discount/${discountId}`, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("deleteDiscount", error.response?.data || error.message);
+    throw error;
+  }
+};

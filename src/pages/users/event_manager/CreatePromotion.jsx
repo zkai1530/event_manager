@@ -3,15 +3,13 @@ import Loading from "@/components/ui/Loading";
 import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { IoTicketOutline } from "react-icons/io5";
-import { createDiscount, updateDiscount } from "services/user/discountService";
+import { createDiscount, deleteDiscount, updateDiscount } from "services/user/discountService";
 import { getEventInfoById } from "services/user/eventService";
 import Swal from "sweetalert2";
-// import {
-//   createPromotion,
-//   updatePromotion,
-// } from "services/user/promotionService";
 import { formatDateTime } from "utils/formatSchedule";
 import { useEventRoute } from "utils/useEventRoute";
+import { FaBan } from "react-icons/fa";
+import { AiFillEdit } from "react-icons/ai";
 
 const CreatePromotion = () => {
   const { eventId, section } = useEventRoute();
@@ -47,10 +45,33 @@ const CreatePromotion = () => {
       const allTicketIds = currentPromotion
         ? (currentPromotion.tickets || []).map((ticket) => ticket.id)
         : (allTickets || []).map((ticket) => ticket.id);
+      // Kiểm tra nếu là promotion (không phải voucher)
+      if (!getValues("promoCode")) {
+        const ticketsWithDiscounts = checkTicketsForExistingDiscounts(
+          allTicketIds,
+          getValues("discountId"),
+        );
+        if (ticketsWithDiscounts.length > 0) {
+          const conflictingTicketNames = ticketsWithDiscounts
+            .map((item) => {
+              const ticket = allTickets.find((t) => t.id === item.ticketId);
+              return ticket ? ticket.name : `ID ${item.ticketId}`;
+            })
+            .join(", ");
+          Swal.fire({
+            title: "Lỗi!",
+            text: `Các vé sau đã có khuyến mãi: ${conflictingTicketNames}. Chọn "Chỉ một vài vé" để loại bỏ vé đã có khuyến mãi!`,
+            icon: "error",
+            confirmButtonText: "OK",
+          });
+          setSelectedOption("certain");
+          setTicketIds([]);
+          return;
+        }
+      }
       setTicketIds(allTicketIds);
       console.log("Reset ticketIds khi chọn all:", allTicketIds);
     } else if (value === "certain") {
-      // Nếu chỉnh sửa, giữ ticketIds cũ; nếu tạo mới, reset về []
       const initialTicketIds = currentPromotion
         ? currentPromotion.ticketIds || []
         : [];
@@ -59,21 +80,81 @@ const CreatePromotion = () => {
     }
   };
 
+  const checkTicketsForExistingDiscounts = (ticketIds, discountId = null) => {
+    return promotions
+      .filter(
+        (p) =>
+          !p.promoCode && // Chỉ kiểm tra promotion (không phải voucher)
+          p.discountId !== discountId && // Bỏ qua khuyến mãi hiện tại khi chỉnh sửa
+          p.ticketIds.some((id) => ticketIds.includes(id)), // Có vé trùng
+      )
+      .map((p) => ({
+        ticketId: p.ticketIds.find((id) => ticketIds.includes(id)),
+        hasDiscount: true,
+        discountId: p.discountId,
+      }));
+  };
+
   const onSubmit = async (data) => {
     const currentPromotion = promotions.find(
       (promotion) => promotion.discountId === data.discountId,
     );
+
     // Nếu chọn "Chỉ một vài vé" mà ticketIds rỗng
     if (selectedOption === "certain" && ticketIds.length === 0) {
-      alert("Vui lòng chọn ít nhất một vé khi áp dụng cho một vài vé");
+      Swal.fire({
+        title: "Lỗi!",
+        text: "Vui lòng chọn ít nhất một vé khi áp dụng cho một vài vé",
+        icon: "error",
+        confirmButtonText: "OK",
+      });
       return;
     }
+
     const allTicketIds =
       selectedOption === "all"
         ? currentPromotion
           ? (currentPromotion.tickets || []).map((ticket) => ticket.id)
           : (allTickets || []).map((ticket) => ticket.id)
         : ticketIds;
+
+    // Kiểm tra vé có khuyến mãi nếu là promotion (không có promoCode)
+    if (!data.promoCode) {
+      const ticketsWithDiscounts = checkTicketsForExistingDiscounts(
+        allTicketIds,
+        data.discountId,
+      );
+      if (ticketsWithDiscounts.length > 0) {
+        const conflictingTicketNames = ticketsWithDiscounts
+          .map((item) => {
+            const ticket = allTickets.find((t) => t.id === item.ticketId);
+            return ticket ? ticket.name : `ID ${item.ticketId}`;
+          })
+          .join(", ");
+        Swal.fire({
+          title: "Lỗi!",
+          text: `Các vé sau đã có khuyến mãi: ${conflictingTicketNames}. Mỗi vé chỉ được áp dụng một khuyến mãi!`,
+          icon: "error",
+          confirmButtonText: "OK",
+        });
+        return;
+      }
+    } else {
+      // Kiểm tra trùng promoCode cho voucher
+      const existingPromoCode = promotions.find(
+        (p) =>
+          p.promoCode === data.promoCode && p.discountId !== data.discountId,
+      );
+      if (existingPromoCode) {
+        Swal.fire({
+          title: "Lỗi!",
+          text: "Mã voucher này đã tồn tại. Vui lòng chọn mã khác!",
+          icon: "error",
+          confirmButtonText: "OK",
+        });
+        return;
+      }
+    }
 
     const requestData = {
       ...data,
@@ -84,6 +165,7 @@ const CreatePromotion = () => {
 
     try {
       setIsLoading(true);
+      let success = false;
       if (requestData.discountId) {
         const data = await updateDiscount(
           requestData.discountId,
@@ -96,6 +178,7 @@ const CreatePromotion = () => {
             text: `Khuyến mãi của bạn đã được cập nhật!.`,
             icon: "success",
           });
+          success = true;
         } else {
           Swal.fire({
             title: "Lỗi!",
@@ -111,6 +194,7 @@ const CreatePromotion = () => {
             text: `Khuyến mãi của bạn đã được thêm!.`,
             icon: "success",
           });
+          success = true;
         } else {
           Swal.fire({
             title: "Lỗi!",
@@ -118,6 +202,22 @@ const CreatePromotion = () => {
             icon: "error",
           });
         }
+      }
+      if (success) {
+        await loadPromotionsData();
+        setIsOpen(false);
+        setValue("discountId", null);
+        setValue("name", "");
+        setValue("promoCode", null);
+        setValue("discountType", "PERCENT");
+        setValue("discountValue", "");
+        setValue("maxUses", null);
+        setValue("discountStart", "");
+        setValue("discountEnd", "");
+        setTicketIds([]);
+        setSelectedOption("all");
+        setPromotionType("promotion");
+        setMaxUsesOption("unlimited");
       }
     } catch (error) {
       console.error("Create/Update promotion error", error);
@@ -159,7 +259,7 @@ const CreatePromotion = () => {
     setValue("discountStart", formatDateTime(promotion.discountStart));
     setValue("discountEnd", formatDateTime(promotion.discountEnd));
     // ... (các setValue khác)
-    setTicketIds(promotion.ticketIds || []); // Đảm bảo ticketIds đúng
+    setTicketIds(promotion.ticketIds || []); 
     setSelectedOption(
       promotion.ticketIds?.length === 0 ||
         (promotion.ticketIds?.length === promotion.tickets.length &&
@@ -177,244 +277,118 @@ const CreatePromotion = () => {
     setPromotionType(promotion.promoCode ? "coupon" : "promotion");
   };
 
-  useEffect(() => {
-    setIsLoading(true);
-    getEventInfoById(eventId)
-      .then((data) => {
-        if (!data.schedules || data.schedules.length === 0) {
-          setIsReady(false);
-          setIsLoading(false);
-          return;
+  const handleDeletePromotion = async (promotion) => {
+    const result = await Swal.fire({
+      title: "Xác nhận xóa",
+      text: `Bạn có chắc chắn muốn xóa khuyến mãi "${promotion.name}"?`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Xóa",
+      cancelButtonText: "Hủy",
+      confirmButtonColor: "#e74c3c",
+    });
+
+    if (result.isConfirmed) {
+      try {
+        setIsLoading(true);
+        const data = await deleteDiscount(promotion.discountId, token);
+        if (data.message === "Delete promotion was successfully!") {
+          Swal.fire({
+            title: "Xóa khuyến mãi thành công!",
+            text: `Khuyến mãi "${promotion.name}" đã được xóa.`,
+            icon: "success",
+          });
+          await loadPromotionsData();
+        } else {
+          Swal.fire({
+            title: "Lỗi!",
+            text: `Xóa khuyến mãi không thành công!`,
+            icon: "error",
+          });
         }
-
-        // Lấy tất cả tickets từ dữ liệu giả lập
-        const allTickets = [
-          ...new Map(
-            data.schedules
-              .flatMap((schedule) => schedule.ticketSchedules)
-              .map((ticket) => [
-                ticket.id,
-                { id: ticket.id, name: ticket.name, price: ticket.price },
-              ]),
-          ).values(),
-        ];
-        setAllTickets(allTickets);
-
-        // Gộp promotions và gán ticketIds
-        const mergedPromotions = data.schedules
-          .flatMap((schedule) => schedule.ticketSchedules)
-          .flatMap((ticket) =>
-            ticket.discounts.map((discount) => ({ discount, ticket })),
-          )
-          .reduce((acc, { discount, ticket }) => {
-            const existingPromotion = acc.find(
-              (p) => p.discountId === discount.discountId,
-            );
-
-            if (existingPromotion) {
-              // Chỉ thêm ticket.id vào ticketIds nếu chưa tồn tại
-              if (!existingPromotion.ticketIds.includes(ticket.id)) {
-                existingPromotion.ticketIds.push(ticket.id);
-              }
-            } else {
-              acc.push({
-                discountId: discount.discountId,
-                name: discount.name,
-                promoCode: discount.promoCode,
-                discountType: discount.discountType,
-                discountValue: discount.discountValue,
-                maxUses: discount.maxUses,
-                timesUsed: discount.timesUsed,
-                discountStart: discount.discountStart,
-                discountEnd: discount.discountEnd,
-                tickets: [...allTickets], // Gán tất cả vé vào tickets
-                ticketIds: [ticket.id], // Chỉ gán ticketIds được liên kết
-              });
-            }
-            return acc;
-          }, []);
-
-        console.log("merge promotions", mergedPromotions);
-        setPromotions(mergedPromotions);
-        setEventType(data.eventType);
-        setIsReady(true);
-      })
-      .catch((err) => {
-        console.log("getEventInfoById", err);
-        setIsReady(false);
-      })
-      .finally(() => {
+      } catch (error) {
+        console.error("Delete promotion error", error);
+        Swal.fire({
+          title: "Lỗi!",
+          text: `Xóa khuyến mãi không thành công!`,
+          icon: "error",
+        });
+      } finally {
         setIsLoading(false);
-      });
-  }, [eventId, setValue, setEventType]);
+      }
+    }
+  }
 
-  // useEffect(() => {
-  //   setIsLoading(true);
+  const loadPromotionsData = async () => {
+    try {
+      setIsLoading(true);
+      const data = await getEventInfoById(eventId);
+      if (!data.schedules || data.schedules.length === 0) {
+        setIsReady(false);
+        return;
+      }
 
-  //   // Giả lập dữ liệu trả về từ API
-  //   const fakeScheduleData = {
-  //     eventType: "RECURRING",
-  //     schedules: [
-  //       {
-  //         scheduleId: 24,
-  //         scheduleDate: "2024-04-21",
-  //         startTime: "10:00:00",
-  //         endTime: "11:00:00",
-  //         ticketSchedules: [
-  //           {
-  //             id: 6,
-  //             name: "VIP Ticket",
-  //             description: "Access to all areas",
-  //             sold: 0,
-  //             price: 100.0,
-  //             availableQuantity: 50,
-  //             saleStart: "2025-04-01T10:00:00",
-  //             saleEnd: "2025-04-05T22:00:00",
-  //             discounts: [
-  //               {
-  //                 discountId: "3",
-  //                 name: "Early Bird Discount",
-  //                 promoCode: null,
-  //                 discountType: "PERCENT",
-  //                 discountValue: 15.0,
-  //                 maxUses: null,
-  //                 timesUsed: 0,
-  //                 discountStart: "2025-04-20T00:00:00",
-  //                 discountEnd: "2025-04-21T23:59:59",
-  //               },
-  //             ],
-  //           },
-  //         ],
-  //       },
-  //       {
-  //         scheduleId: 25,
-  //         scheduleDate: "2024-04-22",
-  //         startTime: "10:00:00",
-  //         endTime: "11:00:00",
-  //         ticketSchedules: [
-  //           {
-  //             id: 6,
-  //             name: "VIP Ticket",
-  //             description: "Access to all areas",
-  //             sold: 0,
-  //             price: 100.0,
-  //             availableQuantity: 50,
-  //             saleStart: "2025-04-01T10:00:00",
-  //             saleEnd: "2025-04-05T22:00:00",
-  //             discounts: [
-  //               {
-  //                 discountId: "3",
-  //                 name: "Early Bird Discount",
-  //                 promoCode: null,
-  //                 discountType: "PERCENT",
-  //                 discountValue: 15.0,
-  //                 maxUses: null,
-  //                 timesUsed: 0,
-  //                 discountStart: "2025-04-20T00:00:00",
-  //                 discountEnd: "2025-04-21T23:59:59",
-  //               },
-  //               {
-  //                 discountId: "4",
-  //                 name: "Early Bird Discount",
-  //                 promoCode: "abc",
-  //                 discountType: "FIXED",
-  //                 discountValue: 15.0,
-  //                 maxUses: 10,
-  //                 timesUsed: 1,
-  //                 discountStart: "2025-04-20T00:00:00",
-  //                 discountEnd: "2025-04-21T23:59:59",
-  //               },
-  //             ],
-  //           },
-  //           {
-  //             id: 7,
-  //             name: "zkai1",
-  //             description: "",
-  //             sold: 0,
-  //             price: 10000.0,
-  //             availableQuantity: 100,
-  //             saleStart: "2025-04-20T12:29:00",
-  //             saleEnd: "2025-04-22T10:00:00",
-  //             discounts: [
-  //               {
-  //                 discountId: "3",
-  //                 name: "Early Bird Discount",
-  //                 promoCode: null,
-  //                 discountType: "PERCENT",
-  //                 discountValue: 15.0,
-  //                 maxUses: null,
-  //                 timesUsed: 0,
-  //                 discountStart: "2025-04-20T00:00:00",
-  //                 discountEnd: "2025-04-21T23:59:59",
-  //               },
-  //             ],
-  //           },
-  //         ],
-  //       },
-  //     ],
-  //   };
+      // Lấy tất cả tickets
+      const allTickets = [
+        ...new Map(
+          data.schedules
+            .flatMap((schedule) => schedule.ticketSchedules)
+            .map((ticket) => [
+              ticket.id,
+              { id: ticket.id, name: ticket.name, price: ticket.price },
+            ]),
+        ).values(),
+      ];
+      setAllTickets(allTickets);
 
-  //   if (
-  //     !fakeScheduleData.schedules ||
-  //     fakeScheduleData.schedules.length === 0
-  //   ) {
-  //     setIsReady(false);
-  //     setIsLoading(false);
-  //     return;
-  //   }
+      // Gộp promotions và gán ticketIds
+      const mergedPromotions = data.schedules
+        .flatMap((schedule) => schedule.ticketSchedules)
+        .flatMap((ticket) =>
+          ticket.discounts.map((discount) => ({ discount, ticket })),
+        )
+        .reduce((acc, { discount, ticket }) => {
+          const existingPromotion = acc.find(
+            (p) => p.discountId === discount.discountId,
+          );
 
-  //   // Lấy tất cả tickets từ dữ liệu giả lập
-  //   const allTickets = [
-  //     ...new Map(
-  //       fakeScheduleData.schedules
-  //         .flatMap((schedule) => schedule.ticketSchedules)
-  //         .map((ticket) => [
-  //           ticket.id,
-  //           { id: ticket.id, name: ticket.name, price: ticket.price },
-  //         ]),
-  //     ).values(),
-  //   ];
+          if (existingPromotion) {
+            if (!existingPromotion.ticketIds.includes(ticket.id)) {
+              existingPromotion.ticketIds.push(ticket.id);
+            }
+          } else {
+            acc.push({
+              discountId: discount.discountId,
+              name: discount.name,
+              promoCode: discount.promoCode,
+              discountType: discount.discountType,
+              discountValue: discount.discountValue,
+              maxUses: discount.maxUses,
+              timesUsed: discount.timesUsed,
+              discountStart: discount.discountStart,
+              discountEnd: discount.discountEnd,
+              tickets: [...allTickets],
+              ticketIds: [ticket.id],
+            });
+          }
+          return acc;
+        }, []);
 
-  //   // Gộp promotions và gán ticketIds
-  //   const mergedPromotions = fakeScheduleData.schedules
-  //     .flatMap((schedule) => schedule.ticketSchedules)
-  //     .flatMap((ticket) =>
-  //       ticket.discounts.map((discount) => ({ discount, ticket })),
-  //     )
-  //     .reduce((acc, { discount, ticket }) => {
-  //       const existingPromotion = acc.find(
-  //         (p) => p.discountId === discount.discountId,
-  //       );
+      console.log("merge promotions", mergedPromotions);
+      setPromotions(mergedPromotions);
+      setEventType(data.eventType);
+      setIsReady(true);
+    } catch (err) {
+      console.log("getEventInfoById", err);
+      setIsReady(false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-  //       if (existingPromotion) {
-  //         // Chỉ thêm ticket.id vào ticketIds nếu chưa tồn tại
-  //         if (!existingPromotion.ticketIds.includes(ticket.id)) {
-  //           existingPromotion.ticketIds.push(ticket.id);
-  //         }
-  //       } else {
-  //         acc.push({
-  //           discountId: discount.discountId,
-  //           name: discount.name,
-  //           promoCode: discount.promoCode,
-  //           discountType: discount.discountType,
-  //           discountValue: discount.discountValue,
-  //           maxUses: discount.maxUses,
-  //           timesUsed: discount.timesUsed,
-  //           discountStart: discount.discountStart,
-  //           discountEnd: discount.discountEnd,
-  //           tickets: [...allTickets], // Gán tất cả vé vào tickets
-  //           ticketIds: [ticket.id], // Chỉ gán ticketIds được liên kết
-  //         });
-  //       }
-  //       return acc;
-  //     }, []);
-
-  //   console.log("merge promotions", mergedPromotions);
-  //   setPromotions(mergedPromotions);
-  //   setEventType(fakeScheduleData.eventType);
-  //   setIsReady(true);
-  //   setIsLoading(false);
-  // }, [eventId, setValue, setEventType, token]);
+  useEffect(() => {
+    loadPromotionsData();
+  }, [eventId, setValue, eventType]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -504,7 +478,7 @@ const CreatePromotion = () => {
                       scope="col"
                       className="w-[16.6%] px-4 py-3 text-end text-sm font-medium text-white"
                     >
-                      Action
+                      Thao tác
                     </th>
                   </tr>
                 </thead>
@@ -548,16 +522,24 @@ const CreatePromotion = () => {
                               <span>{promotion.ticketIds.length} vé</span>
                             </div>
                           </td>
-                          <td className="text-end text-sm font-medium">
+                          <td className="space-x-2 text-end text-sm font-medium">
                             <button
                               type="button"
                               onClick={() => {
                                 handlePromotionSelect(promotion);
                                 setIsOpen(true);
                               }}
-                              className="cursor-pointer text-black hover:text-blue-600"
+                              className="cursor-pointer rounded-sm bg-blue-100 p-2"
                             >
-                              Edit
+                              <AiFillEdit size={18} className="text-blue-500" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                handleDeletePromotion(promotion);
+                              }}
+                              className="cursor-pointer rounded-sm bg-red-100 p-2"
+                            >
+                              <FaBan size={18} className="text-red-500" />
                             </button>
                           </td>
                         </tr>
@@ -924,6 +906,30 @@ const CreatePromotion = () => {
                 <TicketModal
                   closeModal={() => setShowTicketModal(false)}
                   onTicketsSelected={(selectedIds) => {
+                    if (!getValues("promoCode")) {
+                      const ticketsWithDiscounts =
+                        checkTicketsForExistingDiscounts(
+                          selectedIds,
+                          getValues("discountId"),
+                        );
+                      if (ticketsWithDiscounts.length > 0) {
+                        const conflictingTicketNames = ticketsWithDiscounts
+                          .map((item) => {
+                            const ticket = allTickets.find(
+                              (t) => t.id === item.ticketId,
+                            );
+                            return ticket ? ticket.name : `ID ${item.ticketId}`;
+                          })
+                          .join(", ");
+                        Swal.fire({
+                          title: "Lỗi!",
+                          text: `Các vé sau đã có khuyến mãi: ${conflictingTicketNames}. Vui lòng chọn vé khác!`,
+                          icon: "error",
+                          confirmButtonText: "OK",
+                        });
+                        return;
+                      }
+                    }
                     console.log("Đã chọn vé:", selectedIds);
                     setTicketIds(selectedIds);
                     setShowTicketModal(false);

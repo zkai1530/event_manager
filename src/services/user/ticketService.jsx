@@ -30,3 +30,18 @@ export const updateTicket = async (ticketId, data, token) => {
     throw error;
   }
 };
+
+export const deleteTicket = async (ticketId, token) => {
+  try {
+    const response = await axios.delete(`/ticket/${ticketId}`, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("deleteTicket ", error.response?.data || error.message);
+    throw error;
+  }
+};

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { BrowserQRCodeReader } from "@zxing/library";
 import Swal from "sweetalert2";
+import { checkin } from "@/services/user/orderService";
 
 function CheckIn() {
   const [scanResult, setScanResult] = useState(null);
@@ -73,22 +74,10 @@ function CheckIn() {
 
   const checkIn = async (qrCode) => {
     console.log("QR Code scanned:", qrCode);
-    const token =
-      "eyJhbGciOiJIUzUxMiJ9.eyJpc3MiOiJldmVudF9tYW5hZ2VyLmNvbSIsInN1YiI6InprYWkiLCJleHAiOjE3NDcxOTI5OTIsImlhdCI6MTc0NzEwNjU5MiwianRpIjoiZTU3ZWU0NGMtOWExZS00YmVjLTkzY2EtNzYyOTMxN2JjMDJjIiwic2NvcGUiOiJVU0VSIn0.7DssniFrhgck-eXOH7gm20dblQipdDxL8I9Ju-k83E7Mr_t-hwSyJaPDA5IFGxbcK079bD3n1yaVU7r69Gw12Q";
+    const token = localStorage.getItem("token");
     try {
-      const response = await fetch("http://localhost:8081/order/check-in", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ qrCode }),
-      });
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-      const data = await response.json();
-      console.log("API response:", data);
+      const data = await checkin(qrCode, token);
+      console.log("API response: ", data);
       setScanResult(JSON.stringify(data, null, 2));
 
       // Xử lý hiển thị modal dựa trên message
@@ -120,13 +109,13 @@ function CheckIn() {
       } else if (data.message === "This order already checked in!") {
         Swal.fire({
           title: "Lỗi!",
-          text: "Đơn hàng này đã được check-in!",
+          text: "Đơn hàng này đã được check-ian!",
           icon: "error",
           confirmButtonText: "OK",
         });
       }
     } catch (error) {
-      console.error("API error:", error);
+      console.log("Check-in error: ", error.response?.data);
       setScanResult(
         JSON.stringify(
           { message: "Error scanning QR", data: error.message },
@@ -134,12 +123,28 @@ function CheckIn() {
           2,
         ),
       );
-      Swal.fire({
-        title: "Lỗi!",
-        text: "Đơn hàng này đã được check-in!",
-        icon: "error",
-        confirmButtonText: "OK",
-      });
+      if (error.response?.data?.message === 'This order already checked in!') {
+        Swal.fire({
+          title: "Lỗi!",
+          text: "Đơn hàng này đã được check-in!",
+          icon: "error",
+          confirmButtonText: "OK",
+        });
+      } else if (error.response?.data?.message === "Access Denied! (unauthorized)") {
+        Swal.fire({
+          title: "Lỗi!",
+          text: "Bạn không có quyền quét mã check-in của sự kiện này!",
+          icon: "error",
+          confirmButtonText: "OK",
+        });
+      } else {
+        Swal.fire({
+          title: "Lỗi!",
+          text: "Mã QR không hợp lệ!",
+          icon: "error",
+          confirmButtonText: "OK",
+        });
+      }
     }
   };
 

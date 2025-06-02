@@ -1,4 +1,5 @@
 import AccountInfo from "@/pages/users/browser_event/AccountManagement";
+import PaymentPage from "@/pages/users/browser_event/PaymentPage";
 import SuccessOrder from "@/pages/users/browser_event/SuccessOrder";
 import UserLayout from "layout/UserLayout";
 import FavoriteEvent from "pages/users/browser_event/FavoriteEvent";
@@ -14,6 +15,7 @@ const UserRoutes = () => {
         <Route path="favorite-event" element={<FavoriteEvent />} />
         <Route path="account" element={<AccountInfo />} />
         <Route path="success-order" element={<SuccessOrder />} />
+        <Route path=":slug/payment" element={<PaymentPage />} />
       </Route>
     </Routes>
   );

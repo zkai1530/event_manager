@@ -1,26 +1,41 @@
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { FaReceipt } from "react-icons/fa";
 import { useEffect, useState } from "react";
 // import { fetchTicketSales } from "services/user/orderService";
 import { FormatPrice } from "utils/formatPrice";
 import { fetchTicketSales } from "@/services/user/orderService";
+import Loading1 from "@/components/ui/Loading1";
 
 const TicketSalesPage = () => {
   const { scheduleId } = useParams();
   const [data, setData] = useState(null);
+  const [page, setPage] = useState(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    return parseInt(urlParams.get("page") || "1", 10) - 1;
+  });
+  const [totalPages, setTotalPages] = useState(1);
+  const [isLoading, setIsLoading] = useState(false)
   const token = localStorage.getItem("token");
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const data = await fetchTicketSales(scheduleId, token);
+        setIsLoading(true)
+        const data = await fetchTicketSales(scheduleId, token, page);
         setData(data.data);
+        setTotalPages(data.totalPages || 1)
       } catch (error) {
         console.error("Failed to fetch sales data:", error);
       }
+      finally {
+        setIsLoading(false)
+      }
     };
     fetchData();
-  }, [scheduleId, token]);
+  }, [scheduleId, token, page]);
+
+  console.log("data ", data )
 
   if (!data)
     return (
@@ -115,54 +130,113 @@ const TicketSalesPage = () => {
             <p>Chưa có đơn hàng nào cho sự kiện này.</p>
           </div>
         ) : (
-          <table className="w-full table-auto border-collapse text-gray-700">
-            <thead>
-              <tr className="border-b border-gray-300">
-                <th className="py-2 text-left font-bold">Đơn hàng #</th>
-                <th className="py-2 text-center font-bold">Tên người mua</th>
-                <th className="py-2 text-center font-bold">Số lượng</th>
-                <th className="py-2 text-center font-bold">Loại vé</th>
-                <th className="py-2 text-center font-bold">Giá lúc mua</th>
-                <th className="py-2 text-right font-bold">Ngày mua</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.orders.map((order, idx) => (
-                <tr key={order.orderId} className={`text-sm`}>
-                  <td className="py-2 text-left font-medium text-gray-900">
-                    {order.orderId}
-                  </td>
-                  <td className="py-2 text-center">{order.userName}</td>
-                  <td className="py-2 text-center">
-                    {order.orderTickets.reduce(
-                      (sum, ot) => sum + ot.quantity,
-                      0,
-                    )}
-                  </td>
-                  <td className="py-2 text-center">
-                    {order.orderTickets[0]?.ticketName}{" "}
-                    {/* Adjust if ticket name is available */}
-                  </td>
-                  <td className="py-2 text-center font-semibold text-gray-900">
-                    {FormatPrice(
-                      order.orderTickets.reduce(
-                        // (sum, ot) => sum + ot.quantity * ot.priceAtPurchase,
-                        (sum, ot) => sum + ot.priceAtPurchase,
-                        0,
-                      ),
-                    )}
-                  </td>
-                  <td className="py-2 text-right">
-                    {new Date(order.createdAt).toLocaleString("vi-VN", {
-                      day: "2-digit",
-                      month: "short",
-                      year: "numeric",
-                    })}
-                  </td>
+          <>
+            <table className="w-full table-auto border-collapse text-gray-700">
+              <thead>
+                <tr className="border-b border-gray-300">
+                  <th className="py-2 text-left font-bold">Đơn hàng #</th>
+                  <th className="py-2 text-center font-bold">Tên người mua</th>
+                  <th className="py-2 text-center font-bold">Số lượng</th>
+                  <th className="py-2 text-center font-bold">Loại vé</th>
+                  <th className="py-2 text-center font-bold">Giá lúc mua</th>
+                  <th className="py-2 text-center font-bold">Check-in</th>
+                  <th className="py-2 text-right font-bold">Ngày mua</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {isLoading ? (
+                  <tr>
+                    <td
+                      colSpan={7}
+                      className="px-3 py-3 text-center text-gray-500"
+                    >
+                      <div className="inline-flex items-center justify-center">
+                        <Loading1 isLoading={isLoading} />
+                      </div>
+                    </td>
+                  </tr>
+                ) : data.orders.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={7}
+                      className="px-3 py-3 text-center text-gray-500"
+                    >
+                      Không có đơn hàng nào
+                    </td>
+                  </tr>
+                ) : (
+                  data.orders.map((order) => (
+                    <tr key={order.orderId} className="text-sm">
+                      <td className="py-2 text-left font-medium text-gray-900">
+                        {order.orderId}
+                      </td>
+                      <td className="py-2 text-center">{order.userName}</td>
+                      <td className="py-2 text-center">
+                        {order.orderTickets.reduce(
+                          (sum, ot) => sum + ot.quantity,
+                          0,
+                        )}
+                      </td>
+                      <td className="py-2 text-center">
+                        {order.orderTickets
+                          .map((ot) => ot.ticketName)
+                          .join(", ") || "N/A"}
+                      </td>
+                      <td className="py-2 text-center font-semibold text-gray-900">
+                        {FormatPrice(
+                          order.orderTickets.reduce(
+                            (sum, ot) => sum + ot.quantity * ot.priceAtPurchase,
+                            0,
+                          ),
+                        )}
+                      </td>
+                      <td className="py-2 text-center">
+                        {order.isCheckedIn ? (
+                          <span className="text-green-600">✔ Đã check-in</span>
+                        ) : (
+                          <span className="text-red-600">✘ Chưa check-in</span>
+                        )}
+                      </td>
+                      <td className="py-2 text-right">
+                        {new Date(order.createdAt).toLocaleString("vi-VN", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+            <div className="mt-4 flex items-center justify-center space-x-4">
+              <button
+                onClick={() => {
+                  const newPage = Math.max(page - 1, 0);
+                  setPage(newPage);
+                  navigate(`?page=${newPage + 1}`);
+                }}
+                disabled={page === 0}
+                className="rounded bg-gray-300 px-4 py-2 disabled:opacity-50"
+              >
+                Previous
+              </button>
+              <span>
+                Trang {page + 1} / {totalPages}
+              </span>
+              <button
+                onClick={() => {
+                  const newPage = page + 1;
+                  setPage(newPage);
+                  navigate(`?page=${newPage + 1}`);
+                }}
+                disabled={page + 1 >= totalPages}
+                className="rounded bg-gray-300 px-4 py-2 disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+          </>
         )}
       </section>
     </div>

@@ -573,12 +573,12 @@ const EventDetails = () => {
                   />
                   <div className="ml-4 flex items-center space-x-3">
                     <p>
-                      Tạo bởi <strong>Lâm Thanh Diện</strong>{" "}
+                      Tạo bởi <strong>{eventData.userName}</strong>{" "}
                     </p>
                     <div className="h-1 w-1 rounded-full bg-gray-400"></div>
                     <p>
                       {" "}
-                      <strong>1</strong> người theo dõi
+                      <strong>{eventData.followerCount}</strong> người theo dõi
                     </p>
                   </div>
                 </div>
@@ -699,6 +699,7 @@ const EventDetails = () => {
                   <TicketSelectionModal
                     eventInfo={{
                       name: eventData.name,
+                      slug: eventData.slug,
                       imageUrl: eventData.imageUrl,
                       tickets: selectedSchedule.ticketSchedules.map(
                         (ticket) => ({

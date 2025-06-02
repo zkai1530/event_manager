@@ -4,7 +4,11 @@ import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { IoEllipsisVertical, IoTicketOutline } from "react-icons/io5";
 import { getEventInfoById } from "services/user/eventService";
-import { createTicket, updateTicket } from "services/user/ticketService";
+import {
+  createTicket,
+  deleteTicket,
+  updateTicket,
+} from "services/user/ticketService";
 import Swal from "sweetalert2";
 import { FormatPrice } from "utils/formatPrice";
 import { formatDateTime } from "utils/formatSchedule";
@@ -31,6 +35,22 @@ const CreateTicket = () => {
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [scheduleIds, setScheduleIds] = useState([]);
   const [allSchedules, setAllSchedules] = useState([]); // schedules lúc đầu khi chưa có vé thì lưu vào
+
+  const [menuOpen, setMenuOpen] = useState(null); // Lưu ID ticket của menu đang mở
+  const menuRef = useRef(null);
+
+  // Đóng menu khi nhấn ra ngoài
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setMenuOpen(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const handleOptionChange = (e) => {
     const value = e.target.value;
@@ -64,14 +84,6 @@ const CreateTicket = () => {
           : allSchedules.map((schedule) => schedule.scheduleId)
         : scheduleIds;
 
-    // const requestData = {
-    //   ...data,
-    //   scheduleIds:
-    //     eventType === "SINGLE"
-    //       ? tickets[0]?.schedules.map((s) => s.scheduleId) || []
-    //       : allScheduleIds,
-    // };
-
     const requestData = {
       ...data,
       scheduleIds:
@@ -84,6 +96,7 @@ const CreateTicket = () => {
 
     try {
       setIsLoading(true);
+      let success = false;
       if (requestData.id) {
         const data = await updateTicket(requestData.id, requestData, token);
         if (data.message === "Update ticket was successfully!") {
@@ -92,6 +105,7 @@ const CreateTicket = () => {
             text: `Vé của bạn đã được cập nhật!.`,
             icon: "success",
           });
+          success = true;
         } else {
           Swal.fire({
             title: "Lỗi!",
@@ -108,6 +122,7 @@ const CreateTicket = () => {
             text: `Vé của bạn đã được tạo!.`,
             icon: "success",
           });
+          success = true;
         } else {
           Swal.fire({
             title: "Lỗi!",
@@ -115,6 +130,22 @@ const CreateTicket = () => {
             icon: "error",
           });
         }
+      }
+      // Tải lại dữ liệu nếu thành công
+      if (success) {
+        await loadTicketsData();
+        setIsOpen(false); // Đóng form
+        setValue("id", null);
+        setValue("name", "");
+        setValue("description", "");
+        setValue("price", "");
+        setValue("availableQuantity", "");
+        setValue("saleStart", "");
+        setValue("saleEnd", "");
+        setScheduleIds(
+          eventType === "SINGLE" ? allSchedules.map((s) => s.scheduleId) : [],
+        );
+        setSelectedOption("all");
       }
     } catch (error) {
       console.error("Create/Update ticket error", error);
@@ -172,67 +203,110 @@ const CreateTicket = () => {
     );
   };
 
-  const [eventType, setEventType] = useState("SINGLE");
-  useEffect(() => {
-    setIsLoading(true);
-    getEventInfoById(eventId)
-      .then((data) => {
-        console.log("tui ne", data);
-        if (!data.schedules || data.schedules.length === 0) {
-          setIsReady(false);
-          setIsLoading(false);
-          return;
-        }
+  const handleDeleteTicket = async (ticket) => {
+    const result = await Swal.fire({
+      title: "Xác nhận xóa",
+      text: `Bạn có chắc chắn muốn xóa vé "${ticket.name}"?`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Xóa",
+      cancelButtonText: "Hủy",
+      confirmButtonColor: "#e74c3c",
+    });
 
-        // Lấy tất cả schedules từ API
-        const allSchedules = data.schedules.map((schedule) => ({
-          scheduleId: schedule.scheduleId,
-          scheduleDate: schedule.scheduleDate,
-          startTime: schedule.startTime,
-          endTime: schedule.endTime,
-        }));
-        setAllSchedules(allSchedules);
-
-        // Gộp tickets và gán scheduleIds
-        const mergedTickets = data.schedules.reduce((acc, schedule) => {
-          schedule.ticketSchedules.forEach((ticket) => {
-            const existingTicket = acc.find((t) => t.id === ticket.id);
-
-            if (existingTicket) {
-              if (data.eventType !== "SINGLE") {
-                existingTicket.scheduleIds.push(schedule.scheduleId);
-              }
-            } else {
-              acc.push({
-                id: ticket.id,
-                name: ticket.name,
-                description: ticket.description,
-                sold: ticket.sold,
-                price: ticket.price,
-                availableQuantity: ticket.availableQuantity,
-                saleStart: ticket.saleStart,
-                saleEnd: ticket.saleEnd,
-                schedules: [...allSchedules],
-                scheduleIds: [schedule.scheduleId],
-              });
-            }
+    if (result.isConfirmed) {
+      try {
+        setIsLoading(true);
+        const data = await deleteTicket(ticket.id, token);
+        if (data.message === "Delete ticket was successfully!") {
+          Swal.fire({
+            title: "Xóa khuyến mãi thành công!",
+            text: `Khuyến mãi "${ticket.name}" đã được xóa.`,
+            icon: "success",
           });
-          return acc;
-        }, []);
-
-        console.log("merge", mergedTickets);
-        setTickets(mergedTickets);
-        setEventType(data.eventType);
-        setIsReady(true);
-      })
-      .catch((err) => {
-        console.log("getEventInfoById", err);
-        setIsReady(false);
-      })
-      .finally(() => {
+          await loadTicketsData();
+        } else {
+          Swal.fire({
+            title: "Lỗi!",
+            text: `Xóa vé không thành công!`,
+            icon: "error",
+          });
+        }
+      } catch (error) {
+        console.error("Delete ticket error", error);
+        Swal.fire({
+          title: "Lỗi!",
+          text: `Xóa vé không thành công!`,
+          icon: "error",
+        });
+      } finally {
         setIsLoading(false);
-      });
-  }, [eventId, setValue, setEventType]);
+      }
+    }
+  };
+
+  const [eventType, setEventType] = useState("SINGLE");
+  const loadTicketsData = async () => {
+    try {
+      setIsLoading(true);
+      const data = await getEventInfoById(eventId);
+      console.log("tui ne", data);
+      if (!data.schedules || data.schedules.length === 0) {
+        setIsReady(false);
+        return;
+      }
+
+      // Lấy tất cả schedules từ API
+      const allSchedules = data.schedules.map((schedule) => ({
+        scheduleId: schedule.scheduleId,
+        scheduleDate: schedule.scheduleDate,
+        startTime: schedule.startTime,
+        endTime: schedule.endTime,
+      }));
+      setAllSchedules(allSchedules);
+
+      // Gộp tickets và gán scheduleIds
+      const mergedTickets = data.schedules.reduce((acc, schedule) => {
+        schedule.ticketSchedules.forEach((ticket) => {
+          const existingTicket = acc.find((t) => t.id === ticket.id);
+
+          if (existingTicket) {
+            if (data.eventType !== "SINGLE") {
+              existingTicket.scheduleIds.push(schedule.scheduleId);
+            }
+          } else {
+            acc.push({
+              id: ticket.id,
+              name: ticket.name,
+              description: ticket.description,
+              sold: ticket.sold,
+              price: ticket.price,
+              availableQuantity: ticket.availableQuantity,
+              saleStart: ticket.saleStart,
+              saleEnd: ticket.saleEnd,
+              schedules: [...allSchedules],
+              scheduleIds: [schedule.scheduleId],
+            });
+          }
+        });
+        return acc;
+      }, []);
+
+      console.log("merge", mergedTickets);
+      setTickets(mergedTickets);
+      setEventType(data.eventType);
+      setIsReady(true);
+    } catch (err) {
+      console.log("getEventInfoById", err);
+      setIsReady(false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadTicketsData();
+  }, [eventId, eventType, setValue]);
 
   // Click outside for close create ticket form
   useEffect(() => {
@@ -299,8 +373,8 @@ const CreateTicket = () => {
                 <div className="flex items-center space-x-2">
                   <IoTicketOutline />
                   <p className="text-sm text-gray-500">
-                    {ticket.availableQuantity} vé /{" "}
-                    {ticket.schedules.length} lịch trình
+                    {ticket.availableQuantity} vé / {ticket.schedules.length}{" "}
+                    lịch trình
                   </p>
                 </div>
               </div>
@@ -321,14 +395,41 @@ const CreateTicket = () => {
             </div>
 
             {/* right */}
-            <div
-              onClick={() => {
-                handleTicketSelect(ticket);
-                setIsOpen(true);
-              }}
-              className="hover:text-main cursor-pointer pt-4 text-black"
-            >
-              <IoEllipsisVertical size={22} />
+            <div className="relative pt-4">
+              <button
+                onClick={() =>
+                  setMenuOpen(menuOpen === ticket.id ? null : ticket.id)
+                }
+                className="rounded-full p-1 transition-colors hover:text-blue-600"
+              >
+                <IoEllipsisVertical size={22} />
+              </button>
+              {menuOpen === ticket.id && (
+                <div
+                  ref={menuRef}
+                  className="absolute top-0 left-full z-20 ml-2 w-36 rounded-lg border border-gray-100 bg-white py-1 shadow-xl"
+                >
+                  <button
+                    onClick={() => {
+                      handleTicketSelect(ticket);
+                      setIsOpen(true);
+                      setMenuOpen(null);
+                    }}
+                    className="w-full px-4 py-2 text-left text-sm font-medium text-gray-800 transition-colors hover:bg-blue-50 hover:text-blue-600"
+                  >
+                    Sửa
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleDeleteTicket(ticket);
+                      setMenuOpen(null);
+                    }}
+                    className="w-full px-4 py-2 text-left text-sm font-medium text-red-600 transition-colors hover:bg-red-50 hover:text-red-700"
+                  >
+                    Xóa
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         ))}

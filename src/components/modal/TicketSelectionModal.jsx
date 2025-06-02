@@ -5,6 +5,7 @@ import { IoCloseSharp } from "react-icons/io5";
 import { createOrder } from "services/user/orderService";
 import Loading from "@/components/ui/Loading";
 import Swal from "sweetalert2";
+import { useNavigate } from "react-router-dom";
 
 const TicketSelectionModal = ({
   eventInfo,
@@ -14,6 +15,7 @@ const TicketSelectionModal = ({
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const token = localStorage.getItem("token");
+  const navigate = useNavigate();
   const [quantities, setQuantities] = useState(
     eventInfo.tickets.reduce((acc, ticket) => {
       acc[ticket.id] = 0;
@@ -211,6 +213,65 @@ const TicketSelectionModal = ({
     // closeModal();
   };
 
+  const handleContinue = (slug) => {
+    const hasSelectedTickets = Object.values(quantities).some((qty) => qty > 0);
+    if (!hasSelectedTickets) {
+      Swal.fire({
+        title: "Cảnh báo!",
+        text: "Vui lòng chọn ít nhất một vé trước khi tiếp tục!",
+        icon: "warning",
+        confirmButtonText: "OK",
+      });
+      return;
+    }
+    if (!eventInfo.slug) {
+      Swal.fire({
+        title: "Lỗi!",
+        text: "Không tìm thấy thông tin sự kiện!",
+        icon: "error",
+        confirmButtonText: "OK",
+      });
+      return;
+    }
+
+    const checkoutDataWithArray = {
+      scheduleId: selectedSchedule.scheduleId,
+      tickets: Object.entries(quantities)
+        .filter(([ticketId, quantity]) => quantity > 0)
+        .map(([ticketId, quantity]) => {
+          const ticket = eventInfo.tickets.find(
+            (t) => t.id === parseInt(ticketId),
+          );
+          const autoDiscount = ticket.discounts.find(
+            (d) => d.promoCode === null,
+          );
+          const appliedDiscount = promoCodes[ticketId].appliedDiscount;
+          const discountIds = [];
+          if (autoDiscount) discountIds.push(autoDiscount.discountId);
+          if (appliedDiscount && appliedDiscount.promoCode !== null)
+            discountIds.push(appliedDiscount.discountId);
+          return {
+            ticketId: parseInt(ticketId),
+            quantity,
+            discountIds,
+          };
+        }),
+    };
+
+    navigate(`/user/${eventInfo.slug}/payment`, {
+      state: {
+        checkoutData: checkoutDataWithArray,
+        eventInfo: {
+          name: eventInfo.name,
+          imageUrl: eventInfo.imageUrl,
+          location: eventInfo.location,
+          date: selectedSchedule.date,
+          time: selectedSchedule.time,
+          tickets: eventInfo.tickets,
+        },
+      },
+    });
+  };
   const { subtotal = 0, total = 0 } = calculateSummary();
 
   return createPortal(
@@ -362,6 +423,9 @@ const TicketSelectionModal = ({
                 onClick={handleCheckout}
               >
                 Thanh toán
+              </button>
+              <button onClick={() => handleContinue(eventInfo.slug)}>
+                Tiếp tục
               </button>
             </div>
           </div>

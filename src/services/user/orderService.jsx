@@ -44,9 +44,9 @@ export const checkin = async (qrCode, token) => {
       },
     );
     console.log(response.data);
-    return response.data.data;
+    return response.data;
   } catch (error) {
-    console.error("checkin", error.response?.data || error.message);
+    console.error("checkin ", error.response?.data || error.message);
     throw error;
   }
 };
@@ -77,9 +77,9 @@ export const getMyTicketsByOrderStatus = async (
   }
 };
 
-export const fetchTicketSales = async (scheduleId, token) => {
+export const fetchTicketSales = async (scheduleId, token, page) => {
   try {
-    const response = await axios.get(`/order/by-schedule/${scheduleId}`, {
+    const response = await axios.get(`/order/by-schedule/${scheduleId}?page=${page}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
