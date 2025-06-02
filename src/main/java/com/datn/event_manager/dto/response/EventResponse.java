@@ -18,6 +18,8 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class EventResponse {
     String userId;
+    String userName;
+    int followerCount;
     Long eventId;
     String name;
     String imageUrl;

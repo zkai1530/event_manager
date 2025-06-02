@@ -37,6 +37,8 @@ public interface EventMapper {
     @Mapping(target = "userId", source = "user.userId")
     @Mapping(target = "categoryId", source = "category.categoryId")
     @Mapping(target = "themeId", source = "theme.themeId")
+    @Mapping(target = "userName", source = "user.name")
+    @Mapping(target = "followerCount", expression = "java(event.getUser() != null && event.getUser().getFollowers() != null ? event.getUser().getFollowers().size() : 0)")
     EventResponse toEventResponse(Event event);
 
     @IterableMapping(qualifiedByName = "toEventResponse")
