@@ -23,6 +23,7 @@ import {
   unfollowUser,
 } from "@/services/user/userService";
 import Swal from "sweetalert2";
+import RecommendEvent from "@/components/ui/RecommendEvent";
 
 const EventDetails = () => {
   const [eventData, setEventData] = useState(null);
@@ -34,6 +35,13 @@ const EventDetails = () => {
   const token = localStorage.getItem("token");
   const { slug } = useParams();
   const eventId = slug.split("-").pop();
+
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }, [eventId]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -719,6 +727,32 @@ const EventDetails = () => {
               </div>
             </div>
           </div>
+
+          <div className="my-10 flex items-center">
+            <div className="border-main-bold flex-grow border-t-4"></div>
+            <span className="text-main-bold mx-6 text-2xl font-bold whitespace-nowrap">
+              Có thể bạn sẽ thích
+            </span>
+            <div className="border-main-bold flex-grow border-t-4"></div>
+          </div>
+
+          <RecommendEvent
+            userId="09b744fa-11d9-4ef0-9b10-f8e4289734f9"
+            eventId={null}
+          />
+
+          <div className="my-10 flex items-center">
+            <div className="border-main-bold flex-grow border-t-4"></div>
+            <span className="text-main-bold mx-6 text-2xl font-bold whitespace-nowrap">
+              Có thể bạn sẽ thích
+            </span>
+            <div className="border-main-bold flex-grow border-t-4"></div>
+          </div>
+
+          <RecommendEvent
+            eventId={eventId}
+            userId={null}
+          />
         </div>
       )}
       <Loading isLoading={isLoading} />

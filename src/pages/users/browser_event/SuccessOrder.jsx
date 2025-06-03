@@ -12,15 +12,15 @@ const SuccessOrder = () => {
 
   return (
     <div className="flex min-h-screen justify-center bg-white">
-      <div className="my-12 w-full max-w-7xl overflow-hidden rounded-xl bg-white shadow-lg">
+      <div className="my-30 w-full max-w-7xl overflow-hidden rounded-xl bg-white shadow-lg md:my-8">
         {/* Header */}
-        <div className="bg-green-50 px-8 py-10 text-center">
-          <h1 className="text-main-bold mb-3 text-4xl font-bold">
+        <div className="bg-green-50 px-4 py-6 text-center md:px-8 md:py-10">
+          <h1 className="text-main-bold font-main mb-2 text-2xl font-bold md:mb-3 md:text-4xl">
             Xác nhận đặt vé thành công
           </h1>
-          <p className="mx-auto max-w-4xl text-lg text-gray-600">
+          <p className="mx-auto max-w-3xl text-base text-gray-600 md:max-w-4xl md:text-lg">
             Cảm ơn bạn đã mua vé trên{" "}
-            <span className="font-logo from-main to-emphasis bg-gradient-to-r bg-clip-text text-[22px] font-bold text-transparent">
+            <span className="font-logo from-main to-emphasis bg-gradient-to-r bg-clip-text text-[18px] font-bold text-transparent md:text-[22px]">
               Eventify
             </span>
             . Vé điện tử của bạn sẽ được gửi và đính kèm đến email sớm. Vui lòng
@@ -29,51 +29,57 @@ const SuccessOrder = () => {
         </div>
 
         {/* Main Content */}
-        <div className="p-8">
+        <div className="p-4 md:p-8">
           {/* Ticket Info Header */}
-          <div className="mb-8 flex items-center justify-between border-b pb-5">
-            <h2 className="text-2xl font-semibold text-gray-800">
+          <div className="mb-6 flex items-center justify-between border-b pb-3 md:mb-8 md:pb-5">
+            <h2 className="text-lg font-semibold text-gray-800 md:text-2xl">
               Thông tin xuất vé
             </h2>
-            <div className="text-gray-600">
+            <div className="text-sm text-gray-600 md:text-base">
               Mã đơn hàng: <span className="font-medium">#12345</span>
             </div>
           </div>
 
           {/* Two Column Layout */}
-          <div className="flex flex-col gap-10 md:flex-row">
+          <div className="flex flex-col gap-6 md:flex-row md:gap-10">
             {/* Left Column - Event Details */}
             <div className="md:w-5/12">
               <div className="overflow-hidden rounded-lg border">
                 <img
-                  src="https://readdy.ai/api/search-image?query=K-pop%20concert%20poster%20with%20green%20background%2C%20featuring%20multiple%20artists%20arranged%20in%20a%20grid%20layout%2C%20professional%20event%20advertisement%20for%20a%20mega%20concert%20in%20Vietnam%2C%20high%20quality%20promotional%20material&width=600&height=300&seq=1&orientation=landscape"
+                  src="https://salt.tkbcdn.com/ts/ds/87/43/e3/7e239ba463207db6e0e12cee4e433536.jpg"
                   alt="Concert Poster"
-                  className="h-56 w-full object-cover object-top"
+                  className="h-48 w-full object-cover object-top md:h-64"
                 />
-                <div className="p-6">
-                  <h3 className="mb-4 text-2xl font-bold text-gray-800">
+                <div className="p-4 md:p-6">
+                  <h3 className="mb-3 text-lg font-bold text-gray-800 md:mb-4 md:text-2xl">
                     VPBANK Presents K-STAR SPARK IN VIETNAM - MEGA CONCERT 2025
                   </h3>
 
-                  <div className="mb-4 flex items-start gap-3 text-gray-700">
-                    <i className="fas fa-calendar-alt mt-1 text-gray-500"></i>
+                  <div className="mb-3 flex items-start gap-2 text-gray-700 md:mb-4 md:gap-3">
+                    <FaCalendarCheck
+                      size={16}
+                      className="text-main mt-1 md:mt-0.5 md:size-5"
+                    />
                     <div>
-                      <div className="flex items-center space-x-2 text-lg font-medium">
-                        <FaCalendarCheck size={20} className="text-main" />
-                        <p>Thứ Bảy, 21/06/2025</p>
+                      <div className="flex items-center space-x-2 text-base font-medium md:text-lg">
+                        <span>Thứ Bảy, 21/06/2025</span>
                       </div>
-                      <div className="text-sm text-gray-500">19:00 - 21:30</div>
+                      <div className="text-xs text-gray-500 md:text-sm">
+                        19:00 - 21:30
+                      </div>
                     </div>
                   </div>
 
-                  <div className="flex items-start gap-3 text-gray-700">
-                    <i className="fas fa-map-marker-alt mt-1 text-gray-500"></i>
+                  <div className="flex items-start gap-2 text-gray-700 md:gap-3">
+                    <FaLocationDot
+                      size={16}
+                      className="text-main mt-1 md:mt-0.5 md:size-5"
+                    />
                     <div>
-                      <div className="flex items-center space-x-2 text-lg font-medium">
-                        <FaLocationDot size={20} className="text-main" />
-                        <p> SÂN VẬN ĐỘNG QUỐC GIA MỸ ĐÌNH</p>
+                      <div className="text-base font-medium md:text-lg">
+                        SÂN VẬN ĐỘNG QUỐC GIA MỸ ĐÌNH
                       </div>
-                      <div className="text-sm">
+                      <div className="text-xs md:text-sm">
                         Số 1 Lê Đức Thọ, Mỹ Đình 1, Nam Từ Liêm, Hà Nội
                       </div>
                       <div className="mt-1 text-xs text-gray-500">
@@ -89,44 +95,44 @@ const SuccessOrder = () => {
             {/* Right Column - Customer Details */}
             <div className="md:w-7/12">
               {/* Ticket Receipt Section */}
-              <div className="space-y-8">
+              <div className="space-y-6 md:space-y-8">
                 {/* Email Notification */}
-                <div className="flex items-center gap-4 rounded-lg bg-blue-50 p-5">
-                  <div className="rounded-full bg-blue-100 p-3 text-blue-500">
+                <div className="flex flex-col items-start gap-3 rounded-lg bg-blue-50 p-4 md:flex-row md:items-center md:gap-4 md:p-5">
+                  <div className="rounded-full bg-blue-100 p-2.5 text-blue-500">
                     <i className="fas fa-info"></i>
                   </div>
-                  <p className="flex-1 text-gray-700">
+                  <p className="flex-1 text-sm text-gray-700 md:text-base">
                     Nếu sau 10 phút mà bạn chưa nhận được email, click ngay để
                     CTicket gửi lại!
                   </p>
                   <button
                     onClick={handleSendEmail}
-                    className="rounded bg-blue-100 px-5 py-2.5 text-blue-600 transition-colors hover:bg-blue-200"
+                    className="w-full rounded bg-blue-100 px-4 py-2 text-sm text-blue-600 transition-colors hover:bg-blue-200 md:w-auto md:px-5 md:py-2.5 md:text-base"
                   >
                     {emailSent ? "Đã gửi" : "Gửi email"}
                   </button>
                 </div>
 
                 {/* Customer Information */}
-                <div className="rounded-lg border bg-white p-6">
-                  <h4 className="mb-4 text-lg font-medium text-gray-800">
+                <div className="rounded-lg border bg-white p-4 md:p-6">
+                  <h4 className="mb-3 text-base font-medium text-gray-800 md:mb-4 md:text-lg">
                     Thông tin khách hàng
                   </h4>
-                  <ul className="space-y-3 text-gray-800">
+                  <ul className="space-y-2 text-sm text-gray-800 md:space-y-3 md:text-base">
                     <li className="flex items-center">
-                      <span className="mr-3 text-gray-600">•</span>
+                      <span className="mr-2 text-gray-600">•</span>
                       Tên: Pham Minh Anh
                     </li>
                     <li className="flex items-center">
-                      <span className="mr-3 text-gray-600">•</span>
+                      <span className="mr-2 text-gray-600">•</span>
                       Email: example@gmail.com
                     </li>
                     <li className="flex items-center">
-                      <span className="mr-3 text-gray-600">•</span>
+                      <span className="mr-2 text-gray-600">•</span>
                       Số điện thoại: 09xxxxxxxx
                     </li>
                     <li className="flex items-center">
-                      <span className="mr-3 text-gray-600">•</span>
+                      <span className="mr-2 text-gray-600">•</span>
                       Ngày sinh: 01/01/1990
                     </li>
                   </ul>
@@ -134,8 +140,8 @@ const SuccessOrder = () => {
 
                 {/* Seating Details */}
                 <div>
-                  <div className="mb-5 flex items-center justify-between">
-                    <h3 className="text-xl font-semibold text-gray-800">
+                  <div className="mb-4 flex items-center justify-between md:mb-5">
+                    <h3 className="text-lg font-semibold text-gray-800 md:text-xl">
                       Loại vé
                     </h3>
                     <button className="text-gray-400 hover:text-gray-600">
@@ -146,25 +152,27 @@ const SuccessOrder = () => {
                   <div className="overflow-x-auto">
                     <table className="w-full border-collapse">
                       <thead>
-                        <tr className="bg-gray-50 text-left">
-                          <th className="px-5 py-3.5 font-medium text-gray-600">
+                        <tr className="bg-green-100 text-left">
+                          <th className="px-3 py-2 text-sm font-medium text-gray-600 md:px-5 md:py-3.5 md:text-base">
                             Hạng vé
                           </th>
-                          <th className="px-5 py-3.5 text-center font-medium text-gray-600">
+                          <th className="px-3 py-2 text-center text-sm font-medium text-gray-600 md:px-5 md:py-3.5 md:text-base">
                             Số lượng
                           </th>
-                          <th className="px-5 py-3.5 text-right font-medium text-gray-600">
+                          <th className="px-3 py-2 text-right text-sm font-medium text-gray-600 md:px-5 md:py-3.5 md:text-base">
                             Giá vé
                           </th>
                         </tr>
                       </thead>
                       <tbody>
                         <tr className="border-t">
-                          <td className="px-5 py-4 font-medium">
+                          <td className="px-3 py-3 text-sm font-medium md:px-5 md:py-4 md:text-base">
                             CAT 2 R1 SEATING
                           </td>
-                          <td className="px-5 py-4 text-center">x3</td>
-                          <td className="px-5 py-4 text-right font-medium">
+                          <td className="px-3 py-3 text-center text-sm md:px-5 md:py-4 md:text-base">
+                            x3
+                          </td>
+                          <td className="px-3 py-3 text-right text-sm font-medium md:px-5 md:py-4 md:text-base">
                             2,900,000 VND
                           </td>
                         </tr>

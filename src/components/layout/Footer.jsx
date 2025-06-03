@@ -1,29 +1,34 @@
+import { FaCalendarCheck } from "react-icons/fa";
+import { FaLocationDot } from "react-icons/fa6";
+
 const Footer = () => {
   return (
-    <footer className="hidden w-full md:block">
+    <footer className="w-full">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto grid max-w-sm grid-cols-2 gap-3 gap-y-8 py-10 sm:max-w-3xl sm:grid-cols-4 md:gap-8 lg:max-w-full lg:grid-cols-6">
-          <div className="col-span-full mb-10 lg:col-span-2 lg:mb-0">
+        <div className="mx-auto grid max-w-sm grid-cols-1 gap-2 gap-y-6 py-6 sm:max-w-3xl sm:grid-cols-4 sm:gap-4 sm:gap-y-8 sm:py-8 md:gap-8 lg:max-w-full lg:grid-cols-6 lg:py-10">
+          <div className="col-span-full mb-6 lg:col-span-2 lg:mb-0">
             <div className="flex w-fit cursor-pointer items-center">
-              <h1 className="font-logo from-main to-emphasis bg-gradient-to-r bg-clip-text text-[22px] font-bold text-transparent md:text-[33px]">
+              <h1 className="font-logo from-main to-emphasis bg-gradient-to-r bg-clip-text text-[18px] font-bold text-transparent sm:text-[22px] md:text-[33px]">
                 Eventify
               </h1>
             </div>
-            <p className="py-4 text-center text-sm text-gray-500 lg:max-w-xs lg:text-left">
+            <p className="py-3 text-center text-xs text-gray-500 sm:py-4 sm:text-sm lg:max-w-xs lg:text-left">
               Trusted in more than 100 countries & 5 million customers. Have any
-              query ?
+              query?
             </p>
             <a
               href="javascript:;"
-              className="mx-auto block h-9 w-fit rounded-full bg-indigo-600 px-5 py-2.5 text-xs text-white shadow-sm transition-all duration-500 hover:bg-indigo-700 lg:mx-0"
+              className="mx-auto block h-8 w-fit rounded-full bg-indigo-600 px-4 py-2 text-xs text-white shadow-sm transition-all duration-500 hover:bg-indigo-700 sm:h-9 sm:px-5 sm:py-2.5 lg:mx-0"
             >
               Contact us
             </a>
           </div>
-          <div className="text-left lg:mx-auto">
-            <h4 className="mb-7 text-lg font-medium text-gray-900">Pagedone</h4>
-            <ul className="text-sm transition-all duration-500">
-              <li className="mb-6">
+          <div className="text-left sm:mx-auto">
+            <h4 className="mb-5 text-base font-medium text-gray-900 sm:mb-7 sm:text-lg">
+              Eventify
+            </h4>
+            <ul className="text-xs transition-all duration-500 sm:text-sm">
+              <li className="mb-4 sm:mb-6">
                 <a
                   href="javascript:;"
                   className="text-gray-600 hover:text-gray-900"
@@ -31,7 +36,7 @@ const Footer = () => {
                   Home
                 </a>
               </li>
-              <li className="mb-6">
+              <li className="mb-4 sm:mb-6">
                 <a
                   href="javascript:;"
                   className="text-gray-600 hover:text-gray-900"
@@ -49,10 +54,12 @@ const Footer = () => {
               </li>
             </ul>
           </div>
-          <div className="text-left lg:mx-auto">
-            <h4 className="mb-7 text-lg font-medium text-gray-900">Products</h4>
-            <ul className="text-sm transition-all duration-500">
-              <li className="mb-6">
+          <div className="text-left sm:mx-auto">
+            <h4 className="mb-5 text-base font-medium text-gray-900 sm:mb-7 sm:text-lg">
+              Products
+            </h4>
+            <ul className="text-xs transition-all duration-500 sm:text-sm">
+              <li className="mb-4 sm:mb-6">
                 <a
                   href="javascript:;"
                   className="text-gray-600 hover:text-gray-900"
@@ -60,7 +67,7 @@ const Footer = () => {
                   Figma UI System
                 </a>
               </li>
-              <li className="mb-6">
+              <li className="mb-4 sm:mb-6">
                 <a
                   href="javascript:;"
                   className="text-gray-600 hover:text-gray-900"
@@ -78,11 +85,12 @@ const Footer = () => {
               </li>
             </ul>
           </div>
-
-          <div className="text-left lg:mx-auto">
-            <h4 className="mb-7 text-lg font-medium text-gray-900">Support</h4>
-            <ul className="text-sm transition-all duration-500">
-              <li className="mb-6">
+          <div className="text-left sm:mx-auto">
+            <h4 className="mb-5 text-base font-medium text-gray-900 sm:mb-7 sm:text-lg">
+              Support
+            </h4>
+            <ul className="text-xs transition-all duration-500 sm:text-sm">
+              <li className="mb-4 sm:mb-6">
                 <a
                   href="javascript:;"
                   className="text-gray-600 hover:text-gray-900"
@@ -90,7 +98,7 @@ const Footer = () => {
                   Customer Support
                 </a>
               </li>
-              <li className="mb-6">
+              <li className="mb-4 sm:mb-6">
                 <a
                   href="javascript:;"
                   className="text-gray-600 hover:text-gray-900"
@@ -108,17 +116,16 @@ const Footer = () => {
               </li>
             </ul>
           </div>
-
-          <div className="text-left lg:mx-auto">
-            <h4 className="mb-7 text-lg font-medium text-gray-900">
+          <div className="text-left sm:mx-auto">
+            <h4 className="mb-5 text-base font-medium text-gray-900 sm:mb-7 sm:text-lg">
               Subscribe
             </h4>
-            <p className="mb-7 text-sm leading-6 text-gray-500">
+            <p className="mb-5 text-xs leading-5 text-gray-500 sm:mb-7 sm:text-sm sm:leading-6">
               Subscribe to get the latest news from us
             </p>
             <a
               href="javascript:;"
-              className="flex w-fit items-center justify-center gap-2 rounded-full border border-indigo-600 px-6 py-3 text-sm font-semibold text-indigo-600 transition-all duration-500 hover:bg-indigo-50 lg:mx-0"
+              className="flex w-fit items-center justify-center gap-2 rounded-full border border-indigo-600 px-4 py-2 text-xs font-semibold text-indigo-600 transition-all duration-500 hover:bg-indigo-50 sm:mx-0 sm:px-6 sm:py-3 sm:text-sm"
             >
               Subscribe
               <svg
@@ -140,39 +147,36 @@ const Footer = () => {
           </div>
         </div>
 
-        <div className="border-t border-gray-200 py-7">
-          <div className="flex flex-col items-center justify-center lg:flex-row lg:justify-between">
-            <span className="text-sm text-gray-500">
-              ©<a href="https://pagedone.io/">pagedone</a> 2024, All rights
+        <div className="border-t border-gray-200 py-4 sm:py-7">
+          <div className="flex flex-col items-center justify-center sm:flex-row sm:justify-between">
+            <span className="text-xs text-gray-500 sm:text-sm">
+              ©<a href="https://eventify.io/">Eventify</a> 2025, All rights
               reserved.
             </span>
-            <div className="mt-4 flex space-x-4 sm:justify-center lg:mt-0">
+            <div className="mt-3 flex space-x-3 sm:mt-0 sm:space-x-4">
               <a
                 href="javascript:;"
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-[#33CCFF] transition-all duration-500 hover:bg-gray-900"
+                className="flex h-7 w-7 items-center justify-center rounded-full bg-[#33CCFF] transition-all duration-500 hover:bg-gray-900 sm:h-8 sm:w-8"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
-                  width="20"
-                  height="20"
+                  width="16"
+                  height="16"
                   viewBox="0 0 20 20"
                   fill="none"
                 >
-                  <g id="Social Media">
-                    <path
-                      id="Vector"
-                      d="M11.3214 8.93666L16.4919 3.05566H15.2667L10.7772 8.16205L7.1914 3.05566H3.05566L8.47803 10.7774L3.05566 16.9446H4.28097L9.022 11.552L12.8088 16.9446H16.9446L11.3211 8.93666H11.3214ZM9.64322 10.8455L9.09382 10.0765L4.72246 3.95821H6.60445L10.1322 8.8959L10.6816 9.66481L15.2672 16.083H13.3852L9.64322 10.8458V10.8455Z"
-                      fill="white"
-                    />
-                  </g>
+                  <path
+                    d="M11.3214 8.93666L16.4919 3.05566H15.2667L10.7772 8.16205L7.1914 3.05566H3.05566L8.47803 10.7774L3.05566 16.9446H4.28097L9.022 11.552L12.8088 16.9446H16.9446L11.3211 8.93666H11.3214ZM9.64322 10.8455L9.09382 10.0765L4.72246 3.95821H6.60445L10.1322 8.8959L10.6816 9.66481L15.2672 16.083H13.3852L9.64322 10.8458V10.8455Z"
+                    fill="white"
+                  />
                 </svg>
               </a>
               <a
                 href="javascript:;"
-                className="relative flex h-8 w-8 items-center justify-center rounded-full bg-[linear-gradient(45deg,#FEE411_6.9%,#FEDB16_10.98%,#FEC125_17.77%,#FE983D_26.42%,#FE5F5E_36.5%,#FE2181_46.24%,#9000DC_85.57%)] from-gray-900 to-gray-900 transition-all duration-500 hover:bg-gradient-to-b"
+                className="relative flex h-7 w-7 items-center justify-center rounded-full bg-[linear-gradient(45deg,#FEE411_6.9%,#FEDB16_10.98%,#FEC125_17.77%,#FE983D_26.42%,#FE5F5E_36.5%,#FE2181_46.24%,#9000DC_85.57%)] transition-all duration-500 hover:bg-gradient-to-b sm:h-8 sm:w-8"
               >
                 <svg
-                  className="h-[1.125rem] w-[1.25rem] text-white"
+                  className="h-[1rem] w-[1.125rem] text-white sm:h-[1.125rem] sm:w-[1.25rem]"
                   viewBox="0 0 16 16"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
@@ -185,10 +189,10 @@ const Footer = () => {
               </a>
               <a
                 href="javascript:;"
-                className="relative flex h-8 w-8 items-center justify-center rounded-full bg-[#337FFF] transition-all duration-500 hover:bg-gray-900"
+                className="relative flex h-7 w-7 items-center justify-center rounded-full bg-[#337FFF] transition-all duration-500 hover:bg-gray-900 sm:h-8 sm:w-8"
               >
                 <svg
-                  className="h-[1rem] w-[1rem] text-white"
+                  className="h-[0.875rem] w-[0.875rem] text-white sm:h-[1rem] sm:w-[1rem]"
                   viewBox="0 0 8 14"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
@@ -201,10 +205,10 @@ const Footer = () => {
               </a>
               <a
                 href="javascript:;"
-                className="relative flex h-8 w-8 items-center justify-center rounded-full bg-[#FF0000] transition-all duration-500 hover:bg-gray-900"
+                className="relative flex h-7 w-7 items-center justify-center rounded-full bg-[#FF0000] transition-all duration-500 hover:bg-gray-900 sm:h-8 sm:w-8"
               >
                 <svg
-                  className="h-[0.875rem] w-[1.25rem] text-white"
+                  className="h-[0.75rem] w-[1.125rem] text-white sm:h-[0.875rem] sm:w-[1.25rem]"
                   viewBox="0 0 16 12"
                   fill="none"
                   xmlns="http://www.w3.org/2000/svg"
