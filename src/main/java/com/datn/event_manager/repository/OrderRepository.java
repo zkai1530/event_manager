@@ -12,6 +12,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import com.datn.event_manager.dto.response.SuccessOrderResponse;
 import com.datn.event_manager.entity.EventSchedule;
 import com.datn.event_manager.entity.Order;
 import com.datn.event_manager.entity.User;
@@ -52,16 +53,25 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                         @Param("now") LocalDateTime now,
                         Pageable pageable);
 
-        @Query("SELECT o, u, ot, t " +
-                        "FROM Order o " +
-                        "JOIN o.user u " +
-                        "LEFT JOIN o.orderTickets ot " +
-                        "LEFT JOIN ot.ticket t " +
-                        "WHERE o.schedule.scheduleId = :scheduleId AND o.status = 'PAID'")
-        Page<Object[]> findOrdersByScheduleId(@Param("scheduleId") Long scheduleId, Pageable pageable);
+        @Query("SELECT DISTINCT o FROM Order o " +
+                  "JOIN o.user u " +
+                  "LEFT JOIN o.orderTickets ot " +
+                  "LEFT JOIN ot.ticket t " +
+                  "WHERE o.schedule.scheduleId = :scheduleId AND o.status = 'PAID'")
+        Page<Order> findOrdersByScheduleId(@Param("scheduleId") Long scheduleId, Pageable pageable);
 
-        @Query("SELECT SUM(o.totalPrice) FROM Order o WHERE o.schedule = :schedule AND o.status = 'paid'")
+        @Query("SELECT SUM(o.totalPrice) FROM Order o WHERE o.schedule = :schedule AND o.status = 'PAID'")
         BigDecimal getTotalPaidAmountBySchedule(EventSchedule schedule);
+
+        @Query("SELECT COUNT(o) " +
+                  "FROM Order o " +
+                  "WHERE o.schedule.scheduleId = :scheduleId AND o.status = 'PAID' AND o.isCheckedIn = true")
+        Long countCheckedInByScheduleId(@Param("scheduleId") Long scheduleId);
+
+        @Query("SELECT COUNT(o) " +
+                  "FROM Order o " +
+                  "WHERE o.schedule.scheduleId = :scheduleId AND o.status = 'PAID' AND o.isCheckedIn = false")
+        Long countNotCheckedInByScheduleId(@Param("scheduleId") Long scheduleId);
 
         // thống kê cho organizer
         @Query("SELECT COALESCE(SUM(o.totalPrice), 0) FROM Order o WHERE o.schedule.event.user =:user AND o.status = 'PAID'")
@@ -91,6 +101,18 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                         "FROM Order o JOIN o.orderTickets ot " +
                         "WHERE o.user = :user AND o.status = com.datn.event_manager.entity.Order.OrderStatus.PAID")
         Long sumTotalPurchasedTicketsByUser(@Param("user") User user);
+
+        // success order
+        @Query("SELECT o " +
+                  "FROM Order o " +
+                  "LEFT JOIN FETCH o.user " +
+                  "LEFT JOIN FETCH o.schedule es " +
+                  "LEFT JOIN FETCH es.event e " +
+                  "LEFT JOIN FETCH e.eventLocation " +
+                  "LEFT JOIN FETCH o.orderTickets ot " +
+                  "LEFT JOIN FETCH ot.ticket " +
+                  "WHERE o.orderId = :orderId AND o.status = 'PAID'")
+        Optional<Order> findSuccessOrderDetails(@Param("orderId") Long orderId);
 
         // admin dashboard
         @Query("SELECT SUM(o.totalPrice) FROM Order o WHERE o.status = 'PAID'")

@@ -18,6 +18,7 @@ import com.datn.event_manager.dto.request.OrderRequest;
 import com.datn.event_manager.dto.response.APIResponse;
 import com.datn.event_manager.dto.response.Message;
 import com.datn.event_manager.dto.response.OrderResponse;
+import com.datn.event_manager.dto.response.SuccessOrderResponse;
 import com.datn.event_manager.dto.response.ticketsales.OrderResponse1;
 import com.datn.event_manager.service.Order.OrderService;
 
@@ -74,5 +75,11 @@ public class OrderController {
         Pageable pageable = PageRequest.of(page, RECENT_ORDER);
         return ResponseEntity.ok(new APIResponse(Message.RESOURCE_FOUND,
                 orderService.getSalesByScheduleId(scheduleId, pageable)));
+    }
+
+    @GetMapping("/success-order/{orderId}")
+    public ResponseEntity<APIResponse> getSuccessOrderDetails(@PathVariable Long orderId) {
+        return ResponseEntity.ok(new APIResponse(Message.RESOURCE_FOUND,
+                orderService.getSuccessOrderDetails(orderId)));
     }
 }

@@ -7,6 +7,7 @@ import com.datn.event_manager.dto.request.CheckInRequest;
 import com.datn.event_manager.dto.request.OrderRequest;
 import com.datn.event_manager.dto.response.MyTicketResponse;
 import com.datn.event_manager.dto.response.OrderResponse;
+import com.datn.event_manager.dto.response.SuccessOrderResponse;
 import com.datn.event_manager.dto.response.ticketsales.OrderResponse1;
 import com.datn.event_manager.dto.response.ticketsales.PagedOrderResponse;
 
@@ -20,4 +21,6 @@ public interface OrderService {
     Page<MyTicketResponse> getMyTicketsByOrderStatus(String status, String timeFilter, Pageable pageable);
 
     PagedOrderResponse getSalesByScheduleId(Long scheduleId, Pageable pageable);
+
+    SuccessOrderResponse getSuccessOrderDetails(Long orderId);
 }

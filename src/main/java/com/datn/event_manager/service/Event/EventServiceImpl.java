@@ -172,7 +172,7 @@ public class EventServiceImpl implements EventService {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new AppException(ErrorCode.EVENT_NOT_FOUND));
 
-        if (event.getIsSuspended() || !event.getIsPublished()) {
+        if (event.getIsSuspended()) {
             throw new AppException(ErrorCode.EVENT_NOT_FOUND);
         }
 

@@ -27,6 +27,9 @@ public interface TicketScheduleRepository extends JpaRepository<TicketSchedule, 
 
     Optional<TicketSchedule> findBySchedule(EventSchedule schedule);
 
+    @Query("SELECT COALESCE(SUM(ts.checkedInCount), 0) FROM TicketSchedule ts WHERE ts.schedule.scheduleId = :scheduleId")
+    Long countCheckedInByScheduleId(@Param("scheduleId") Long scheduleId);
+
     // thống kê cho organizer
     @Query("SELECT COALESCE(SUM(ts.sold), 0) FROM TicketSchedule ts WHERE ts.schedule.event.user = :user")
     Long sumTotalSoldTicketsByUser(@Param("user") User user);

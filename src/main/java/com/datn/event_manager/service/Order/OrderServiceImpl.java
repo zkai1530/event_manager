@@ -24,6 +24,7 @@ import com.datn.event_manager.dto.request.OrderRequest;
 import com.datn.event_manager.dto.request.TicketItem;
 import com.datn.event_manager.dto.response.MyTicketResponse;
 import com.datn.event_manager.dto.response.OrderResponse;
+import com.datn.event_manager.dto.response.SuccessOrderResponse;
 import com.datn.event_manager.dto.response.ticketsales.OrderResponse1;
 import com.datn.event_manager.dto.response.ticketsales.PagedOrderResponse;
 import com.datn.event_manager.dto.response.ticketsales.TicketScheduleResponse;
@@ -327,18 +328,22 @@ public class OrderServiceImpl implements OrderService {
                 .collect(Collectors.toList());
 
         // get Orders
-        Page<Object[]> orderResults = orderRepository.findOrdersByScheduleId(scheduleId, pageable);
-        List<Order> orders = orderResults.stream()
-                .map(result -> (Order) result[0])
-                .collect(Collectors.toList());
+        Page<Order> orderResults = orderRepository.findOrdersByScheduleId(scheduleId, pageable);
+        List<Order> orders = orderResults.getContent();
 
         OrderResponse1 response = new OrderResponse1();
         response.setTicketSchedules(orderMapper.toTicketScheduleResponseList(ticketSchedules));
         response.setOrders(orderMapper.toOrderDetailResponseList(orders));
 
+        // calculate total revenue and check in count by schedule 
+        BigDecimal totalRevenue = orderRepository.getTotalPaidAmountBySchedule(eventSchedule);
+        Long totalCheckedIn = ticketScheduleRepository.countCheckedInByScheduleId(scheduleId);
+
         // create PagedOrderResponse
         PagedOrderResponse pagedResponse = new PagedOrderResponse();
         pagedResponse.setData(response);
+        pagedResponse.setTotalRevenue(totalRevenue != null ? totalRevenue : BigDecimal.ZERO);
+        pagedResponse.setTotalCheckedIn(totalCheckedIn != null ? totalCheckedIn : 0L);
         pagedResponse.setPageNumber(orderResults.getNumber());
         pagedResponse.setPageSize(orderResults.getSize());
         pagedResponse.setTotalElements(orderResults.getTotalElements());
@@ -347,6 +352,13 @@ public class OrderServiceImpl implements OrderService {
         pagedResponse.setFirst(orderResults.isFirst());
 
         return pagedResponse;
+    }
+
+    @Override
+    public SuccessOrderResponse getSuccessOrderDetails(Long orderId) {
+        Order order = orderRepository.findSuccessOrderDetails(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+        return orderMapper.toSuccessOrderResponse(order);
     }
 
 }

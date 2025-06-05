@@ -19,6 +19,8 @@ import lombok.experimental.FieldDefaults;
 public class OrderDetailResponse {
     Long orderId;
     String userName;
+    String email;
+    String avatarUrl;
     LocalDateTime createdAt;
     Boolean isCheckedIn;
     List<OrderTicketResponse1> orderTickets;

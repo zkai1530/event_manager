@@ -1,5 +1,7 @@
 package com.datn.event_manager.dto.response.ticketsales;
 
+import java.math.BigDecimal;
+
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,6 +16,8 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class PagedOrderResponse {
     OrderResponse1 data;
+    BigDecimal totalRevenue;
+    Long totalCheckedIn;
     int pageNumber;
     int pageSize;
     long totalElements;
