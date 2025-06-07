@@ -236,24 +236,6 @@ public class OrderServiceImpl implements OrderService {
         return response.getCheckoutUrl();
     }
 
-    // @Override
-    // public void cancelOrder(Long orderId) {
-    //     User user = authenticationService.getUserFromToken();
-
-    //     Order order = orderRepository.findById(orderId)
-    //             .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
-
-    //     if (!user.getUserId().equals(order.getUser().getUserId())) {
-    //         throw new AppException(ErrorCode.UNAUTHORIZED);
-    //     }
-
-    //     if (PaymentStatus.PENDING.equals(order.getPaymentStatus()) && OrderStatus.PENDING.equals(order.getStatus())) {
-    //         order.setStatus(OrderStatus.CANCELED);
-    //         order.setPaymentStatus(PaymentStatus.FAILED);
-    //         orderRepository.save(order);
-    //     }
-    // }
-
     @Override
     public OrderResponse checkIn(CheckInRequest request) {
         User user = authenticationService.getUserFromToken();
@@ -359,8 +341,31 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public SuccessOrderResponse getSuccessOrderDetails(Long orderId) {
-        Order order = orderRepository.findSuccessOrderDetails(orderId)
+        User user = authenticationService.getUserFromToken();
+
+        Order order = orderRepository.findOrderByOrderId(orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+
+        // Check if the user is the owner of the order
+        if (!user.getUserId().equals(order.getUser().getUserId())) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+        
+        return orderMapper.toSuccessOrderResponse(order);
+    }
+
+    @Override
+    public SuccessOrderResponse getOrderByOrderId(Long orderId) {
+        User user = authenticationService.getUserFromToken();
+
+        Order order = orderRepository.findOrderByOrderId(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+
+        // Check if the user is the owner of the order 
+        if (!user.getUserId().equals(order.getUser().getUserId())) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
         return orderMapper.toSuccessOrderResponse(order);
     }
 

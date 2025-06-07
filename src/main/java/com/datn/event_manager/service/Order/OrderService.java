@@ -30,4 +30,6 @@ public interface OrderService {
     PagedOrderResponse getSalesByScheduleId(Long scheduleId, Pageable pageable);
 
     SuccessOrderResponse getSuccessOrderDetails(Long orderId);
+
+    SuccessOrderResponse getOrderByOrderId(Long orderId);
 }

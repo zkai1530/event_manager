@@ -116,6 +116,18 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
                   "WHERE o.orderId = :orderId AND o.status = 'PAID'")
         Optional<Order> findSuccessOrderDetails(@Param("orderId") Long orderId);
 
+        // get order by orderId
+        @Query("SELECT o " +
+                  "FROM Order o " +
+                  "LEFT JOIN FETCH o.user " +
+                  "LEFT JOIN FETCH o.schedule es " +
+                  "LEFT JOIN FETCH es.event e " +
+                  "LEFT JOIN FETCH e.eventLocation " +
+                  "LEFT JOIN FETCH o.orderTickets ot " +
+                  "LEFT JOIN FETCH ot.ticket " +
+                  "WHERE o.orderId = :orderId")
+        Optional<Order> findOrderByOrderId(@Param("orderId") Long orderId);
+
         // admin dashboard
         @Query("SELECT SUM(o.totalPrice) FROM Order o WHERE o.status = 'PAID'")
         BigDecimal getTotalRevenue();

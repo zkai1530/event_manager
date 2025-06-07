@@ -99,4 +99,10 @@ public class OrderController {
         return ResponseEntity.ok(new APIResponse(Message.RESOURCE_FOUND,
                 orderService.getSuccessOrderDetails(orderId)));
     }
+
+    @GetMapping("/details/{orderId}")
+    public ResponseEntity<APIResponse> getOrderByOrderId(@PathVariable Long orderId) {
+        return ResponseEntity.ok(new APIResponse(Message.RESOURCE_FOUND,
+                orderService.getOrderByOrderId(orderId)));
+    }
 }
