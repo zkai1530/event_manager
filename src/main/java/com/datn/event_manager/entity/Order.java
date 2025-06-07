@@ -48,6 +48,9 @@ public class Order {
     @Column(name = "created_at", nullable = false, updatable = false)
     LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column(name = "reservation_time")
+    private LocalDateTime reservationTime;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     User user;

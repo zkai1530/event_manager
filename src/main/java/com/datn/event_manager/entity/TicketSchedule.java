@@ -32,4 +32,7 @@ public class TicketSchedule {
 
     @Column(name = "checked_in_count")
     Integer checkedInCount = 0;
+
+    @Column(name = "reserved_quantity")
+    Integer reservedQuantity = 0;
 }

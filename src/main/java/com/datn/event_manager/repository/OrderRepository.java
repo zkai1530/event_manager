@@ -20,6 +20,8 @@ import com.datn.event_manager.entity.Order.OrderStatus;
 
 public interface OrderRepository extends JpaRepository<Order, Long> {
         Optional<Order> findByPaymentLinkId(String paymentLinkId);
+        
+        List<Order> findByStatusAndReservationTimeBefore(OrderStatus status, LocalDateTime time);
 
         @Query("SELECT DISTINCT o.user.userId " +
                         "FROM Order o JOIN o.orderTickets ot " +

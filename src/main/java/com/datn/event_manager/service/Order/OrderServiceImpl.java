@@ -2,6 +2,7 @@ package com.datn.event_manager.service.Order;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -23,7 +24,9 @@ import com.datn.event_manager.dto.request.CheckInRequest;
 import com.datn.event_manager.dto.request.OrderRequest;
 import com.datn.event_manager.dto.request.TicketItem;
 import com.datn.event_manager.dto.response.MyTicketResponse;
+import com.datn.event_manager.dto.response.OrderReservationResponse;
 import com.datn.event_manager.dto.response.OrderResponse;
+import com.datn.event_manager.dto.response.OrderStatusResponse;
 import com.datn.event_manager.dto.response.SuccessOrderResponse;
 import com.datn.event_manager.dto.response.ticketsales.OrderResponse1;
 import com.datn.event_manager.dto.response.ticketsales.PagedOrderResponse;
@@ -233,23 +236,23 @@ public class OrderServiceImpl implements OrderService {
         return response.getCheckoutUrl();
     }
 
-    @Override
-    public void cancelOrder(Long orderId) {
-        User user = authenticationService.getUserFromToken();
+    // @Override
+    // public void cancelOrder(Long orderId) {
+    //     User user = authenticationService.getUserFromToken();
 
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+    //     Order order = orderRepository.findById(orderId)
+    //             .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
 
-        if (!user.getUserId().equals(order.getUser().getUserId())) {
-            throw new AppException(ErrorCode.UNAUTHORIZED);
-        }
+    //     if (!user.getUserId().equals(order.getUser().getUserId())) {
+    //         throw new AppException(ErrorCode.UNAUTHORIZED);
+    //     }
 
-        if (PaymentStatus.PENDING.equals(order.getPaymentStatus()) && OrderStatus.PENDING.equals(order.getStatus())) {
-            order.setStatus(OrderStatus.CANCELED);
-            order.setPaymentStatus(PaymentStatus.FAILED);
-            orderRepository.save(order);
-        }
-    }
+    //     if (PaymentStatus.PENDING.equals(order.getPaymentStatus()) && OrderStatus.PENDING.equals(order.getStatus())) {
+    //         order.setStatus(OrderStatus.CANCELED);
+    //         order.setPaymentStatus(PaymentStatus.FAILED);
+    //         orderRepository.save(order);
+    //     }
+    // }
 
     @Override
     public OrderResponse checkIn(CheckInRequest request) {
@@ -335,7 +338,7 @@ public class OrderServiceImpl implements OrderService {
         response.setTicketSchedules(orderMapper.toTicketScheduleResponseList(ticketSchedules));
         response.setOrders(orderMapper.toOrderDetailResponseList(orders));
 
-        // calculate total revenue and check in count by schedule 
+        // calculate total revenue and check in count by schedule
         BigDecimal totalRevenue = orderRepository.getTotalPaidAmountBySchedule(eventSchedule);
         Long totalCheckedIn = ticketScheduleRepository.countCheckedInByScheduleId(scheduleId);
 
@@ -359,6 +362,218 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findSuccessOrderDetails(orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
         return orderMapper.toSuccessOrderResponse(order);
+    }
+
+    @Override
+    public OrderReservationResponse reserveOrder(OrderRequest orderRequest) throws Exception {
+        User user = authenticationService.getUserFromToken();
+        EventSchedule eventSchedule = scheduleRepository.findById(orderRequest.getScheduleId())
+                .orElseThrow(() -> new AppException(ErrorCode.SCHEDULE_NOT_FOUND));
+
+        BigDecimal totalPrice = BigDecimal.ZERO;
+        List<OrderTicket> orderTickets = new ArrayList<>();
+        Set<Long> usedDiscountIds = new HashSet<>();
+
+        for (TicketItem ticketItem : orderRequest.getTickets()) {
+            Ticket ticket = ticketRepository.findById(ticketItem.getTicketId())
+                    .orElseThrow(() -> new AppException(ErrorCode.TICKET_NOT_FOUND));
+
+            if (ticket.getSaleEnd().isBefore(LocalDateTime.now())) {
+                throw new AppException(ErrorCode.TICKET_NOT_AVAILABLE);
+            }
+
+            TicketSchedule ticketSchedule = ticket.getTicketSchedules().stream()
+                    .filter(ts -> ts.getSchedule().getScheduleId().equals(eventSchedule.getScheduleId()))
+                    .findFirst()
+                    .orElseThrow(() -> new AppException(ErrorCode.SCHEDULE_NOT_FOUND));
+
+            if (ticketItem.getQuantity() > ticketSchedule.getAvailableQuantity() - ticketSchedule.getSold()
+                    - ticketSchedule.getReservedQuantity()) {
+                throw new AppException(ErrorCode.TICKET_QUANTITY_EXCEEDS_AVAILABLE);
+            }
+
+            ticketSchedule.setReservedQuantity(ticketSchedule.getReservedQuantity() + ticketItem.getQuantity());
+            ticketScheduleRepository.save(ticketSchedule);
+
+            BigDecimal ticketPrice = ticket.getPrice();
+
+            List<Discount> discounts = new ArrayList<>();
+            if (ticketItem.getDiscountIds() != null && !ticketItem.getDiscountIds().isEmpty()) {
+                if (ticketItem.getDiscountIds().size() > 2) {
+                    throw new IllegalArgumentException("Maximum 2 discounts per ticket item");
+                }
+
+                for (Long discountId : ticketItem.getDiscountIds()) {
+                    Discount discount = discountRepository.findById(discountId)
+                            .orElseThrow(() -> new AppException(ErrorCode.DISCOUNT_NOT_FOUND));
+
+                    long nullPromoCount = ticketItem.getDiscountIds().stream()
+                            .map(id -> discountRepository.findById(id)
+                                    .orElseThrow(() -> new AppException(ErrorCode.DISCOUNT_NOT_FOUND)))
+                            .filter(d -> d.getPromoCode() == null)
+                            .count();
+                    if (nullPromoCount > 1) {
+                        throw new IllegalArgumentException("Only one discount with null promoCode allowed");
+                    }
+
+                    boolean isValidDiscount = ticketDiscountRepository.existsByTicketAndDiscount(ticket, discount);
+                    if (!isValidDiscount) {
+                        throw new IllegalArgumentException("Discount " + discount.getName()
+                                + " is not applicable for ticket: " + ticket.getName());
+                    }
+
+                    LocalDateTime now = LocalDateTime.now();
+                    if (discount.getDiscountStart() != null && now.isBefore(discount.getDiscountStart())) {
+                        throw new IllegalArgumentException("Discount is not yet valid: " + discount.getName());
+                    }
+                    if (discount.getDiscountEnd() != null && now.isAfter(discount.getDiscountEnd())) {
+                        throw new AppException(ErrorCode.DISCOUNT_EXPIRED);
+                    }
+
+                    if (discount.getMaxUses() != null && discount.getTimesUsed() >= discount.getMaxUses()) {
+                        throw new AppException(ErrorCode.DISCOUNT_USAGE_LIMIT_REACHED);
+                    }
+
+                    discounts.add(discount);
+                    usedDiscountIds.add(discountId);
+                }
+
+                for (Discount discount : discounts) {
+                    if (discount.getDiscountType() == DiscountType.PERCENT) {
+                        BigDecimal discountAmount = ticketPrice.multiply(discount.getDiscountValue())
+                                .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+                        ticketPrice = ticketPrice.subtract(discountAmount);
+                    } else if (discount.getDiscountType() == DiscountType.FIXED) {
+                        ticketPrice = ticketPrice.subtract(discount.getDiscountValue());
+                    }
+                }
+            }
+
+            totalPrice = totalPrice.add(ticketPrice.multiply(BigDecimal.valueOf(ticketItem.getQuantity())));
+
+            OrderTicket orderTicket = OrderTicket.builder()
+                    .ticket(ticket)
+                    .discount(!discounts.isEmpty() ? discounts.get(0) : null)
+                    .priceAtPurchase(ticketPrice.doubleValue())
+                    .quantity(ticketItem.getQuantity())
+                    .build();
+
+            orderTickets.add(orderTicket);
+        }
+
+        Order order = Order.builder()
+                .user(user)
+                .schedule(eventSchedule)
+                .totalPrice(totalPrice)
+                .status(OrderStatus.PENDING)
+                .paymentStatus(PaymentStatus.PENDING)
+                .orderTickets(orderTickets)
+                .isCheckedIn(false)
+                .createdAt(LocalDateTime.now())
+                .reservationTime(LocalDateTime.now())
+                .build();
+
+        orderTickets.forEach(ot -> ot.setOrder(order));
+        orderRepository.save(order);
+
+        return new OrderReservationResponse(order.getOrderId(), order.getReservationTime());
+    }
+
+    @Override
+    @Transactional
+    public String createPaymentLink(Long orderId) throws Exception {
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+
+        long remainingTimeSeconds = 15 * 60
+                - Duration.between(order.getReservationTime(), LocalDateTime.now()).getSeconds();
+        if (remainingTimeSeconds <= 0 || order.getStatus() == OrderStatus.CANCELED) {
+            cancelOrder(orderId);
+            throw new AppException(ErrorCode.ORDER_EXPIRED);
+        }
+
+        List<ItemData> items = order.getOrderTickets().stream()
+                .map(ot -> ItemData.builder()
+                        .name(ot.getTicket().getName())
+                        .quantity(ot.getQuantity())
+                        .price(ot.getTicket().getPrice().intValue())
+                        .build())
+                .collect(Collectors.toList());
+
+        PaymentData paymentData = PaymentData.builder()
+                .orderCode(order.getOrderId())
+                .amount(order.getTotalPrice().intValue())
+                .description("Payment for order " + order.getOrderId())
+                .items(items)
+                .returnUrl(payOSConfig.getReturnUrl())
+                .cancelUrl(payOSConfig.getCancelUrl())
+                .build();
+
+        PayOS payOS = payOSService.getPayOSClient();
+        CheckoutResponseData response = payOS.createPaymentLink(paymentData);
+
+        order.setPaymentLinkId(response.getPaymentLinkId());
+        orderRepository.save(order);
+
+        Set<Long> usedDiscountIds = order.getOrderTickets().stream()
+                .filter(ot -> ot.getDiscount() != null)
+                .map(ot -> ot.getDiscount().getDiscountId())
+                .collect(Collectors.toSet());
+        paymentService.storeUsedDiscountIds(response.getPaymentLinkId(), usedDiscountIds);
+
+        return response.getCheckoutUrl();
+
+    }
+
+    @Override
+    // @Transactional(readOnly = true)
+    public OrderStatusResponse getOrderStatus(Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+
+        if (order.getStatus() == OrderStatus.CANCELED) {
+            return new OrderStatusResponse(orderId, OrderStatus.CANCELED, 0);
+        }
+
+        long remainingTimeSeconds = 15 * 60
+                - Duration.between(order.getReservationTime(), LocalDateTime.now()).getSeconds();
+        if (remainingTimeSeconds <= 0) {
+            cancelOrder(orderId);
+            return new OrderStatusResponse(orderId, OrderStatus.CANCELED, 0);
+        }
+
+        return new OrderStatusResponse(orderId, order.getStatus(), remainingTimeSeconds);
+    }
+
+    @Override
+    @Transactional
+    public void cancelOrder(Long orderId) {
+        User user = authenticationService.getUserFromToken();
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
+
+        if (!user.getUserId().equals(order.getUser().getUserId())) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
+        if (order.getStatus() != OrderStatus.PENDING) {
+            throw new AppException(ErrorCode.ORDER_NOT_PENDING);
+        }
+
+        // Reset reservedQuantity
+        for (OrderTicket ot : order.getOrderTickets()) {
+            TicketSchedule ts = ot.getTicket().getTicketSchedules().stream()
+                    .filter(t -> t.getSchedule().getScheduleId().equals(order.getSchedule().getScheduleId()))
+                    .findFirst()
+                    .orElseThrow(() -> new AppException(ErrorCode.SCHEDULE_NOT_FOUND));
+            ts.setReservedQuantity(ts.getReservedQuantity() - ot.getQuantity());
+            ticketScheduleRepository.save(ts);
+        }
+
+        order.setStatus(OrderStatus.CANCELED);
+        orderRepository.save(order);
     }
 
 }

@@ -48,6 +48,23 @@ public class OrderController {
         return ResponseEntity.ok(new APIResponse(Message.CREATE_ORDER_SUCCESS, orderService.createOrder(orderRequest)));
     }
 
+    @PostMapping("/reserve")
+    public ResponseEntity<APIResponse> reserveOrder(@RequestBody OrderRequest orderRequest) throws Exception {
+        return ResponseEntity.ok(new APIResponse(Message.CREATE_ORDER_SUCCESS, orderService.reserveOrder(orderRequest)));
+    }
+
+    @GetMapping("/status/{orderId}")
+    public ResponseEntity<APIResponse> getOrderStatus(@PathVariable Long orderId){
+        return ResponseEntity
+                .ok(new APIResponse(Message.CREATE_ORDER_SUCCESS, orderService.getOrderStatus(orderId)));
+    }
+
+    @PostMapping("/payment-link/{orderId}")
+    public ResponseEntity<APIResponse> createPaymentLink(@PathVariable Long orderId) throws Exception {
+        return ResponseEntity
+                .ok(new APIResponse(Message.CREATE_ORDER_SUCCESS, orderService.createPaymentLink(orderId)));
+    }
+
     @PutMapping("/cancel/{orderId}")
     public ResponseEntity<APIResponse> cancelOrder(@PathVariable Long orderId) {
         orderService.cancelOrder(orderId);

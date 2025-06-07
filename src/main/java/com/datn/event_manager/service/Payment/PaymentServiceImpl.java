@@ -92,7 +92,7 @@ public class PaymentServiceImpl implements PaymentService {
         String qrCode = UUID.randomUUID().toString();
         order.setQrCode(qrCode);
 
-        // todo: update ticketscheudle's sold
+        // todo: update ticketscheudle's sold and reset reservedQuantity
         Set<Long> usedDiscountIds = new HashSet<>();
         for (OrderTicket orderTicket : order.getOrderTickets()) {
             Ticket ticket = orderTicket.getTicket();
@@ -100,8 +100,14 @@ public class PaymentServiceImpl implements PaymentService {
                     .filter(ts -> ts.getSchedule().getScheduleId().equals(order.getSchedule().getScheduleId()))
                     .findFirst()
                     .orElseThrow(() -> new AppException(ErrorCode.SCHEDULE_NOT_FOUND));
+            // * update ticketscheudle's sold
             int newSold = ticketSchedule.getSold() + orderTicket.getQuantity();
             ticketSchedule.setSold(newSold);
+
+            // * reset reservedQuantity
+            int newReserved = ticketSchedule.getReservedQuantity() - orderTicket.getQuantity();
+            ticketSchedule.setReservedQuantity(Math.max(newReserved, 0));
+
             ticketScheduleRepository.save(ticketSchedule);
 
             if (orderTicket.getDiscount() != null) {
@@ -124,40 +130,6 @@ public class PaymentServiceImpl implements PaymentService {
 
         // Xóa cache sau khi xử lý
         usedDiscountIdsMap.remove(paymentLinkId);
-
-        // switch (status) {
-        // case "00":
-        // order.setPaymentStatus(PaymentStatus.SUCCESS);
-        // order.setStatus(OrderStatus.PAID);
-        // Set<Long> usedDiscountIds = new HashSet<>();
-        // for (OrderTicket orderTicket : order.getOrderTickets()) {
-        // Ticket ticket = orderTicket.getTicket();
-        // int newSold = ticket.getSold() + orderTicket.getQuantity();
-        // ticket.setSold(newSold);
-        // ticketRepository.save(ticket);
-
-        // if (orderTicket.getDiscount() != null) {
-        // usedDiscountIds.add(orderTicket.getDiscount().getDiscountId());
-        // }
-        // }
-
-        // for (Long discountId : usedDiscountIds) {
-        // Discount discount = discountRepository.findById(discountId)
-        // .orElseThrow(() -> new AppException(ErrorCode.DISCOUNT_NOT_FOUND));
-
-        // discount.setTimesUsed(discount.getTimesUsed() + 1);
-        // discountRepository.save(discount);
-        // }
-
-        // break;
-        // case "CANCELED":
-        // order.setPaymentStatus(PaymentStatus.FAILED);
-        // order.setStatus(OrderStatus.CANCELED);
-        // break;
-
-        // default:
-        // return;
-        // }
 
         orderRepository.save(order);
     }

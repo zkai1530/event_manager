@@ -73,6 +73,7 @@ public class TicketServiceImpl implements TicketService {
                         .ticket(ticket)
                         .schedule(schedule)
                         .checkedInCount(0)
+                        .reservedQuantity(0)
                         .availableQuantity(request.getAvailableQuantity())
                         .sold(0)
                         .build())

@@ -26,6 +26,8 @@ public enum ErrorCode {
     DISCOUNT_NOT_FOUND("Discount not found!", HttpStatus.NOT_FOUND),
     PAYMENT_NOT_FOUND("Payment not found!", HttpStatus.NOT_FOUND),
     ORDER_NOT_FOUND("Order not found!", HttpStatus.NOT_FOUND),
+    ORDER_EXPIRED("Order has expired!", HttpStatus.BAD_REQUEST),
+    ORDER_NOT_PENDING("Order is not pending!", HttpStatus.BAD_REQUEST),
     FAVORITE_NOT_FOUND("Favorite not found!", HttpStatus.NOT_FOUND),
     NOTIFICATION_NOT_FOUND("Notification not found!", HttpStatus.NOT_FOUND),
     CATEGORY_NOT_FOUND("Category not found!", HttpStatus.NOT_FOUND),
