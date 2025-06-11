@@ -18,6 +18,7 @@ public interface TicketMapper {
     @Mapping(source = "ticket.price", target = "price")
     @Mapping(source = "sold", target = "sold")
     @Mapping(source = "availableQuantity", target = "availableQuantity")
+    @Mapping(source = "reservedQuantity", target = "reservedQuantity")
     @Mapping(source = "ticket.saleStart", target = "saleStart")
     @Mapping(source = "ticket.saleEnd", target = "saleEnd")
     @Mapping(source = "ticket.ticketDiscounts", target = "discounts")

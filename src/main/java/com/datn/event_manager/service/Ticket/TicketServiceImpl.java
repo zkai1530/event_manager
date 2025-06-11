@@ -1,6 +1,8 @@
 package com.datn.event_manager.service.Ticket;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -55,6 +57,15 @@ public class TicketServiceImpl implements TicketService {
             if (!eventOwnerId.equals(user.getUserId())) {
                 throw new AppException(ErrorCode.UNAUTHORIZED);
             }
+
+            // check endTime is before scheduleDate of event
+            LocalDate scheduleDate = schedule.getScheduleDate();
+            LocalTime startTime = schedule.getStartTime();
+            LocalDateTime scheduleStart = LocalDateTime.of(scheduleDate, startTime);
+            if (!request.getSaleEnd().isBefore(scheduleStart)) {
+                throw new IllegalArgumentException(
+                        "Sale end time is invalid for schedule on " + scheduleDate + " starting at " + startTime);
+            }
         }
 
         Ticket ticket = Ticket.builder()
@@ -88,6 +99,9 @@ public class TicketServiceImpl implements TicketService {
     public void updateTicket(Long ticketId, TicketRequest request) {
         User user = authenticationService.getUserFromToken();
 
+        Ticket ticket = ticketRepository.findById(ticketId)
+                .orElseThrow(() -> new AppException(ErrorCode.TICKET_NOT_FOUND));
+
         List<EventSchedule> schedulesRequest = scheduleRepository.findAllById(request.getScheduleIds());
 
         log.info(schedulesRequest.stream().map(schedule -> schedule.getScheduleId()).toList().toString());
@@ -105,6 +119,11 @@ public class TicketServiceImpl implements TicketService {
             }
         }
 
+        // check if the event is published, can't edit information
+        if (ticket.getTicketSchedules().get(0).getSchedule().getEvent().getIsPublished()) {
+            throw new AppException(ErrorCode.EVENT_ALREADY_PUBLISHED);
+        }
+
         if (request.getSaleStart() != null && request.getSaleEnd() != null) {
             if (request.getSaleStart().isAfter(request.getSaleEnd())) {
                 throw new AppException(ErrorCode.INVALID_SALE_DATES);
@@ -115,8 +134,17 @@ public class TicketServiceImpl implements TicketService {
             }
         }
 
-        Ticket ticket = ticketRepository.findById(ticketId)
-                .orElseThrow(() -> new AppException(ErrorCode.TICKET_NOT_FOUND));
+        if (request.getSaleEnd() != null) {
+            for (EventSchedule schedule : schedulesRequest) {
+                LocalDate scheduleDate = schedule.getScheduleDate();
+                LocalTime startTime = schedule.getStartTime();
+                LocalDateTime scheduleStart = LocalDateTime.of(scheduleDate, startTime);
+                if (!request.getSaleEnd().isBefore(scheduleStart)) {
+                    throw new IllegalArgumentException(
+                            "Sale end time is invalid for schedule on " + scheduleDate + " starting at " + startTime);
+                }
+            }
+        }
 
         if (request.getName() != null)
             ticket.setName(request.getName());
@@ -155,7 +183,7 @@ public class TicketServiceImpl implements TicketService {
                 currentTicketSchedule.setAvailableQuantity(request.getAvailableQuantity());
                 ticketScheduleRepository.save(currentTicketSchedule);
             }
-            
+
         }
 
         Set<Long> currentScheduleIds = currentTicketSchedules.stream()

@@ -151,6 +151,11 @@ public class ScheduleServiceImpl implements ScheduleService {
             throw new AppException(ErrorCode.UNAUTHORIZED);
         }
 
+        // check if the event is published, can't edit information
+        if (schedule.getEvent().getIsPublished()) {
+            throw new AppException(ErrorCode.EVENT_ALREADY_PUBLISHED);
+        }
+
         // check start time < end time?
         if (!newSchedule.getEndTime().isAfter(newSchedule.getStartTime())) {
             throw new IllegalArgumentException("End time must be after start time.");

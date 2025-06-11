@@ -190,6 +190,11 @@ public class EventServiceImpl implements EventService {
             throw new AppException(ErrorCode.UNAUTHORIZED);
         }
 
+        // check if the event is published, can't edit information
+        if (event.getIsPublished()) {
+            throw new AppException(ErrorCode.EVENT_ALREADY_PUBLISHED);
+        }
+
         // EventType
         EventType oldEventType = event.getEventType();
         EventType newEventType = request.getEventType();

@@ -92,6 +92,16 @@ public class DiscountServiceImpl implements DiscountService {
             }
         }
 
+        for (Ticket ticket : tickets) {
+            LocalDateTime saleEnd = ticket.getSaleEnd();
+            if (request.getDiscountEnd() != null && saleEnd != null && !request.getDiscountEnd().isBefore(saleEnd)
+                    && !request.getDiscountEnd().isEqual(saleEnd)) {
+                throw new IllegalArgumentException(
+                        "Discount end time is invalid for ticket " + ticket.getTicketId() + " with sale end at "
+                                + saleEnd);
+            }
+        }
+
         log.info("type" + request.getDiscountType());
         // add discount to ticket 
         Discount discount = Discount.builder()
@@ -121,6 +131,9 @@ public class DiscountServiceImpl implements DiscountService {
     public DiscountResponse updateDiscount(Long discountId, DiscountRequest request) {
         User user = authenticationService.getUserFromToken();
 
+        Discount discount = discountRepository.findById(discountId)
+                .orElseThrow(() -> new AppException(ErrorCode.DISCOUNT_NOT_FOUND));
+
         List<Ticket> ticketsRequest = ticketRepository.findAllById(request.getTicketIds());
 
         if (ticketsRequest.size() != request.getTicketIds().size()) {
@@ -138,6 +151,11 @@ public class DiscountServiceImpl implements DiscountService {
             }
         }
 
+        // check if the event is published, can't edit information
+        if (discount.getTicketDiscounts().get(0).getTicket().getTicketSchedules().get(0).getSchedule().getEvent().getIsPublished()) {
+            throw new AppException(ErrorCode.EVENT_ALREADY_PUBLISHED);
+        }
+
         if (request.getDiscountStart() != null && request.getDiscountEnd() != null) {
             if (request.getDiscountStart().isAfter(request.getDiscountEnd())) {
                 throw new AppException(ErrorCode.INVALID_SALE_DATES);
@@ -148,12 +166,21 @@ public class DiscountServiceImpl implements DiscountService {
             }
         }
 
+        if (request.getDiscountEnd() != null) {
+            for (Ticket ticket : ticketsRequest) {
+                LocalDateTime saleEnd = ticket.getSaleEnd();
+                if (saleEnd != null && !request.getDiscountEnd().isBefore(saleEnd)
+                        && !request.getDiscountEnd().isEqual(saleEnd)) {
+                    throw new IllegalArgumentException(
+                            "Discount end time is invalid for ticket " + ticket.getTicketId() + " with sale end at "
+                                    + saleEnd);
+                }
+            }
+        }
+
         // update Discount 
 
         // todo: update normal field
-        Discount discount = discountRepository.findById(discountId)
-                .orElseThrow(() -> new AppException(ErrorCode.DISCOUNT_NOT_FOUND));
-        
         if (request.getName() != null)
             discount.setName(request.getName());
         discount.setPromoCode(request.getPromoCode());

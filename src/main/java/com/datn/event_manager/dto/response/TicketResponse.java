@@ -23,6 +23,7 @@ public class TicketResponse {
     Integer sold;
     BigDecimal price;
     Integer availableQuantity;
+    Integer reservedQuantity;
     LocalDateTime saleStart;
     LocalDateTime saleEnd;
     List<DiscountResponse> discounts;

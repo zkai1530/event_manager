@@ -428,8 +428,10 @@ public class OrderServiceImpl implements OrderService {
                     }
 
                     LocalDateTime now = LocalDateTime.now();
+                    log.info("Current time: {}", now);
+                    log.info("Discount start time: {}", discount.getDiscountStart());
                     if (discount.getDiscountStart() != null && now.isBefore(discount.getDiscountStart())) {
-                        throw new IllegalArgumentException("Discount is not yet valid: " + discount.getName());
+                        throw new IllegalArgumentException("Discount is not yet valid");
                     }
                     if (discount.getDiscountEnd() != null && now.isAfter(discount.getDiscountEnd())) {
                         throw new AppException(ErrorCode.DISCOUNT_EXPIRED);
