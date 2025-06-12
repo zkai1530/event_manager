@@ -19,13 +19,13 @@ public interface TicketScheduleRepository extends JpaRepository<TicketSchedule, 
 
     List<TicketSchedule> findAllByScheduleIn(List<EventSchedule> schedules);
 
+    List<TicketSchedule> findBySchedule(EventSchedule schedule);
+
     @Query("SELECT ts, t " +
             "FROM TicketSchedule ts " +
             "JOIN ts.ticket t " +
             "WHERE ts.schedule.scheduleId = :scheduleId")
     List<Object[]> findTicketSchedulesByScheduleId(@Param("scheduleId") Long scheduleId);
-
-    Optional<TicketSchedule> findBySchedule(EventSchedule schedule);
 
     @Query("SELECT COALESCE(SUM(ts.checkedInCount), 0) FROM TicketSchedule ts WHERE ts.schedule.scheduleId = :scheduleId")
     Long countCheckedInByScheduleId(@Param("scheduleId") Long scheduleId);

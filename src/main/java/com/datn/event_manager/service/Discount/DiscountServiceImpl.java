@@ -62,6 +62,12 @@ public class DiscountServiceImpl implements DiscountService {
             }
         }
 
+        // check if the event is published, can't edit information
+        if (tickets.get(0).getTicketSchedules().get(0).getSchedule().getEvent()
+                .getIsPublished()) {
+            throw new AppException(ErrorCode.EVENT_ALREADY_PUBLISHED);
+        }
+
         // check if the discount type is percent 
         if (request.getDiscountType() == DiscountType.PERCENT && request.getDiscountValue().compareTo(BigDecimal.valueOf(100)) > 0) {
             throw new IllegalArgumentException("Discount value must be less than or equal to 100%");
@@ -97,7 +103,7 @@ public class DiscountServiceImpl implements DiscountService {
             if (request.getDiscountEnd() != null && saleEnd != null && !request.getDiscountEnd().isBefore(saleEnd)
                     && !request.getDiscountEnd().isEqual(saleEnd)) {
                 throw new IllegalArgumentException(
-                        "Discount end time is invalid for ticket " + ticket.getTicketId() + " with sale end at "
+                        "Discount end time is invalid for ticket " + ticket.getName() + " with sale end at "
                                 + saleEnd);
             }
         }
@@ -257,8 +263,24 @@ public class DiscountServiceImpl implements DiscountService {
 
     @Override
     public void deleteDiscount(Long discountId) {
+        User user = authenticationService.getUserFromToken();
+
         Discount discount = discountRepository.findById(discountId)
                 .orElseThrow(() -> new AppException(ErrorCode.DISCOUNT_NOT_FOUND));
+
+        // Check if the user is the owner of the event
+        if (!discount.getTicketDiscounts().get(0).getTicket().getTicketSchedules().get(0).getSchedule().getEvent().getUser().getUserId()
+                .equals(user.getUserId())) {
+            {
+                throw new AppException(ErrorCode.UNAUTHORIZED);
+            }
+        }
+
+        // check if the event is published, can't edit information
+        if (discount.getTicketDiscounts().get(0).getTicket().getTicketSchedules().get(0).getSchedule().getEvent()
+                .getIsPublished()) {
+            throw new AppException(ErrorCode.EVENT_ALREADY_PUBLISHED);
+        }
 
         discountRepository.delete(discount);
     }

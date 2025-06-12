@@ -1,5 +1,7 @@
 package com.datn.event_manager.service.Schedule;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -12,6 +14,7 @@ import com.datn.event_manager.dto.request.ScheduleRequest;
 import com.datn.event_manager.dto.response.EventScheduleResponse;
 import com.datn.event_manager.entity.Event;
 import com.datn.event_manager.entity.EventSchedule;
+import com.datn.event_manager.entity.TicketSchedule;
 import com.datn.event_manager.entity.User;
 import com.datn.event_manager.enums.EventType;
 import com.datn.event_manager.exception.AppException;
@@ -19,6 +22,7 @@ import com.datn.event_manager.exception.ErrorCode;
 import com.datn.event_manager.mapper.ScheduleMapper;
 import com.datn.event_manager.repository.EventRepository;
 import com.datn.event_manager.repository.EventScheduleRepository;
+import com.datn.event_manager.repository.TicketScheduleRepository;
 import com.datn.event_manager.service.Authentication.AuthenticationService;
 
 import lombok.AccessLevel;
@@ -32,6 +36,7 @@ import lombok.extern.slf4j.Slf4j;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class ScheduleServiceImpl implements ScheduleService {
     EventScheduleRepository scheduleRepository;
+    TicketScheduleRepository ticketScheduleRepository;
     EventRepository eventRepository;
     AuthenticationService authenticationService;
     ScheduleMapper scheduleMapper;
@@ -58,7 +63,8 @@ public class ScheduleServiceImpl implements ScheduleService {
         // check if there are any overlapping schedules
 
         // sort by schedule date and start time
-        allSchedules.sort(Comparator.comparing(ScheduleItem::getScheduleDate).thenComparing(ScheduleItem::getStartTime)); 
+        allSchedules
+                .sort(Comparator.comparing(ScheduleItem::getScheduleDate).thenComparing(ScheduleItem::getStartTime));
 
         for (int i = 0; i < allSchedules.size() - 1; i++) {
             ScheduleItem currSchedule = allSchedules.get(i);
@@ -66,7 +72,7 @@ public class ScheduleServiceImpl implements ScheduleService {
 
             if (currSchedule.getScheduleDate().equals(nextSchedule.getScheduleDate())
                     && !(currSchedule.getStartTime().isAfter(nextSchedule.getEndTime())
-                    || currSchedule.getEndTime().isBefore(nextSchedule.getStartTime()))) {
+                            || currSchedule.getEndTime().isBefore(nextSchedule.getStartTime()))) {
                 return true;
             }
         }
@@ -115,6 +121,11 @@ public class ScheduleServiceImpl implements ScheduleService {
             throw new AppException(ErrorCode.UNAUTHORIZED);
         }
 
+        // check if the event is published, can't edit information
+        if (event.getIsPublished()) {
+            throw new AppException(ErrorCode.EVENT_ALREADY_PUBLISHED);
+        }
+
         // check eventType is recurring?
         if (event.getEventType() == EventType.SINGLE) {
             throw new AppException(ErrorCode.EVENT_TYPE_MUST_BE_RECURRING);
@@ -122,7 +133,7 @@ public class ScheduleServiceImpl implements ScheduleService {
 
         // check conflict schedule
         List<EventSchedule> existingSchedules = scheduleRepository.findAllByEvent(event);
-        if(isScheduleConflict(existingSchedules, request.getSchedules())) {
+        if (isScheduleConflict(existingSchedules, request.getSchedules())) {
             throw new AppException(ErrorCode.CONFLICT_SCHEDULE);
         }
 
@@ -156,6 +167,15 @@ public class ScheduleServiceImpl implements ScheduleService {
             throw new AppException(ErrorCode.EVENT_ALREADY_PUBLISHED);
         }
 
+        List<TicketSchedule> ticketSchedules = ticketScheduleRepository.findBySchedule(schedule);
+        for (TicketSchedule ticketSchedule : ticketSchedules) {
+            if (ticketSchedule.getSold() > 0) {
+                throw new IllegalArgumentException(
+                        "This schedule has already been purchased for ticket name: "
+                                + ticketSchedule.getTicket().getName());
+            }
+        }
+
         // check start time < end time?
         if (!newSchedule.getEndTime().isAfter(newSchedule.getStartTime())) {
             throw new IllegalArgumentException("End time must be after start time.");
@@ -166,22 +186,21 @@ public class ScheduleServiceImpl implements ScheduleService {
                 .filter(existingSchedule -> !existingSchedule.getScheduleId().equals(scheduleId))
                 .toList();
 
-        
         // check if the new schedule conflicts with existing schedules
         for (EventSchedule existingSchedule : existingSchedules) {
             if (existingSchedule.getScheduleDate().equals(newSchedule.getScheduleDate())
                     && !(newSchedule.getStartTime().isAfter(existingSchedule.getEndTime())
-                    || newSchedule.getEndTime().isBefore(existingSchedule.getStartTime()))) {
+                            || newSchedule.getEndTime().isBefore(existingSchedule.getStartTime()))) {
                 throw new AppException(ErrorCode.CONFLICT_SCHEDULE);
             }
         }
 
-        // update schedule 
+        // update schedule
         schedule.setScheduleDate(newSchedule.getScheduleDate());
         schedule.setEndTime(newSchedule.getEndTime());
         schedule.setStartTime(newSchedule.getStartTime());
 
-        scheduleRepository.save(schedule);        
+        scheduleRepository.save(schedule);
     }
 
     @Override
@@ -193,6 +212,21 @@ public class ScheduleServiceImpl implements ScheduleService {
         // check if user is the owner of the event
         if (!schedule.getEvent().getUser().getUserId().equals(user.getUserId())) {
             throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
+        // check if the event is published, can't edit information
+        if (schedule.getEvent().getIsPublished()) {
+            throw new AppException(ErrorCode.EVENT_ALREADY_PUBLISHED);
+        }
+
+        // Check if any ticket for this schedule has sold tickets
+        List<TicketSchedule> ticketSchedules = ticketScheduleRepository.findBySchedule(schedule);
+        for (TicketSchedule ticketSchedule : ticketSchedules) {
+            if (ticketSchedule.getSold() > 0) {
+                throw new IllegalArgumentException(
+                        "This schedule has already been purchased for ticket name: "
+                                + ticketSchedule.getTicket().getName());
+            }
         }
 
         scheduleRepository.delete(schedule);

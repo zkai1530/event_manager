@@ -58,6 +58,11 @@ public class TicketServiceImpl implements TicketService {
                 throw new AppException(ErrorCode.UNAUTHORIZED);
             }
 
+            // check if the event is published, can't add information
+            if (schedule.getEvent().getIsPublished()) {
+                throw new AppException(ErrorCode.EVENT_ALREADY_PUBLISHED);
+            }
+
             // check endTime is before scheduleDate of event
             LocalDate scheduleDate = schedule.getScheduleDate();
             LocalTime startTime = schedule.getStartTime();
@@ -146,22 +151,6 @@ public class TicketServiceImpl implements TicketService {
             }
         }
 
-        if (request.getName() != null)
-            ticket.setName(request.getName());
-        if (request.getDescription() != null)
-            ticket.setDescription(request.getDescription());
-        if (request.getPrice() != null)
-            ticket.setPrice(request.getPrice());
-        if (request.getAvailableQuantity() != null)
-            ticket.setAvailableQuantity(request.getAvailableQuantity());
-        if (request.getSaleStart() != null)
-            ticket.setSaleStart(request.getSaleStart());
-        if (request.getSaleStart() != null)
-            ticket.setSaleStart(request.getSaleStart());
-        if (request.getSaleEnd() != null)
-            ticket.setSaleEnd(request.getSaleEnd());
-        ticket.setSold(0);
-
         // update scheduleIds
 
         // * ticket.getTicketSchedules().clear(); // clear existing schedules
@@ -178,13 +167,6 @@ public class TicketServiceImpl implements TicketService {
 
         // todo: take current schedule. Example: 1, 2
         List<TicketSchedule> currentTicketSchedules = ticket.getTicketSchedules();
-        if (request.getAvailableQuantity() != null) {
-            for (TicketSchedule currentTicketSchedule : currentTicketSchedules) {
-                currentTicketSchedule.setAvailableQuantity(request.getAvailableQuantity());
-                ticketScheduleRepository.save(currentTicketSchedule);
-            }
-
-        }
 
         Set<Long> currentScheduleIds = currentTicketSchedules.stream()
                 .map(td -> td.getSchedule().getScheduleId())
@@ -195,8 +177,45 @@ public class TicketServiceImpl implements TicketService {
                 .map(EventSchedule::getScheduleId)
                 .collect(Collectors.toSet());
 
+        // * Check if any schedule to be removed has sold tickets
+        for (TicketSchedule ticketSchedule : currentTicketSchedules) {
+            Long scheduleId = ticketSchedule.getSchedule().getScheduleId();
+            if (!requestScheduleIds.contains(scheduleId) && ticketSchedule.getSold() > 0) {
+                EventSchedule schedule = ticketSchedule.getSchedule();
+                LocalDate scheduleDate = schedule.getScheduleDate();
+                LocalTime startTime = schedule.getStartTime();
+                throw new IllegalArgumentException(
+                        "Schedule on " + scheduleDate + " starting at " + startTime +
+                                " has already been purchased for ticket " + ticket.getTicketId());
+            }
+        }
+
+        if (request.getName() != null)
+            ticket.setName(request.getName());
+        if (request.getDescription() != null)
+            ticket.setDescription(request.getDescription());
+        if (request.getPrice() != null)
+            ticket.setPrice(request.getPrice());
+        if (request.getAvailableQuantity() != null)
+            ticket.setAvailableQuantity(request.getAvailableQuantity());
+        if (request.getSaleStart() != null)
+            ticket.setSaleStart(request.getSaleStart());
+        if (request.getSaleEnd() != null)
+            ticket.setSaleEnd(request.getSaleEnd());
+        ticket.setSold(0);
+
+        // Update availableQuantity for existing TicketSchedules
+        if (request.getAvailableQuantity() != null) {
+            for (TicketSchedule currentTicketSchedule : currentTicketSchedules) {
+                currentTicketSchedule.setAvailableQuantity(request.getAvailableQuantity());
+                // ticketScheduleRepository.save(currentTicketSchedule);
+            }
+
+        }
+
         // todo: return if ticketIds no have change
         if (currentScheduleIds.equals(requestScheduleIds)) {
+            ticketRepository.save(ticket);
             return;
         }
 
@@ -220,18 +239,46 @@ public class TicketServiceImpl implements TicketService {
                         .schedule(schedule)
                         .availableQuantity(request.getAvailableQuantity() != null ? request.getAvailableQuantity()
                                 : ticket.getAvailableQuantity())
+                        .sold(0)
                         .build();
                 currentTicketSchedules.add(ticketSchedule);
             }
         }
         ticket.setTicketSchedules(currentTicketSchedules);
+
         ticketRepository.save(ticket);
     }
 
     @Override
     public void deleteTicket(Long ticketId) {
+        User user = authenticationService.getUserFromToken();
+
         Ticket ticket = ticketRepository.findById(ticketId)
                 .orElseThrow(() -> new AppException(ErrorCode.TICKET_NOT_FOUND));
+
+        // Check if the user is the owner of the event
+        if (!ticket.getTicketSchedules().get(0).getSchedule().getEvent().getUser().getUserId()
+                .equals(user.getUserId())) {
+            {
+                throw new AppException(ErrorCode.UNAUTHORIZED);
+            }
+        }
+
+        // check if the event is published, can't edit information
+        if (ticket.getTicketSchedules().get(0).getSchedule().getEvent().getIsPublished()) {
+            throw new AppException(ErrorCode.EVENT_ALREADY_PUBLISHED);
+        }
+
+        // Check if any schedule of this ticket has sold tickets
+        for (TicketSchedule ticketSchedule : ticket.getTicketSchedules()) {
+            if (ticketSchedule.getSold() > 0) {
+                LocalDate date = ticketSchedule.getSchedule().getScheduleDate();
+                LocalTime time = ticketSchedule.getSchedule().getStartTime();
+                throw new IllegalArgumentException(
+                        "Schedule on " + date + " starting at " + time +
+                                " has already been purchased for ticket " + ticket.getTicketId());
+            }
+        }
 
         ticketRepository.delete(ticket);
     }

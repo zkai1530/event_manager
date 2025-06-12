@@ -5,6 +5,7 @@ import java.math.BigDecimal;
 import java.text.Normalizer;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
@@ -71,6 +72,7 @@ public class EventServiceImpl implements EventService {
     EventThemesRepository eventThemesRepository;
     EventCategoriesRepository eventCategoriesRepository;
     TicketRepository ticketRepository;
+    TicketScheduleRepository ticketScheduleRepository;
     EventMapper eventMapper;
     FAQRepository faqRepository;
     AuthenticationService authenticationService;
@@ -195,6 +197,44 @@ public class EventServiceImpl implements EventService {
             throw new AppException(ErrorCode.EVENT_ALREADY_PUBLISHED);
         }
 
+        // Check if any ticket has sold tickets
+        boolean hasSoldTickets = false;
+        List<EventSchedule> schedules = eventScheduleRepository.findAllByEvent(event);
+        for (EventSchedule schedule : schedules) {
+            List<TicketSchedule> ticketSchedules = ticketScheduleRepository.findBySchedule(schedule);
+            for (TicketSchedule ticketSchedule : ticketSchedules) {
+                if (ticketSchedule.getSold() > 0) {
+                    hasSoldTickets = true;
+                    break;
+                }
+            }
+            if (hasSoldTickets)
+                break;
+        }
+
+        // Check for location changes
+        boolean locationChanged = false;
+        EventLocation location = event.getEventLocation();
+        EventLocationRequest eventLocationRequest = request.getEventLocationRequest();
+        if (eventLocationRequest != null) {
+            if (location == null) {
+                locationChanged = true; // New location is a change
+            } else {
+                if (!eventLocationRequest.getAddress().equals(location.getAddress()) ||
+                        !eventLocationRequest.getCity().equals(location.getCity()) ||
+                        !eventLocationRequest.getCountry().equals(location.getCountry()) ||
+                        !eventLocationRequest.getPostalCode().equals(location.getPostalCode())) {
+                    locationChanged = true;
+                }
+            }
+        }
+        // Prevent updating location if tickets are sold and location changed
+        if (hasSoldTickets && locationChanged) {
+            throw new IllegalArgumentException(
+                    "Cannot update location for event " + event.getName() +
+                            " as tickets have already been purchased");
+        }
+
         // EventType
         EventType oldEventType = event.getEventType();
         EventType newEventType = request.getEventType();
@@ -230,10 +270,14 @@ public class EventServiceImpl implements EventService {
         eventRepository.save(event);
 
         // Location
-        EventLocationRequest eventLocationRequest = request.getEventLocationRequest();
-        EventLocation location = event.getEventLocation();
+        // EventLocationRequest eventLocationRequest = request.getEventLocationRequest();
+        // EventLocation location = event.getEventLocation();
 
         if (eventLocationRequest != null) {
+            if (location == null) {
+                location = new EventLocation();
+                location.setEvent(event);
+            }
             if (eventLocationRequest.getAddress() != null)
                 location.setAddress(eventLocationRequest.getAddress());
             if (eventLocationRequest.getCity() != null)
@@ -242,7 +286,6 @@ public class EventServiceImpl implements EventService {
                 location.setCountry(eventLocationRequest.getCountry());
             if (eventLocationRequest.getPostalCode() != null)
                 location.setPostalCode(eventLocationRequest.getPostalCode());
-
             eventLocationRepository.save(location);
         }
 
@@ -299,12 +342,22 @@ public class EventServiceImpl implements EventService {
                 }
                 EventSchedule eventSchedule = event.getSchedules().get(0);
 
-                if (request.getEventDate() != null)
-                    eventSchedule.setScheduleDate(request.getEventDate());
-                if (request.getStartTime() != null)
-                    eventSchedule.setStartTime(request.getStartTime());
-                if (request.getEndTime() != null)
-                    eventSchedule.setEndTime(request.getEndTime());
+                // Check for schedule changes
+                boolean scheduleChanged = false;
+                if (!request.getEventDate().equals(eventSchedule.getScheduleDate()) ||
+                        !request.getStartTime().equals(eventSchedule.getStartTime()) ||
+                        !request.getEndTime().equals(eventSchedule.getEndTime())) {
+                    scheduleChanged = true;
+                }
+                //Prevent updating schedule if tickets are sold
+                if (hasSoldTickets && scheduleChanged) {
+                    throw new IllegalArgumentException(
+                            "Cannot update schedule for event " + event.getName() +
+                                    " as tickets have been purchased");
+                }
+                eventSchedule.setScheduleDate(request.getEventDate());
+                eventSchedule.setStartTime(request.getStartTime());
+                eventSchedule.setEndTime(request.getEndTime());
 
                 eventScheduleRepository.save(eventSchedule);
             }
@@ -361,6 +414,18 @@ public class EventServiceImpl implements EventService {
         }
 
         return eventMapper.toEventResponse(event);
+    }
+
+    private int getTotalSoldTickets(Event event) {
+        int totalSold = 0;
+        List<EventSchedule> schedules = eventScheduleRepository.findAllByEvent(event);
+        for (EventSchedule schedule : schedules) {
+            List<TicketSchedule> ticketSchedules = ticketScheduleRepository.findBySchedule(schedule);
+            for (TicketSchedule ticketSchedule : ticketSchedules) {
+                totalSold += ticketSchedule.getSold();
+            }
+        }
+        return totalSold;
     }
 
     // @Override
@@ -690,6 +755,21 @@ public class EventServiceImpl implements EventService {
         User user = authenticationService.getUserFromToken();
         if (user.getUserId() != event.getUser().getUserId()) {
             throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
+        // Check if any ticket for this event has sold tickets
+        List<EventSchedule> schedules = eventScheduleRepository.findAllByEvent(event);
+        for (EventSchedule schedule : schedules) {
+            List<TicketSchedule> ticketSchedules = ticketScheduleRepository.findBySchedule(schedule);
+            for (TicketSchedule ticketSchedule : ticketSchedules) {
+                if (ticketSchedule.getSold() > 0) {
+                    LocalDate date = schedule.getScheduleDate();
+                    LocalTime time = schedule.getStartTime();
+                    throw new IllegalArgumentException(
+                            "This event has tickets that have already been sold for the schedule on "
+                                    + date + " starting at " + time + ".");
+                }
+            }
         }
 
         eventRepository.delete(event);
