@@ -3,7 +3,11 @@ import Loading from "@/components/ui/Loading";
 import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { IoTicketOutline } from "react-icons/io5";
-import { createDiscount, deleteDiscount, updateDiscount } from "services/user/discountService";
+import {
+  createDiscount,
+  deleteDiscount,
+  updateDiscount,
+} from "services/user/discountService";
 import { getEventInfoById } from "services/user/eventService";
 import Swal from "sweetalert2";
 import { formatDateTime } from "utils/formatSchedule";
@@ -221,11 +225,39 @@ const CreatePromotion = () => {
       }
     } catch (error) {
       console.error("Create/Update promotion error", error);
-      Swal.fire({
-        title: "Lỗi!",
-        text: `Thêm khuyến mãi không thành công!.`,
-        icon: "error",
-      });
+      if (error.response.data.message === "Event is already published!") {
+        Swal.fire({
+          title: "Sự kiện đã được xuất bản!",
+          text: `Không thể thêm/chỉnh sửa thông tin!`,
+          icon: "error",
+        });
+      } else if (
+        error.response.data?.data.includes(
+          "Discount end time is invalid for ticket",
+        )
+      ) {
+        const message = error.response.data.data;
+
+        const match = message.match(/ticket (\d+) with sale end at/);
+
+        let msg = "Thêm khuyến mãi không thành công!";
+        if (match) {
+          const ticketName = match[1];
+          msg = `Khoảng thời gian khuyến mãi phải có hiệu lực trước khi kết thúc bán vé của vé ${ticketName}`;
+        }
+
+        Swal.fire({
+          title: "Lỗi nè!",
+          text: msg,
+          icon: "error",
+        });
+      } else {
+        Swal.fire({
+          title: "Lỗi!",
+          text: `Thêm khuyến mãi không thành công!.`,
+          icon: "error",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -259,7 +291,7 @@ const CreatePromotion = () => {
     setValue("discountStart", formatDateTime(promotion.discountStart));
     setValue("discountEnd", formatDateTime(promotion.discountEnd));
     // ... (các setValue khác)
-    setTicketIds(promotion.ticketIds || []); 
+    setTicketIds(promotion.ticketIds || []);
     setSelectedOption(
       promotion.ticketIds?.length === 0 ||
         (promotion.ticketIds?.length === promotion.tickets.length &&
@@ -308,16 +340,24 @@ const CreatePromotion = () => {
         }
       } catch (error) {
         console.error("Delete promotion error", error);
-        Swal.fire({
-          title: "Lỗi!",
-          text: `Xóa khuyến mãi không thành công!`,
-          icon: "error",
-        });
+        if (error.response.data?.message === "Event is already published!") {
+          Swal.fire({
+            title: "Sự kiện đã được xuất bản!",
+            text: `Không thể xoá khuyến mãi!`,
+            icon: "error",
+          });
+        } else {
+          Swal.fire({
+            title: "Lỗi!",
+            text: `Xóa khuyến mãi không thành công!`,
+            icon: "error",
+          });
+        }
       } finally {
         setIsLoading(false);
       }
     }
-  }
+  };
 
   const loadPromotionsData = async () => {
     try {

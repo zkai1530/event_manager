@@ -13,6 +13,24 @@ export const loginWithGoogleCode = async (code) => {
   }
 };
 
+export const loginNormal = async (email, password) => {
+  try {
+    const response = await axios.post(
+      "/auth/login",
+      { email, password },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      },
+    );
+    return response.data;
+  } catch (error) {
+    console.error("loginNormal ", error.response?.data || error.message);
+    throw error;
+  }
+};
+
 export const logoutUser = async (token) => {
   try {
     const response = await axios.post("/auth/logout", { token });

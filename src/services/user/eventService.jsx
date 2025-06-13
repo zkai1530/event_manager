@@ -39,6 +39,21 @@ export const updateEvent = async (eventId, formData, token) => {
   }
 };
 
+export const deleteEvent = async (eventId, token) => {
+  console.log(token);
+  try {
+    const response = await axios.delete(`/event/${eventId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("deleteEvent ", error.response?.data || error.message);
+    throw error;
+  }
+};
+
 export const getEventListInfoByUser = async (token, page, timeFilter) => {
   try {
     const response = await axios.get(
@@ -104,10 +119,11 @@ export const searchEvents = async (
       page,
       location,
       isFree,
-      startDate: startDate || undefined,
-      endDate: endDate || undefined,
       eventStatus: eventStatus || undefined,
     };
+    if (startDate) params.startDate = startDate;
+    if (endDate) params.endDate = endDate;
+
     const response = await axios.get(`/event/search/${keyword || ""}/result`, {
       params,
     });

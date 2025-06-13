@@ -39,6 +39,7 @@
     "react-router-dom": "^7.4.1",
     "react-select": "^5.10.1",
     "recharts": "^2.15.3",
+    "rsuite": "^5.82.0",
     "sweetalert2": "^11.19.1",
     "swiper": "^11.2.6",
     "tailwind-merge": "^3.2.0"

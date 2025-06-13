@@ -1,47 +1,100 @@
 import { useAuth } from "context/AuthContext";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FaArrowRight } from "react-icons/fa";
 import { Link, useNavigate } from "react-router-dom";
 
-const Login = () => {
+const Login1 = () => {
   const inputRef = useRef(null);
+  const passwordRef = useRef(null);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState(null);
+  const { loginWithGoogle, login, role, user } = useAuth();
+  console.log("role ", role)
+  const navigate = useNavigate();
+
   const handleGoogleLogin = () => {
-    // URL Google OAuth to take code
     const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=1080231574783-oa36iru2q2ibfi659npnui31allll63n.apps.googleusercontent.com&redirect_uri=http://localhost:5173/callback&scope=email profile`;
     window.location.href = googleAuthUrl;
   };
 
-  // when callback saved the code, callback -> login (call loginWithGoogle from authContext (saved token in localStorage)) -> navigate /home
-  const { loginWithGoogle } = useAuth();
-  const navigate = useNavigate();
+//   useEffect(() => {
+//     const googleAuthCode = localStorage.getItem("googleAuthCode");
+//     const existingToken = localStorage.getItem("token");
 
+//     if (existingToken) {
+//       navigate("/");
+//       return;
+//     }
+
+//     if (googleAuthCode) {
+//       loginWithGoogle(googleAuthCode)
+//         .then(() => {
+//           localStorage.removeItem("googleAuthCode");
+//           if (localStorage.getItem("token")) {
+//             navigate("/");
+//           }
+//         })
+//         .catch((error) => {
+//           console.error("Google Login failed", error);
+//         });
+//     }
+//   }, [loginWithGoogle, navigate]);
+
+  // Sửa handleBlur để tránh tràn stack
+  
   useEffect(() => {
     const googleAuthCode = localStorage.getItem("googleAuthCode");
-    const existingToken = localStorage.getItem("token");
-
-    if (existingToken) {
-      navigate("/");
-      return;
-    }
-
     if (googleAuthCode) {
       loginWithGoogle(googleAuthCode)
         .then(() => {
           localStorage.removeItem("googleAuthCode");
-          if (localStorage.getItem("token")) {
-            navigate("/");
-          }
         })
         .catch((error) => {
-          console.error("Login failed", error);
+          console.error("Google login failed:", error);
         });
     }
-  }, [loginWithGoogle, navigate]);
+  }, [loginWithGoogle]);
 
-  const handleBlur = () => {
-    inputRef.current.reportValidity();
+  const handleBlur = (ref) => {
+    if (ref.current) {
+      ref.current.reportValidity();
+    }
   };
-  console.log("hi");
+
+  // Sửa handleLogin để debug lỗi
+  const handleLogin = async () => {
+    if (!email || !password) {
+      setError("Vui lòng nhập email và mật khẩu.");
+      return;
+    }
+    try {
+      setError(null);
+      console.log("Attempting login with:", { email, password }); // Debug
+      await login(email, password);
+      console.log("role", role)
+    } catch (error) {
+      console.error("Login error:", error.response?.data || error.message); // Debug
+      setError(
+        error.response?.data?.message ||
+          "Đăng nhập thất bại. Vui lòng kiểm tra email hoặc mật khẩu.",
+      );
+    }
+  };
+
+  useEffect(() => {
+    console.log("Role updated:", role, "User:", user);
+    if (user && role !== null) {
+      if (role === "ADMIN") {
+        console.log("Navigate to admin dashboard");
+        navigate("/admin/dashboard");
+      } else {
+        console.log("Navigate to home");
+        navigate("/");
+      }
+    }
+  }, [user, role, navigate]);
+
   return (
     <div className="relative min-h-screen w-full">
       <div
@@ -59,13 +112,13 @@ const Login = () => {
             Xin Chào!
           </h2>
           <p className="mb-6 text-slate-300">
-            Đăng nhập để khám phá và quản lý các sự kiện thú vị! 
+            Đăng nhập để khám phá và quản lý các sự kiện thú vị!
           </p>
           <div className="mx-auto mb-4 w-full px-4 sm:px-0">
+            {/* Email Input */}
             <label className="mb-2 block text-sm font-medium text-white">
               Email
             </label>
-
             <div className="relative">
               <input
                 ref={inputRef}
@@ -73,9 +126,10 @@ const Login = () => {
                 className="focus:border-main-bold focus:ring-main-bold dark:focus:border-main dark:focus:ring-main w-full rounded-lg border border-gray-600 bg-gray-800 px-4 py-3 text-white placeholder-gray-400 shadow-sm transition-all duration-200 hover:border-gray-400 focus:ring-2 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500 dark:hover:border-gray-500"
                 type="email"
                 required
-                onBlur={handleBlur}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                onBlur={() => handleBlur(inputRef)} // Gắn riêng
               />
-
               <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
                 <svg
                   stroke="currentColor"
@@ -93,11 +147,46 @@ const Login = () => {
                 </svg>
               </div>
             </div>
+            {/* Password Input */}
+            <label className="mt-4 mb-2 block text-sm font-medium text-white">
+              Mật khẩu
+            </label>
+            <div className="relative">
+              <input
+                ref={passwordRef}
+                placeholder="Nhập mật khẩu của bạn"
+                className="focus:border-main-bold focus:ring-main-bold dark:focus:border-main dark:focus:ring-main w-full rounded-lg border border-gray-600 bg-gray-800 px-4 py-3 text-white placeholder-gray-400 shadow-sm transition-all duration-200 hover:border-gray-400 focus:ring-2 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500 dark:hover:border-gray-500"
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onBlur={() => handleBlur(passwordRef)} // Gắn riêng
+              />
+              <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
+                <svg
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="h-5 w-5 text-gray-400 dark:text-gray-500"
+                >
+                  <path
+                    d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
+                    strokeWidth="2"
+                    strokeLinejoin="round"
+                    strokeLinecap="round"
+                  ></path>
+                </svg>
+              </div>
+            </div>
+            {/* Hiển thị lỗi */}
+            {error && <p className="mt-2 text-sm text-red-500">{error}</p>}
           </div>
 
           <button
             className="group relative mb-4 h-11 w-full rounded-xl bg-gray-800 text-center text-xl font-semibold text-white"
             type="button"
+            onClick={handleLogin}
           >
             <div className="bg-main-bold absolute top-[4px] left-1 z-10 flex h-9 w-1/4 items-center justify-center rounded-md duration-500 group-hover:w-[396px]">
               <FaArrowRight />
@@ -155,4 +244,4 @@ const Login = () => {
   );
 };
 
-export default Login;
+export default Login1;

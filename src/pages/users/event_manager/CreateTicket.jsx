@@ -149,11 +149,67 @@ const CreateTicket = () => {
       }
     } catch (error) {
       console.error("Create/Update ticket error", error);
-      Swal.fire({
-        title: "Lỗi!",
-        text: `Thêm vé không thành công!.`,
-        icon: "error",
-      });
+      if (error.response.data.message === "Event is already published!") {
+        Swal.fire({
+          title: "Sự kiện đã được xuất bản!",
+          text: `Không thể thêm/chỉnh sửa thông tin!`,
+          icon: "error",
+        });
+      } else if (
+        error.response.data?.data.includes(
+          "Sale end time is invalid for schedule on",
+        )
+      ) {
+        const message = error.response.data.data;
+
+        // Dùng regex để lấy ngày và giờ
+        const match = message.match(
+          /schedule on (\d{4}-\d{2}-\d{2}) starting at (\d{2}:\d{2})/,
+        );
+
+        let msg = "Thêm vé không thành công!";
+        if (match) {
+          const [_, dateStr, timeStr] = match;
+          const [year, month, day] = dateStr.split("-");
+          msg = `Khoảng thời gian bán vé phải diễn ra trước khi lịch trình ngày ${day}-${month}-${year} vào lúc ${timeStr} của sự kiện diễn ra`;
+        }
+
+        Swal.fire({
+          title: "Lỗi!",
+          text: msg,
+          icon: "error",
+        });
+      } else if (
+        error.response.data?.data.includes(
+          "has already been purchased for ticket",
+        )
+      ) {
+        const message = error.response.data.data;
+
+        // Dùng regex để tách ngày, giờ
+        const match = message.match(
+          /Schedule on (\d{4}-\d{2}-\d{2}) starting at (\d{2}:\d{2})/,
+        );
+
+        let msg = "Không thể gỡ lịch trình vì đã có người dùng mua vé này.";
+        if (match) {
+          const [_, dateStr, timeStr] = match;
+          const [year, month, day] = dateStr.split("-");
+          msg = `Không thể gỡ lịch trình ngày ${day}-${month}-${year} bắt đầu lúc ${timeStr} vì đã có người dùng mua vé này.`;
+        }
+
+        Swal.fire({
+          title: "Lỗi!",
+          text: msg,
+          icon: "error",
+        });
+      } else {
+        Swal.fire({
+          title: "Lỗi!",
+          text: `Thêm vé không thành công!`,
+          icon: "error",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -234,11 +290,43 @@ const CreateTicket = () => {
         }
       } catch (error) {
         console.error("Delete ticket error", error);
-        Swal.fire({
-          title: "Lỗi!",
-          text: `Xóa vé không thành công!`,
-          icon: "error",
-        });
+        if (error.response.data?.message === "Event is already published!") {
+          Swal.fire({
+            title: "Sự kiện đã được xuất bản!",
+            text: `Không thể xoá vé!`,
+            icon: "error",
+          });
+        } else if (
+          error.response.data?.data.includes(
+            "has already been purchased for ticket",
+          )
+        ) {
+          const message = error.response.data.data;
+
+          // Dùng regex để tách ngày, giờ
+          const match = message.match(
+            /Schedule on (\d{4}-\d{2}-\d{2}) starting at (\d{2}:\d{2})/,
+          );
+
+          let msg = "Không thể xoá vì đã có người dùng mua vé này.";
+          // if (match) {
+          //   const [_, dateStr, timeStr] = match;
+          //   const [year, month, day] = dateStr.split("-");
+          //   msg = `Không thể gỡ lịch trình ngày ${day}-${month}-${year} bắt đầu lúc ${timeStr} vì đã có người dùng mua vé này.`;
+          // }
+
+          Swal.fire({
+            title: "Lỗi!",
+            text: msg,
+            icon: "error",
+          });
+        } else {
+          Swal.fire({
+            title: "Lỗi!",
+            text: `Xóa vé không thành công!`,
+            icon: "error",
+          });
+        }
       } finally {
         setIsLoading(false);
       }
@@ -373,8 +461,8 @@ const CreateTicket = () => {
                 <div className="flex items-center space-x-2">
                   <IoTicketOutline />
                   <p className="text-sm text-gray-500">
-                    {ticket.availableQuantity} vé / {ticket.schedules.length}{" "}
-                    lịch trình
+                    {ticket.availableQuantity} vé
+                    {/* / {ticket.schedules.length}{" "} lịch trình */}
                   </p>
                 </div>
               </div>

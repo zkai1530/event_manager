@@ -1,3 +1,4 @@
+import Login1 from "@/pages/auth/Login1";
 import AccountSettings from "@/pages/users/browser_event/AccountManagement";
 import BankAccountForm from "@/pages/users/event_manager/EventPublish";
 import UserLayout from "layout/UserLayout";
@@ -13,7 +14,7 @@ const PublicRoutes = () => {
   return (
     <Routes>
       {/* route don't have layout */}
-      <Route path="/login" element={<Login />} />
+      <Route path="/login" element={<Login1 />} />
       <Route path="/callback" element={<Callback />} />
 
       {/* route have layout */}

@@ -9,7 +9,6 @@ import {
 } from "lucide-react";
 import { getAllComplaints } from "@/services/admin/complaintService";
 
-
 const ComplaintManagement = () => {
   const [complaints, setComplaints] = useState([]);
   const [filteredComplaints, setFilteredComplaints] = useState([]);
@@ -19,7 +18,7 @@ const ComplaintManagement = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedComplaint, setSelectedComplaint] = useState(null);
   const itemsPerPage = 15;
-  const token = localStorage.getItem("token")
+  const token = localStorage.getItem("token");
 
   // Fetch complaints
   useEffect(() => {
@@ -191,7 +190,7 @@ const ComplaintManagement = () => {
     <div className="flex flex-col">
       {/* Header */}
       <header className="bg-main p-4 text-white shadow-md">
-        <h1 className="text-2xl font-bold">Dashboard Quản Trị Viên</h1>
+        <h1 className="text-2xl font-bold uppercase">Quản lý khiếu nại</h1>
       </header>
 
       {/* Main content */}

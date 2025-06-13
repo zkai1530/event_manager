@@ -14,48 +14,39 @@ const TicketSalesPage = () => {
     return parseInt(urlParams.get("page") || "1", 10) - 1;
   });
   const [totalPages, setTotalPages] = useState(1);
-  const [isLoading, setIsLoading] = useState(false)
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [totalCheckedIn, setTotalCheckedIn] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
   const token = localStorage.getItem("token");
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setIsLoading(true)
+        setIsLoading(true);
         const data = await fetchTicketSales(scheduleId, token, page);
         setData(data.data);
-        setTotalPages(data.totalPages || 1)
+        setTotalPages(data.totalPages || 1);
+        setTotalRevenue(data.totalRevenue || 0);
+        setTotalCheckedIn(data.totalCheckedIn || 0);
       } catch (error) {
         console.error("Failed to fetch sales data:", error);
-      }
-      finally {
-        setIsLoading(false)
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchData();
   }, [scheduleId, token, page]);
 
-  console.log("data ", data )
+  console.log("data ", data);
 
-  if (!data)
+  if (!data) {
     return (
       <div className="py-10 text-center text-lg font-medium text-gray-600">
         {/* Loading... */}
       </div>
     );
-
-  // tính Net Sales
-  const netSales = data.orders.reduce((total, order) => {
-    return (
-      total +
-      order.orderTickets.reduce(
-        // (sum, ot) => sum + ot.quantity * ot.priceAtPurchase,
-        // 0,
-        (sum, ot) => sum + ot.priceAtPurchase,
-        0,
-      )
-    );
-  }, 0);
+  }
 
   // tính tổng vé bán ra
   const totalTicketsSold = data.ticketSchedules.reduce(
@@ -73,14 +64,27 @@ const TicketSalesPage = () => {
         Event Dashboard
       </h1>
 
-      {/* Net Sales and Tickets Sold side by side */}
-      <section className="mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2">
+      <section className="mb-8 grid grid-cols-1 gap-6 sm:grid-cols-3">
+        {/* Net Sales */}
         <div className="flex flex-col rounded-lg bg-white p-4 shadow-[0px_1px_9px_-1px_rgba(0,0,0,0.2)]">
           <h2 className="text-md mb-1 font-medium text-gray-800">Net Sales</h2>
           <p className="text-2xl font-bold text-gray-900">
-            {FormatPrice(netSales)}
+            {FormatPrice(totalRevenue)}
           </p>
         </div>
+
+        {/* Total checked in */}
+        <div className="flex flex-col rounded-lg bg-white p-4 shadow-[0px_1px_9px_-1px_rgba(0,0,0,0.2)]">
+          <h2 className="text-md mb-1 font-medium text-gray-800">
+            Tổng check-in
+          </h2>
+          <p className="text-2xl font-bold text-gray-900">
+            {totalCheckedIn.toLocaleString()} /{" "}
+            {totalTicketsSold.toLocaleString()}
+          </p>
+        </div>
+
+        {/* Total tickets sold */}
         <div className="flex flex-col rounded-lg bg-white p-4 shadow-[0px_1px_9px_-1px_rgba(0,0,0,0.2)]">
           <h2 className="text-md mb-1 font-medium text-gray-800">
             Tổng vé bán
@@ -170,7 +174,23 @@ const TicketSalesPage = () => {
                       <td className="py-2 text-left font-medium text-gray-900">
                         {order.orderId}
                       </td>
-                      <td className="py-2 text-center">{order.userName}</td>
+                      <td className="flex py-2 text-left pl-2">
+                        <img
+                          src={
+                            order.avatarUrl || "https://via.placeholder.com/30"
+                          }
+                          alt={order.userName}
+                          className="mr-2 h-8 w-8 rounded-full"
+                        />
+                        <div className="text-left">
+                          <span className="block font-medium text-gray-900">
+                            {order.userName}
+                          </span>
+                          <span className="block text-sm text-gray-500">
+                            {order.email}
+                          </span>
+                        </div>
+                      </td>
                       <td className="py-2 text-center">
                         {order.orderTickets.reduce(
                           (sum, ot) => sum + ot.quantity,
@@ -183,12 +203,7 @@ const TicketSalesPage = () => {
                           .join(", ") || "N/A"}
                       </td>
                       <td className="py-2 text-center font-semibold text-gray-900">
-                        {FormatPrice(
-                          order.orderTickets.reduce(
-                            (sum, ot) => sum + ot.quantity * ot.priceAtPurchase,
-                            0,
-                          ),
-                        )}
+                      {FormatPrice(order.orderTickets[0]?.priceAtPurchase)}
                       </td>
                       <td className="py-2 text-center">
                         {order.isCheckedIn ? (

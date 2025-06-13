@@ -15,7 +15,10 @@ import {
 import { vi, enUS } from "date-fns/locale";
 import { getEventInfoById } from "services/user/eventService";
 import { useParams } from "react-router-dom";
-import { createSchedules } from "services/user/schedulesService";
+import {
+  createSchedules,
+  deleteSchedule,
+} from "services/user/schedulesService";
 import { FormatPrice } from "utils/formatPrice";
 import Swal from "sweetalert2";
 import Loading from "@/components/ui/Loading";
@@ -100,321 +103,6 @@ const CreateSchedule = () => {
       });
   }, [eventId, setValue, setEventType]);
 
-  // useEffect(() => {
-  //   if (schedules.length > 0) {
-  //     const firstScheduleDate = parse(
-  //       schedules[0].scheduleDate,
-  //       "yyyy-MM-dd",
-  //       new Date(),
-  //     );
-  //     setActiveMonth(firstScheduleDate);
-  //     setSelectedDate(firstScheduleDate);
-  //   }
-  // }, [schedules]);
-
-  // useEffect(() => {
-  //   setIsLoading(true);
-
-  //   // Giả lập dữ liệu trả về từ API
-  //   const fakeScheduleData = {
-  //     eventType: "RECURRING",
-  //     schedules: [
-  //       {
-  //         scheduleId: 24,
-  //         scheduleDate: "2025-04-21",
-  //         startTime: "10:00:00",
-  //         endTime: "11:00:00",
-  //         ticketSchedules: [
-  //           {
-  //             id: 6,
-  //             name: "VIP Ticket",
-  //             description: "Access to all areas",
-  //             sold: 0,
-  //             price: 100.0,
-  //             availableQuantity: 50,
-  //             saleStart: "2025-04-01T10:00:00",
-  //             saleEnd: "2025-04-05T22:00:00",
-  //             discounts: [
-  //               {
-  //                 discountId: "3",
-  //                 name: "Early Bird Discount",
-  //                 promoCode: null,
-  //                 discountType: "PERCENT",
-  //                 discountValue: 15.0,
-  //                 maxUses: null,
-  //                 timesUsed: 0,
-  //                 discountStart: "2025-04-20T00:00:00",
-  //                 discountEnd: "2025-04-21T23:59:59",
-  //               },
-  //             ],
-  //           },
-  //         ],
-  //       },
-  //       {
-  //         scheduleId: 25,
-  //         scheduleDate: "2025-04-21",
-  //         startTime: "13:00:00",
-  //         endTime: "14:00:00",
-  //         ticketSchedules: [
-  //           {
-  //             id: 6,
-  //             name: "VIP Ticket",
-  //             description: "Access to all areas",
-  //             sold: 0,
-  //             price: 100.0,
-  //             availableQuantity: 50,
-  //             saleStart: "2025-04-01T10:00:00",
-  //             saleEnd: "2025-04-05T22:00:00",
-  //             discounts: [
-  //               {
-  //                 discountId: "3",
-  //                 name: "Early Bird Discount",
-  //                 promoCode: null,
-  //                 discountType: "PERCENT",
-  //                 discountValue: 15.0,
-  //                 maxUses: null,
-  //                 timesUsed: 0,
-  //                 discountStart: "2025-04-20T00:00:00",
-  //                 discountEnd: "2025-04-21T23:59:59",
-  //               },
-  //               {
-  //                 discountId: "4",
-  //                 name: "Early Bird Discount",
-  //                 promoCode: "abc",
-  //                 discountType: "FIXED",
-  //                 discountValue: 15.0,
-  //                 maxUses: 10,
-  //                 timesUsed: 1,
-  //                 discountStart: "2025-04-20T00:00:00",
-  //                 discountEnd: "2025-04-21T23:59:59",
-  //               },
-  //             ],
-  //           },
-  //           {
-  //             id: 7,
-  //             name: "zkai1",
-  //             description: "",
-  //             sold: 0,
-  //             price: 10000.0,
-  //             availableQuantity: 100,
-  //             saleStart: "2025-04-20T12:29:00",
-  //             saleEnd: "2025-04-22T10:00:00",
-  //             discounts: [
-  //               {
-  //                 discountId: "3",
-  //                 name: "Early Bird Discount",
-  //                 promoCode: null,
-  //                 discountType: "PERCENT",
-  //                 discountValue: 15.0,
-  //                 maxUses: null,
-  //                 timesUsed: 0,
-  //                 discountStart: "2025-04-20T00:00:00",
-  //                 discountEnd: "2025-04-21T23:59:59",
-  //               },
-  //             ],
-  //           },
-  //         ],
-  //       },
-  //       {
-  //         scheduleId: 26,
-  //         scheduleDate: "2025-04-24",
-  //         startTime: "10:00:00",
-  //         endTime: "11:00:00",
-  //         ticketSchedules: [
-  //           {
-  //             id: 6,
-  //             name: "VIP Ticket",
-  //             description: "Access to all areas",
-  //             sold: 0,
-  //             price: 100.0,
-  //             availableQuantity: 50,
-  //             saleStart: "2025-04-01T10:00:00",
-  //             saleEnd: "2025-04-05T22:00:00",
-  //             discounts: [
-  //               {
-  //                 discountId: "3",
-  //                 name: "Early Bird Discount",
-  //                 promoCode: null,
-  //                 discountType: "PERCENT",
-  //                 discountValue: 15.0,
-  //                 maxUses: null,
-  //                 timesUsed: 0,
-  //                 discountStart: "2025-04-20T00:00:00",
-  //                 discountEnd: "2025-04-21T23:59:59",
-  //               },
-  //             ],
-  //           },
-  //         ],
-  //       },
-  //       {
-  //         scheduleId: 27,
-  //         scheduleDate: "2025-04-23",
-  //         startTime: "10:00:00",
-  //         endTime: "11:00:00",
-  //         ticketSchedules: [
-  //           {
-  //             id: 6,
-  //             name: "VIP Ticket",
-  //             description: "Access to all areas",
-  //             sold: 0,
-  //             price: 100.0,
-  //             availableQuantity: 50,
-  //             saleStart: "2025-04-01T10:00:00",
-  //             saleEnd: "2025-04-05T22:00:00",
-  //             discounts: [
-  //               {
-  //                 discountId: "3",
-  //                 name: "Early Bird Discount",
-  //                 promoCode: null,
-  //                 discountType: "PERCENT",
-  //                 discountValue: 15.0,
-  //                 maxUses: null,
-  //                 timesUsed: 0,
-  //                 discountStart: "2025-04-20T00:00:00",
-  //                 discountEnd: "2025-04-21T23:59:59",
-  //               },
-  //             ],
-  //           },
-  //         ],
-  //       },
-  //       {
-  //         scheduleId: 28,
-  //         scheduleDate: "2025-04-30",
-  //         startTime: "10:00:00",
-  //         endTime: "11:00:00",
-  //         ticketSchedules: [
-  //           {
-  //             id: 6,
-  //             name: "VIP Ticket",
-  //             description: "Access to all areas",
-  //             sold: 0,
-  //             price: 100.0,
-  //             availableQuantity: 50,
-  //             saleStart: "2025-04-01T10:00:00",
-  //             saleEnd: "2025-04-05T22:00:00",
-  //             discounts: [
-  //               {
-  //                 discountId: "3",
-  //                 name: "Early Bird Discount",
-  //                 promoCode: null,
-  //                 discountType: "PERCENT",
-  //                 discountValue: 15.0,
-  //                 maxUses: null,
-  //                 timesUsed: 0,
-  //                 discountStart: "2025-04-20T00:00:00",
-  //                 discountEnd: "2025-04-21T23:59:59",
-  //               },
-  //             ],
-  //           },
-  //         ],
-  //       },
-  //       {
-  //         scheduleId: 29,
-  //         scheduleDate: "2025-04-27",
-  //         startTime: "10:00:00",
-  //         endTime: "11:00:00",
-  //         ticketSchedules: [
-  //           {
-  //             id: 6,
-  //             name: "VIP Ticket",
-  //             description: "Access to all areas",
-  //             sold: 0,
-  //             price: 100.0,
-  //             availableQuantity: 50,
-  //             saleStart: "2025-04-01T10:00:00",
-  //             saleEnd: "2025-04-05T22:00:00",
-  //             discounts: [
-  //               {
-  //                 discountId: "3",
-  //                 name: "Early Bird Discount",
-  //                 promoCode: null,
-  //                 discountType: "PERCENT",
-  //                 discountValue: 15.0,
-  //                 maxUses: null,
-  //                 timesUsed: 0,
-  //                 discountStart: "2025-04-20T00:00:00",
-  //                 discountEnd: "2025-04-21T23:59:59",
-  //               },
-  //             ],
-  //           },
-  //         ],
-  //       },
-  //       {
-  //         scheduleId: 30,
-  //         scheduleDate: "2025-05-01",
-  //         startTime: "10:00:00",
-  //         endTime: "11:00:00",
-  //         ticketSchedules: [
-  //           {
-  //             id: 6,
-  //             name: "VIP Ticket",
-  //             description: "Access to all areas",
-  //             sold: 0,
-  //             price: 100.0,
-  //             availableQuantity: 50,
-  //             saleStart: "2025-04-01T10:00:00",
-  //             saleEnd: "2025-04-05T22:00:00",
-  //             discounts: [
-  //               {
-  //                 discountId: "3",
-  //                 name: "Early Bird Discount",
-  //                 promoCode: null,
-  //                 discountType: "PERCENT",
-  //                 discountValue: 15.0,
-  //                 maxUses: null,
-  //                 timesUsed: 0,
-  //                 discountStart: "2025-04-20T00:00:00",
-  //                 discountEnd: "2025-04-21T23:59:59",
-  //               },
-  //             ],
-  //           },
-  //         ],
-  //       },
-  //     ],
-  //   };
-
-  //   if (
-  //     !fakeScheduleData.schedules ||
-  //     fakeScheduleData.schedules.length === 0
-  //   ) {
-  //     setIsReady(false);
-  //     setIsLoading(false);
-  //     return;
-  //   }
-
-  //   // Xử lý schedules để thêm dayOfWeek và duration
-  //   const processedSchedules = fakeScheduleData.schedules.map((schedule) => {
-  //     const date = parse(schedule.scheduleDate, "yyyy-MM-dd", new Date());
-  //     const start = parse(schedule.startTime, "HH:mm:ss", new Date());
-  //     const end = parse(schedule.endTime, "HH:mm:ss", new Date());
-  //     const duration = differenceInMinutes(end, start) / 60;
-
-  //     return {
-  //       scheduleId: schedule.scheduleId,
-  //       scheduleDate: schedule.scheduleDate,
-  //       dayOfWeek: format(date, "EEEE", { locale: vi }), // Thứ (tiếng Việt)
-  //       startTime: schedule.startTime.slice(0, 5), // Cắt bỏ giây (10:00)
-  //       endTime: schedule.endTime.slice(0, 5), // Cắt bỏ giây (11:00)
-  //       duration: duration.toFixed(1), // Làm tròn 1 chữ số (1.0h)
-  //       tickets: schedule.ticketSchedules.map((ticket) => ({
-  //         id: ticket.id,
-  //         name: ticket.name,
-  //         price: ticket.price,
-  //         availableQuantity: ticket.availableQuantity,
-  //         description: ticket.description,
-  //         saleStart: ticket.saleStart,
-  //         saleEnd: ticket.saleEnd,
-  //       })),
-  //     };
-  //   });
-
-  //   console.log("Processed Schedules:", processedSchedules);
-  //   setSchedules(processedSchedules);
-  //   setEventType(fakeScheduleData.eventType);
-  //   setIsReady(true);
-  //   setIsLoading(false);
-  // }, []);
-
   const timeOptions = Array.from({ length: 48 }, (_, i) => {
     const hours = Math.floor(i / 2)
       .toString()
@@ -490,7 +178,6 @@ const CreateSchedule = () => {
     const result = { schedules };
 
     console.log("Schedule submitted:", result);
-    // setIsOpen(false);
     clearErrors();
 
     try {
@@ -503,6 +190,38 @@ const CreateSchedule = () => {
           text: `Lịch trình của bạn đã được thêm!.`,
           icon: "success",
         });
+
+        // Gọi lại getEventInfoById để cập nhật danh sách schedules
+        const updatedData = await getEventInfoById(eventId);
+        const processedSchedules = updatedData.schedules.map((schedule) => {
+          const date = parse(schedule.scheduleDate, "yyyy-MM-dd", new Date());
+          const start = parse(schedule.startTime, "HH:mm:ss", new Date());
+          const end = parse(schedule.endTime, "HH:mm:ss", new Date());
+          const duration = differenceInMinutes(end, start) / 60;
+
+          return {
+            scheduleId: schedule.scheduleId,
+            scheduleDate: schedule.scheduleDate,
+            dayOfWeek: format(date, "EEEE", { locale: enUS }),
+            startTime: schedule.startTime.slice(0, 5),
+            endTime: schedule.endTime.slice(0, 5),
+            duration: duration.toFixed(1),
+            tickets: schedule.ticketSchedules.map((ticket) => ({
+              id: ticket.id,
+              name: ticket.name,
+              price: ticket.price,
+              availableQuantity: ticket.availableQuantity,
+              description: ticket.description,
+              saleStart: ticket.saleStart,
+              saleEnd: ticket.saleEnd,
+            })),
+          };
+        });
+
+        setSchedules(processedSchedules);
+        setEventType(updatedData.eventType);
+        setIsReady(true);
+        setIsOpen(false); // Đóng form sau khi thêm thành công
       } else {
         Swal.fire({
           title: "Lỗi!",
@@ -518,10 +237,113 @@ const CreateSchedule = () => {
           text: `Thêm lịch trình không thành công!.`,
           icon: "error",
         });
+      } else if (error.message === "Event is already published!") {
+        Swal.fire({
+          title: "Sự kiện đã được xuất bản!",
+          text: `Không thể thêm/chỉnh sửa lịch trình!`,
+          icon: "error",
+        });
       }
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleDeleteSchedule = async (scheduleId) => {
+    Swal.fire({
+      title: "Bạn có chắc chắn muốn xóa?",
+      text: "Hành động này không thể hoàn tác!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Xóa",
+      cancelButtonText: "Hủy",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          setIsLoading(true);
+          const token = localStorage.getItem("token");
+          await deleteSchedule(scheduleId, token);
+          Swal.fire({
+            title: "Xóa thành công!",
+            text: "Lịch trình đã được xóa.",
+            icon: "success",
+          });
+
+          // để cập nhật danh sách schedules
+          const updatedData = await getEventInfoById(eventId);
+          const processedSchedules = updatedData.schedules.map((schedule) => {
+            const date = parse(schedule.scheduleDate, "yyyy-MM-dd", new Date());
+            const start = parse(schedule.startTime, "HH:mm:ss", new Date());
+            const end = parse(schedule.endTime, "HH:mm:ss", new Date());
+            const duration = differenceInMinutes(end, start) / 60;
+
+            return {
+              scheduleId: schedule.scheduleId,
+              scheduleDate: schedule.scheduleDate,
+              dayOfWeek: format(date, "EEEE", { locale: enUS }),
+              startTime: schedule.startTime.slice(0, 5),
+              endTime: schedule.endTime.slice(0, 5),
+              duration: duration.toFixed(1),
+              tickets: schedule.ticketSchedules.map((ticket) => ({
+                id: ticket.id,
+                name: ticket.name,
+                price: ticket.price,
+                availableQuantity: ticket.availableQuantity,
+                description: ticket.description,
+                saleStart: ticket.saleStart,
+                saleEnd: ticket.saleEnd,
+              })),
+            };
+          });
+
+          setSchedules(processedSchedules);
+          setEventType(updatedData.eventType);
+          setIsReady(updatedData.schedules.length > 0);
+          setExpandedSchedules({}); // Đóng tất cả các lịch trình đang mở
+          setSelectedDate(null); // Bỏ chọn ngày trên lịch
+        } catch (error) {
+          console.error("deleteSchedule ", error);
+          if (error.response.data?.message === "Event is already published!") {
+            Swal.fire({
+              title: "Sự kiện đã được xuất bản!",
+              text: `Không thể xoá lịch trình!`,
+              icon: "error",
+            });
+          } else if (
+            error.response.data?.data.includes(
+              "This schedule has already been purchased for ticket name",
+            )
+          ) {
+            const message = error.response.data.data;
+
+            // Dùng regex để lấy ngày và giờ
+            const ticketNameMatch = message.match(/ticket name: (.+)$/);
+            const ticketName = ticketNameMatch?.[1]?.trim();
+
+            let msg = "Xoá lịch trình không thành công!";
+            if (ticketNameMatch) {
+              msg = `Không thể xoá vì đã có người dùng mua vé "${ticketName}" của lịch trình này `;
+            }
+
+            Swal.fire({
+              title: "Lỗi!",
+              text: msg,
+              icon: "error",
+            });
+          } else {
+            Swal.fire({
+              title: "Lỗi!",
+              text: "Xóa lịch trình không thành công.",
+              icon: "error",
+            });
+          }
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    });
   };
 
   const handleDateChange = (date) => {
@@ -825,7 +647,15 @@ const CreateSchedule = () => {
                                 <button className="mt-1 cursor-pointer font-medium text-blue-600">
                                   Sửa thông tin
                                 </button>
-                                <button className="mt-1 cursor-pointer font-medium text-red-600">
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteSchedule(
+                                      firstSchedule.scheduleId,
+                                    );
+                                  }}
+                                  className="mt-1 cursor-pointer font-medium text-red-600"
+                                >
                                   Xoá lịch trình
                                 </button>
                               </div>

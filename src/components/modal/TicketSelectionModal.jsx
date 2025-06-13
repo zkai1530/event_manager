@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { format } from "date-fns";
 import { IoCloseSharp } from "react-icons/io5";
-import { createOrder } from "services/user/orderService";
+import { createOrder, reserveOrder } from "services/user/orderService";
 import Loading from "@/components/ui/Loading";
 import Swal from "sweetalert2";
 import { useNavigate } from "react-router-dom";
@@ -40,7 +40,25 @@ const TicketSelectionModal = ({
 
   const handleQuantityChange = (ticketId, delta) => {
     setQuantities((prev) => {
-      const newQuantity = Math.max(0, prev[ticketId] + delta);
+      const ticket = eventInfo.tickets.find((t) => t.id === ticketId);
+      const remaining =
+        ticket.availableQuantity - ticket.sold - ticket.reservedQuantity;
+      const newQuantity = prev[ticketId] + delta;
+
+      if (newQuantity < 0) {
+        return prev; // Không cho âm
+      }
+
+      if (newQuantity > remaining) {
+        Swal.fire({
+          title: "Xin lỗi!",
+          text: `Hiện chỉ còn ${remaining} vé! Vui lòng quay lại sau.`,
+          icon: "warning",
+          confirmButtonText: "OK",
+        });
+        return prev;
+      }
+
       return { ...prev, [ticketId]: newQuantity };
     });
   };
@@ -55,7 +73,14 @@ const TicketSelectionModal = ({
   const applyPromoCode = (ticketId) => {
     const ticket = eventInfo.tickets.find((t) => t.id === ticketId);
     const promoCode = promoCodes[ticketId].code;
-    const discount = ticket.discounts.find((d) => d.promoCode === promoCode);
+    const now = new Date();
+    const discount = ticket.discounts.find(
+      (d) =>
+        d.promoCode === promoCode &&
+        new Date(d.discountStart) <= now &&
+        new Date(d.discountEnd) >= now && // Kiểm tra discountEnd
+        (d.maxUses === null || d.timesUsed < d.maxUses), // Kiểm tra maxUses
+    );
 
     if (discount && discount.promoCode !== null) {
       setPromoCodes((prev) => ({
@@ -65,12 +90,32 @@ const TicketSelectionModal = ({
     } else {
       Swal.fire({
         title: "Cảnh báo!",
-        text: "Mã khuyến mãi không hợp lệ!",
+        text: "Mã khuyến mãi không hợp lệ hoặc đã hết hiệu lực!",
         icon: "warning",
         confirmButtonText: "OK",
       });
     }
   };
+
+  // const applyPromoCode = (ticketId) => {
+  //   const ticket = eventInfo.tickets.find((t) => t.id === ticketId);
+  //   const promoCode = promoCodes[ticketId].code;
+  //   const discount = ticket.discounts.find((d) => d.promoCode === promoCode);
+
+  //   if (discount && discount.promoCode !== null) {
+  //     setPromoCodes((prev) => ({
+  //       ...prev,
+  //       [ticketId]: { code: discount.promoCode, appliedDiscount: discount },
+  //     }));
+  //   } else {
+  //     Swal.fire({
+  //       title: "Cảnh báo!",
+  //       text: "Mã khuyến mãi không hợp lệ!",
+  //       icon: "warning",
+  //       confirmButtonText: "OK",
+  //     });
+  //   }
+  // };
 
   const removePromoCode = (ticketId) => {
     setPromoCodes((prev) => ({
@@ -87,10 +132,29 @@ const TicketSelectionModal = ({
   //  tính giá sau giảm giá
   const calculateTicketPrice = (ticket) => {
     let price = ticket.price;
-    const autoDiscount = ticket.discounts.find((d) => d.promoCode === null);
-    const appliedDiscount = promoCodes[ticket.id].appliedDiscount;
+    const now = new Date();
 
     // Áp dụng discount có promoCode null
+    const autoDiscount = ticket.discounts.find(
+      (d) =>
+        d.promoCode === null &&
+        new Date(d.discountStart) <= now &&
+        new Date(d.discountEnd) >= now && // Kiểm tra discountEnd
+        (d.maxUses === null || d.timesUsed < d.maxUses), // Kiểm tra maxUses
+    );
+
+    // Áp dụng discount từ mã nhập
+    const appliedDiscount = promoCodes[ticket.id].appliedDiscount;
+    const validAppliedDiscount =
+      appliedDiscount &&
+      new Date(appliedDiscount.discountStart) <= now &&
+      new Date(appliedDiscount.discountEnd) >= now && // Kiểm tra discountEnd
+      (appliedDiscount.maxUses === null ||
+        appliedDiscount.timesUsed < appliedDiscount.maxUses) // Kiểm tra maxUses
+        ? appliedDiscount
+        : null;
+
+    // Áp dụng autoDiscount
     if (autoDiscount) {
       price =
         autoDiscount.discountType === "PERCENT"
@@ -98,32 +162,137 @@ const TicketSelectionModal = ({
           : price - autoDiscount.discountValue;
     }
 
-    // Áp dụng discount từ mã nhập
-    if (appliedDiscount && appliedDiscount.promoCode !== null) {
-      if (appliedDiscount.discountType === "PERCENT") {
-        price = price * (1 - appliedDiscount.discountValue / 100);
-      } else if (appliedDiscount.discountType === "FIXED") {
-        price = price - appliedDiscount.discountValue; 
-      }
-      // Để giá không âm
-      price = Math.max(0, price);
+    // Áp dụng validAppliedDiscount
+    if (validAppliedDiscount && validAppliedDiscount.promoCode !== null) {
+      price =
+        validAppliedDiscount.discountType === "PERCENT"
+          ? price * (1 - validAppliedDiscount.discountValue / 100)
+          : price - validAppliedDiscount.discountValue;
     }
 
     return Math.max(0, price);
   };
 
+  // const calculateTicketPrice = (ticket) => {
+  //   let price = ticket.price;
+  //   const autoDiscount = ticket.discounts.find((d) => d.promoCode === null);
+  //   const appliedDiscount = promoCodes[ticket.id].appliedDiscount;
+
+  //   // Áp dụng discount có promoCode null
+  //   if (autoDiscount) {
+  //     price =
+  //       autoDiscount.discountType === "PERCENT"
+  //         ? price * (1 - autoDiscount.discountValue / 100)
+  //         : price - autoDiscount.discountValue;
+  //   }
+
+  //   // Áp dụng discount từ mã nhập
+  //   if (appliedDiscount && appliedDiscount.promoCode !== null) {
+  //     if (appliedDiscount.discountType === "PERCENT") {
+  //       price = price * (1 - appliedDiscount.discountValue / 100);
+  //     } else if (appliedDiscount.discountType === "FIXED") {
+  //       price = price - appliedDiscount.discountValue;
+  //     }
+  //     // Để giá không âm
+  //     price = Math.max(0, price);
+  //   }
+
+  //   return Math.max(0, price);
+  // };
+
+  // const calculateSummary = () => {
+  //   let subtotal = 0;
+
+  //   eventInfo.tickets.forEach((ticket) => {
+  //     const quantity = quantities[ticket.id];
+  //     if (quantity > 0) {
+  //       const discountedPrice = calculateTicketPrice(ticket);
+  //       subtotal += discountedPrice * quantity;
+  //     }
+  //   });
+
+  //   return { subtotal, total: subtotal };
+  // };
   const calculateSummary = () => {
     let subtotal = 0;
+    const ticketDetails = [];
 
     eventInfo.tickets.forEach((ticket) => {
       const quantity = quantities[ticket.id];
       if (quantity > 0) {
-        const discountedPrice = calculateTicketPrice(ticket);
-        subtotal += discountedPrice * quantity;
+        const now = new Date();
+        let remainingUses = 0;
+
+        // Tìm autoDiscount
+        const autoDiscount = ticket.discounts.find(
+          (d) =>
+            d.promoCode === null &&
+            new Date(d.discountStart) <= now &&
+            new Date(d.discountEnd) >= now &&
+            (d.maxUses === null || d.timesUsed < d.maxUses),
+        );
+        if (autoDiscount && autoDiscount.maxUses !== null) {
+          remainingUses = autoDiscount.maxUses - autoDiscount.timesUsed;
+        }
+
+        // Tìm validAppliedDiscount
+        const appliedDiscount = promoCodes[ticket.id].appliedDiscount;
+        const validAppliedDiscount =
+          appliedDiscount &&
+          new Date(appliedDiscount.discountStart) <= now &&
+          new Date(appliedDiscount.discountEnd) >= now &&
+          (appliedDiscount.maxUses === null ||
+            appliedDiscount.timesUsed < appliedDiscount.maxUses)
+            ? appliedDiscount
+            : null;
+        if (validAppliedDiscount && validAppliedDiscount.maxUses !== null) {
+          remainingUses = Math.max(
+            remainingUses,
+            validAppliedDiscount.maxUses - validAppliedDiscount.timesUsed,
+          );
+        }
+
+        // Tính số vé áp discount và không áp
+        const discountedQuantity =
+          remainingUses > 0 ? Math.min(quantity, remainingUses) : quantity;
+        const nonDiscountedQuantity = quantity - discountedQuantity;
+
+        // Tính giá vé
+        let discountedPrice = ticket.price;
+        if (discountedQuantity > 0) {
+          if (autoDiscount) {
+            discountedPrice =
+              autoDiscount.discountType === "PERCENT"
+                ? discountedPrice * (1 - autoDiscount.discountValue / 100)
+                : discountedPrice - autoDiscount.discountValue;
+          }
+          if (validAppliedDiscount && validAppliedDiscount.promoCode !== null) {
+            discountedPrice =
+              validAppliedDiscount.discountType === "PERCENT"
+                ? discountedPrice *
+                  (1 - validAppliedDiscount.discountValue / 100)
+                : discountedPrice - validAppliedDiscount.discountValue;
+          }
+        }
+        const originalPrice = ticket.price;
+
+        subtotal +=
+          discountedPrice * discountedQuantity +
+          originalPrice * nonDiscountedQuantity;
+
+        // ticketDetails dùng để hiển thị trong UI
+        ticketDetails.push({
+          id: ticket.id,
+          name: ticket.name,
+          discountedQuantity,
+          nonDiscountedQuantity,
+          discountedPrice,
+          originalPrice,
+        });
       }
     });
 
-    return { subtotal, total: subtotal };
+    return { subtotal, total: subtotal, ticketDetails };
   };
 
   const formatDate = (dateString) => {
@@ -213,7 +382,7 @@ const TicketSelectionModal = ({
     // closeModal();
   };
 
-  const handleContinue = (slug) => {
+  const handleContinue = async (slug) => {
     const hasSelectedTickets = Object.values(quantities).some((qty) => qty > 0);
     if (!hasSelectedTickets) {
       Swal.fire({
@@ -237,42 +406,111 @@ const TicketSelectionModal = ({
     const checkoutDataWithArray = {
       scheduleId: selectedSchedule.scheduleId,
       tickets: Object.entries(quantities)
-        .filter(([ticketId, quantity]) => quantity > 0)
-        .map(([ticketId, quantity]) => {
+        .filter(([_, quantity]) => quantity > 0)
+        .flatMap(([ticketId, quantity]) => {
           const ticket = eventInfo.tickets.find(
             (t) => t.id === parseInt(ticketId),
           );
+          const now = new Date();
+
+          // Tìm autoDiscount
           const autoDiscount = ticket.discounts.find(
-            (d) => d.promoCode === null,
+            (d) =>
+              d.promoCode === null &&
+              new Date(d.discountStart) <= now &&
+              new Date(d.discountEnd) >= now &&
+              (d.maxUses === null || d.timesUsed < d.maxUses),
           );
+
+          // Tìm validAppliedDiscount
           const appliedDiscount = promoCodes[ticketId].appliedDiscount;
+          const validAppliedDiscount =
+            appliedDiscount &&
+            new Date(appliedDiscount.discountStart) <= now &&
+            new Date(appliedDiscount.discountEnd) >= now &&
+            (appliedDiscount.maxUses === null ||
+              appliedDiscount.timesUsed < appliedDiscount.maxUses)
+              ? appliedDiscount
+              : null;
+
+          // Tính số lượng vé áp discount
+          let remainingUses = 0;
+          if (autoDiscount && autoDiscount.maxUses !== null) {
+            remainingUses = autoDiscount.maxUses - autoDiscount.timesUsed;
+          }
+          if (validAppliedDiscount && validAppliedDiscount.maxUses !== null) {
+            remainingUses = Math.max(
+              remainingUses,
+              validAppliedDiscount.maxUses - validAppliedDiscount.timesUsed,
+            );
+          }
+
+          const discountedQuantity =
+            remainingUses > 0 ? Math.min(quantity, remainingUses) : quantity;
+          const nonDiscountedQuantity = quantity - discountedQuantity;
+
           const discountIds = [];
-          if (autoDiscount) discountIds.push(autoDiscount.discountId);
-          if (appliedDiscount && appliedDiscount.promoCode !== null)
-            discountIds.push(appliedDiscount.discountId);
-          return {
-            ticketId: parseInt(ticketId),
-            quantity,
-            discountIds,
-          };
+          if (autoDiscount && discountedQuantity > 0)
+            discountIds.push(autoDiscount.discountId);
+          if (
+            validAppliedDiscount &&
+            validAppliedDiscount.promoCode !== null &&
+            discountedQuantity > 0
+          )
+            discountIds.push(validAppliedDiscount.discountId);
+
+          // Tạo 2 ticketItem
+          const result = [];
+          if (discountedQuantity > 0) {
+            result.push({
+              ticketId: parseInt(ticketId),
+              quantity: discountedQuantity,
+              discountIds,
+            });
+          }
+          if (nonDiscountedQuantity > 0) {
+            result.push({
+              ticketId: parseInt(ticketId),
+              quantity: nonDiscountedQuantity,
+              discountIds: [],
+            });
+          }
+          return result;
         }),
     };
 
-    navigate(`/user/${eventInfo.slug}/payment`, {
-      state: {
-        checkoutData: checkoutDataWithArray,
-        eventInfo: {
-          name: eventInfo.name,
-          imageUrl: eventInfo.imageUrl,
-          location: eventInfo.location,
-          date: selectedSchedule.date,
-          time: selectedSchedule.time,
-          tickets: eventInfo.tickets,
-        },
-      },
-    });
+    console.log("checkoutDataWithArray ", checkoutDataWithArray);
+
+    try {
+      const response = await reserveOrder(checkoutDataWithArray, token);
+      console.log("Reserve order response:", response);
+      if (
+        response &&
+        response.data &&
+        response.data.orderId &&
+        response.data.reservationTime
+      ) {
+        const { orderId } = response.data;
+        navigate(`/user/${slug}/payment/${orderId}`);
+      } else {
+        Swal.fire({
+          title: "Lỗi!",
+          text: "Dữ liệu trả về không hợp lệ. Vui lòng thử lại!",
+          icon: "error",
+          confirmButtonText: "OK",
+        });
+      }
+    } catch (error) {
+      console.error("Error reserving order:", error);
+      Swal.fire({
+        title: "Lỗi!",
+        text: "Có lỗi khi đặt vé. Vui lòng thử lại!",
+        icon: "error",
+        confirmButtonText: "OK",
+      });
+    }
   };
-  const { subtotal = 0, total = 0 } = calculateSummary();
+  const { subtotal = 0, total = 0, ticketDetails = [] } = calculateSummary();
 
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-[rgba(57,54,79,0.8)]">
@@ -321,51 +559,56 @@ const TicketSelectionModal = ({
               {eventInfo.tickets.map((ticket) => {
                 const discountedPrice = calculateTicketPrice(ticket);
                 const isNotAvailable = isTicketNotAvailable(ticket);
+                const now = new Date();
+                const hasValidPromoDiscount = ticket.discounts.some(
+                  (d) =>
+                    d.promoCode !== null &&
+                    new Date(d.discountStart) <= now &&
+                    new Date(d.discountEnd) >= now &&
+                    (d.maxUses === null || d.timesUsed < d.maxUses),
+                );
+
                 return (
                   <div
                     key={ticket.id}
                     className="mb-4 rounded-lg border border-blue-500"
                   >
                     <div>
-                      {/* Ô nhập mã khuyến mãi, chỉ hiển thị nếu vé còn bán */}
-                      {!isNotAvailable ? (
-                        ticket.discounts.some((d) => d.promoCode !== null) && (
-                          <div className="mt-2 flex w-full items-center gap-2 px-3 pt-2">
-                            <input
-                              type="text"
-                              placeholder="Nhập mã khuyến mãi"
-                              value={promoCodes[ticket.id].code}
-                              onChange={(e) =>
-                                handlePromoCodeChange(ticket.id, e.target.value)
+                      {/* Ô nhập mã khuyến mãi, chỉ hiển thị nếu vé còn bán và có discount hợp lệ */}
+                      {!isNotAvailable && hasValidPromoDiscount && (
+                        <div className="mt-2 flex w-full items-center gap-2 px-3 pt-2">
+                          <input
+                            type="text"
+                            placeholder="Nhập mã khuyến mãi"
+                            value={promoCodes[ticket.id].code}
+                            onChange={(e) =>
+                              handlePromoCodeChange(ticket.id, e.target.value)
+                            }
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                applyPromoCode(ticket.id);
                               }
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                  e.preventDefault();
-                                  applyPromoCode(ticket.id);
-                                }
-                              }}
-                              className="flex-grow rounded border border-gray-300 px-2 py-1 text-sm"
-                              disabled={!!promoCodes[ticket.id].appliedDiscount}
-                            />
-                            {promoCodes[ticket.id].appliedDiscount ? (
-                              <button
-                                onClick={() => removePromoCode(ticket.id)}
-                                className="rounded bg-red-500 px-2 py-1 text-sm text-white hover:bg-red-600"
-                              >
-                                X
-                              </button>
-                            ) : (
-                              <button
-                                onClick={() => applyPromoCode(ticket.id)}
-                                className="rounded bg-blue-500 px-3 py-1 text-sm text-white hover:bg-blue-600"
-                              >
-                                Áp dụng
-                              </button>
-                            )}
-                          </div>
-                        )
-                      ) : (
-                        <div></div>
+                            }}
+                            className="flex-grow rounded border border-gray-300 px-2 py-1 text-sm"
+                            disabled={!!promoCodes[ticket.id].appliedDiscount}
+                          />
+                          {promoCodes[ticket.id].appliedDiscount ? (
+                            <button
+                              onClick={() => removePromoCode(ticket.id)}
+                              className="rounded bg-red-500 px-2 py-1 text-sm text-white hover:bg-red-600"
+                            >
+                              X
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => applyPromoCode(ticket.id)}
+                              className="rounded bg-blue-500 px-3 py-1 text-sm text-white hover:bg-blue-600"
+                            >
+                              Áp dụng
+                            </button>
+                          )}
+                        </div>
                       )}
                     </div>
                     <div className="flex items-center justify-between px-4 py-3">
@@ -390,7 +633,11 @@ const TicketSelectionModal = ({
                       <div className="flex items-center space-x-2">
                         <button
                           onClick={() => handleQuantityChange(ticket.id, -1)}
-                          className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 text-white"
+                          className={`flex h-8 w-8 items-center justify-center rounded-full text-white ${
+                            isNotAvailable || quantities[ticket.id] === 0
+                              ? "cursor-not-allowed bg-gray-300"
+                              : "bg-orange-400"
+                          }`}
                           disabled={
                             quantities[ticket.id] === 0 || isNotAvailable
                           }
@@ -400,7 +647,11 @@ const TicketSelectionModal = ({
                         <span className="text-md">{quantities[ticket.id]}</span>
                         <button
                           onClick={() => handleQuantityChange(ticket.id, 1)}
-                          className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500 text-white"
+                          className={`flex h-8 w-8 items-center justify-center rounded-full text-white ${
+                            isNotAvailable
+                              ? "bg-gray-300 disabled:bg-gray-300"
+                              : "bg-orange-500 hover:bg-orange-600"
+                          }`}
                           disabled={isNotAvailable}
                         >
                           +
@@ -416,15 +667,18 @@ const TicketSelectionModal = ({
               <hr className="text-gray-300" />
             </div>
 
-            {/* CẬP NHẬT: Nút Check out */}
-            <div className="-mb-8">
-              <button
+            {/* Nút Check out */}
+            <div className="-mb-4">
+              {/* <button
                 className="rounded-lg bg-orange-500 px-6 py-2 text-white hover:bg-orange-600"
                 onClick={handleCheckout}
-              >
+              > 
                 Thanh toán
-              </button>
-              <button onClick={() => handleContinue(eventInfo.slug)}>
+              </button> */}
+              <button
+                className="cursor-pointer rounded-lg bg-orange-500 px-6 py-2 text-white hover:bg-orange-600"
+                onClick={() => handleContinue(eventInfo.slug)}
+              >
                 Tiếp tục
               </button>
             </div>
@@ -443,30 +697,45 @@ const TicketSelectionModal = ({
             </div>
 
             {/* Order Summary với scrollbar */}
-            <div className="max-h-[calc(90vh-120px-128px)] flex-1 overflow-y-auto">
-              <h3 className="text-md mb-3 font-medium">Tóm tắt đơn hàng</h3>
-              {eventInfo.tickets.map((ticket) => {
-                const quantity = quantities[ticket.id];
-                if (quantity === 0) return null;
-                const discountedPrice = calculateTicketPrice(ticket);
-                return (
-                  <div
-                    key={ticket.id}
-                    className="mb-2 flex justify-between text-sm"
-                  >
-                    <span>
-                      {ticket.name} x {quantity}
-                    </span>
-                    <span>
-                      {(discountedPrice * quantity).toLocaleString()} VND
-                    </span>
-                  </div>
-                );
-              })}
-              <hr className="my-3 border-gray-300" />
-              <div className="text-md flex justify-between font-medium">
-                <span>Tổng tiền</span>
-                <span>{total.toLocaleString()} VND</span>
+            <div className="max-h-full flex-1 overflow-y-auto">
+              <h3 className="mb-4 text-lg font-semibold">Tóm tắt đơn hàng</h3>
+              {ticketDetails.map((detail) => (
+                <div
+                  key={detail.id}
+                  className="mb-2 flex flex-col text-sm text-gray-700"
+                >
+                  {detail.discountedQuantity > 0 && (
+                    <div className="flex justify-between">
+                      <span>
+                        {detail.name} x {detail.discountedQuantity} (Giảm giá)
+                      </span>
+                      <span>
+                        {(
+                          detail.discountedQuantity * detail.discountedPrice
+                        ).toLocaleString()}{" "}
+                        VND
+                      </span>
+                    </div>
+                  )}
+                  {detail.nonDiscountedQuantity > 0 && (
+                    <div className="flex justify-between">
+                      <span>
+                        {detail.name} x {detail.nonDiscountedQuantity}
+                      </span>
+                      <span>
+                        {(
+                          detail.nonDiscountedQuantity * detail.originalPrice
+                        ).toLocaleString()}{" "}
+                        VND
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ))}
+              <hr className="my-4 border-gray-400" />
+              <div className="text-md flex justify-between font-semibold">
+                <span>Tổng</span>
+                <span>{total.toLocaleString()} VNĐ</span>
               </div>
             </div>
           </div>

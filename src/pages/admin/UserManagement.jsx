@@ -99,7 +99,7 @@ const UserManagement = () => {
     if (result.isConfirmed) {
       try {
         const response = await unblockUser(token, user.userId);
-        if (response.message === "User has been successfully blocked!") {
+        if (response.message === "User has been successfully unblocked!") {
           Swal.fire({
             title: "Thành công!",
             text: `Đã bỏ chặn ${user.email}.`,
@@ -138,18 +138,12 @@ const UserManagement = () => {
   return (
     <div className="py-4">
       <header className="bg-main mb-5 p-4 text-white shadow-md">
-        <h1 className="text-2xl font-bold">Dashboard Quản Trị Viên</h1>
+        <h1 className="text-2xl font-bold uppercase">Quản lý người dùng</h1>
       </header>
       <div className="rounded-xl bg-white p-4 shadow-xl sm:p-6">
-        {/* Header */}
-        <div className="mb-4 flex items-center justify-between">
-          <h1 className="text-xl font-bold text-gray-900 sm:text-2xl">
-            Quản lý người dùng
-          </h1>
-        </div>
-
         {/* Filters */}
         <div className="mb-4">
+          <span className="font-bold">Tìm kiếm</span>
           <input
             type="text"
             placeholder="Tìm kiếm theo tên hoặc email"

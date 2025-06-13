@@ -148,11 +148,35 @@ const CreateEvent = () => {
       }
     } catch (error) {
       console.error("Create/Update event error", error);
-      Swal.fire({
-        title: "Lỗi!",
-        text: `Thêm sự kiện không thành công!.`,
-        icon: "error",
-      });
+      if (error.response.data.message === "Event is already published!") {
+        Swal.fire({
+          title: "Sự kiện đã được xuất bản!",
+          text: `Không thể chỉnh sửa thông tin!`,
+          icon: "error",
+        });
+      } else if (
+        error.response.data?.data.includes("Cannot update location for event")
+      ) {
+        Swal.fire({
+          title: "Lỗi!",
+          text: "Không thể cập nhật thông tin địa điểm vì sự kiện đã có người dùng mua vé!",
+          icon: "error",
+        });
+      } else if (
+        error.response.data?.data.includes("Cannot update schedule for event")
+      ) {
+        Swal.fire({
+          title: "Lỗi!",
+          text: "Không thể cập nhật thông tin lịch trình vì sự kiện đã có người dùng mua vé!",
+          icon: "error",
+        });
+      } else {
+        Swal.fire({
+          title: "Lỗi!",
+          text: `Thêm sự kiện không thành công!.`,
+          icon: "error",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
@@ -292,6 +316,12 @@ const CreateEvent = () => {
           } else if (data.eventType === "RECURRING") {
             setEventType("recurringEvent");
           }
+
+          // kiểm tra sự kiện có vé bán chưa
+          const hasSoldTickets = data.schedules.some((schedule) =>
+            schedule.ticketSchedules.some((ticket) => ticket.sold > 0),
+          );
+          setHaveTicket(hasSoldTickets);
 
           // Đổ dữ liệu vào form
           Object.entries(fetchedData).forEach(([key, value]) => {
@@ -731,11 +761,11 @@ const CreateEvent = () => {
                     //     : ""
                     // }
                     htmlFor="recurringEvent"
-                    className={`peer-checked:ring-main-bold peer-checked:border-main-bold flex items-center space-x-3 border-2 border-gray-200 peer-checked:ring-1 ${haveTicket && eventType === "singleEvent" ? "!cursor-not-allowed" : "cursor-pointer"}`}
+                    className={`peer-checked:ring-main-bold peer-checked:border-main-bold flex items-center space-x-3 border-2 border-gray-200 peer-checked:ring-1 ${haveTicket && eventType === "singleEvent" ? "!cursor-not-allowed opacity-60" : "cursor-pointer"}`}
                   >
                     {haveTicket && eventType === "singleEvent" && (
-                      <div className="absolute -top-12 left-1/2 z-10 hidden w-full max-w-full -translate-x-1/2 transform rounded bg-black px-2 py-1 text-xs break-words whitespace-normal text-white shadow-md group-hover:block">
-                        Đã có vé
+                      <div className="absolute -top-12 left-1/2 z-10 hidden w-full max-w-full -translate-x-1/2 transform rounded border bg-white px-2 py-2 text-xs break-words whitespace-normal text-gray-800 shadow-md group-hover:block">
+                        Lịch trình hiện tại đã có vé, không thể đổi!
                       </div>
                     )}
                     <FaRegCalendarAlt size={25} className="text-main-bold" />

@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import { QRCodeCanvas } from "qrcode.react";
 import {
   getMyTicketsByOrderStatus,
@@ -64,6 +64,8 @@ const MyTickets = () => {
     }
     setLoading(false);
   };
+
+  console.log("tice ", tickets);
 
   useEffect(() => {
     fetchTickets();
@@ -269,8 +271,10 @@ const MyTickets = () => {
                   {formatDateTime(ticket.scheduleDate, ticket.startTime)}
                 </p>
                 <p className="text-sm text-gray-600">
-                  {ticket.location.address}, {ticket.location.city},{" "}
-                  {ticket.location.country}
+                  {`${ticket.location.address}`}
+                  {ticket.location.city !== "Unknown" &&
+                    `, ${ticket.location.city}`}
+                  , {ticket.location.country}
                 </p>
                 <p
                   className={
@@ -369,28 +373,54 @@ const MyTickets = () => {
             <p className="mb-2">
               <strong>Vé:</strong>
             </p>
-            <ul className="mb-4">
-              {selectedTicket.tickets.map((ticket, index) => (
-                <li key={index} className="ml-4">
-                  - {ticket.ticketName}: {ticket.quantity} vé
-                </li>
-              ))}
-            </ul>
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse">
+                <thead>
+                  <tr className="bg-main-light text-left">
+                    <th className="px-4 py-2 text-sm font-medium text-gray-900">
+                      Hạng vé
+                    </th>
+                    <th className="px-4 py-2 text-center text-sm font-medium text-gray-900">
+                      Số lượng
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {selectedTicket.tickets.map((ticket, index) => (
+                    <tr key={index} className="border-t">
+                      <td className="px-4 py-2 text-sm font-medium text-gray-900">
+                        {ticket.ticketName}
+                      </td>
+                      <td className="px-4 py-2 text-center text-sm">
+                        {ticket.quantity} vé
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
             {selectedTicket.status !== "PAID" ? (
               <button
                 onClick={closeModal}
-                className="bg-main w-full cursor-pointer rounded-full px-4 py-2 text-white"
+                className="bg-main mt-4 w-full cursor-pointer rounded-full px-4 py-2 text-white"
               >
                 Đóng
               </button>
             ) : (
-              <button
-                // onClick={closeModal}
-                onClick={handleDownload}
-                className="bg-main w-full cursor-pointer rounded-full px-4 py-2 text-white"
-              >
-                Tải xuống mã QR
-              </button>
+              <div className="">
+                <Link
+                  to={`/user/success-order?orderCode=${selectedTicket.orderId}`}
+                  className="text-xs text-blue-500 underline hover:text-blue-700"
+                >
+                  Chi tiết hơn
+                </Link>
+                <button
+                  onClick={handleDownload}
+                  className="bg-main mt-4 w-full cursor-pointer rounded-full px-4 py-2 text-white"
+                >
+                  Tải xuống mã QR
+                </button>
+              </div>
             )}
           </div>
         </div>

@@ -58,8 +58,8 @@ const SearchEvent = () => {
     if (searchQuery) params.append("q", searchQuery);
     if (location) params.append("location", location);
     params.append("isFree", free);
-    if (startDate) params.append("startDate", startDate);
-    if (endDate) params.append("endDate", endDate);
+    if (startDate && startDate.trim()) params.append("startDate", startDate);
+    if (endDate && endDate.trim()) params.append("endDate", endDate);
     if (eventStatus) params.append("eventStatus", eventStatus);
     // params.append("page", page.toString());
     params.append("page", "0");
@@ -119,6 +119,12 @@ const SearchEvent = () => {
 
   return (
     <div className="py-4">
+      {/* <div className="flex justify-center">
+        <h1 className="text-main-bold text-3xl font-bold uppercase">
+          KẾT QUẢ TÌM KIẾM: <span className="font-bold">THIÊN ĐĂNG</span>
+        </h1>
+      </div> */}
+      
       <div className="flex w-full justify-end">
         <SearchFilter onApply={handleApplyFilters} />
       </div>
@@ -152,7 +158,7 @@ const SearchEvent = () => {
                       <div
                         key={event.eventId}
                         className="relative cursor-pointer overflow-hidden rounded-lg transition-shadow duration-300 hover:shadow-lg"
-                        onClick={() => navigate(`/details/${event.slug  }`)}
+                        onClick={() => navigate(`/details/${event.slug}`)}
                       >
                         <div className="relative">
                           <img
@@ -181,12 +187,14 @@ const SearchEvent = () => {
                           </p>
                           <p className="space mt-1 flex items-center text-[15px] text-gray-600">
                             <FaMapMarkerAlt
-                              size={16}
-                              className="text-main-bold mr-1"
+                              size={25}
+                              className="text-main-bold mr-2"
                             />
                             <span>
-                              {event.eventLocation.city},{" "}
-                              {event.eventLocation.country}
+                              {`${event.eventLocation.address}`}
+                              {event.eventLocation.city !== "Unknown" &&
+                                `, ${event.eventLocation.city}`}
+                              , {event.eventLocation.country}
                             </span>
                           </p>
                         </div>

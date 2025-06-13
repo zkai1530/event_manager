@@ -113,7 +113,7 @@ const DisbursementManagement = () => {
     <div className="min-h-screen rounded-xl p-2">
       {/* Header */}
       <header className="bg-main mb-5 p-4 text-white shadow-sm">
-        <h1 className="text-2xl font-bold">Tổng quan giải ngân</h1>
+        <h1 className="text-2xl font-bold uppercase">TỔNG quan giải ngân</h1>
       </header>
 
       {/* Danh sách sự kiện */}

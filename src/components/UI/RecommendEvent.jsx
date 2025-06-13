@@ -142,7 +142,7 @@ const RecommendEvent = ({ userId, eventId }) => {
                   <p className="space mt-1 flex items-center text-[15px] text-gray-600">
                     <FaMapMarkerAlt size={16} className="text-main-bold mr-1" />
                     <span>
-                      {event.eventLocation.city}, {event.eventLocation.country}
+                      {event.eventLocation.address}, {event.eventLocation.country}
                     </span>
                   </p>
                 </div>

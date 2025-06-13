@@ -15,7 +15,7 @@ const UserRoutes = () => {
         <Route path="favorite-event" element={<FavoriteEvent />} />
         <Route path="account" element={<AccountInfo />} />
         <Route path="success-order" element={<SuccessOrder />} />
-        <Route path=":slug/payment" element={<PaymentPage />} />
+        <Route path=":slug/payment/:orderId" element={<PaymentPage />} />
       </Route>
     </Routes>
   );

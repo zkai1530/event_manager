@@ -3,15 +3,17 @@ import {
   logoutUser,
   loginWithGoogleCode,
   introspect,
+  loginNormal,
 } from "services/user/userService";
 
 // Tạo context với giá trị mặc định khớp với loginWithGoogle nhận code
 const AuthContext = createContext({
   user: null,
   loginWithGoogle: (code) => Promise.resolve(), // Định nghĩa hàm nhận code
+  login: (email, password) => Promise.resolve(),
   logout: () => {},
   role: null,
-  setUser: (user) => {}, 
+  setUser: (user) => {},
   setRole: (role) => {},
 });
 
@@ -35,6 +37,31 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (error) {
       console.error("loginWithGoogle", error);
+    }
+  };
+
+  const login = async (email, password) => {
+    console.log(email, password)
+    try {
+      const response = await loginNormal(email, password);
+      if (response.message === "Log in successfully!") {
+        const token = response.data;
+        localStorage.setItem("token", token);
+        setUser({ token });
+        const introspectData = await introspect(token);
+        setRole(introspectData.data.valid ? introspectData.data.role : null);
+        console.log("role ne ", introspectData.data.role)
+        if (!introspectData.data.valid) {
+          setUser(null);
+          localStorage.removeItem("token");
+          throw new Error("Invalid token after login");
+        }
+      } else {
+        throw new Error("Login failed");
+      }
+    } catch (error) {
+      console.error("Login failed", error.response?.data || error.message);
+      throw error;
     }
   };
 
@@ -97,7 +124,7 @@ export const AuthProvider = ({ children }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, loginWithGoogle, logout, role, setUser, setRole }}
+      value={{ user, loginWithGoogle, login, logout, role, setUser, setRole }}
     >
       {children}
     </AuthContext.Provider>

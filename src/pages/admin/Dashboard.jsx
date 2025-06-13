@@ -227,7 +227,7 @@ const Dashboard = () => {
     <div className="min-h-screen">
       {/* Header */}
       <header className="bg-main p-4 text-white shadow-md">
-        <h1 className="text-2xl font-bold">Dashboard Quản Trị Viên</h1>
+        <h1 className="text-2xl font-bold uppercase">Dashboard</h1>
       </header>
 
       {/* Card Content */}

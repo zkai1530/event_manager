@@ -23,8 +23,8 @@ import { NavUser } from "./nav-user";
 // Menu items.
 const data = {
   user: {
-    name: "zkai",
-    email: "m@example.com",
+    name: "Ly Khanh",
+    email: "lykhanh2303@gmail.com",
     avatar: "/avatars/shadcn.jpg",
   },
   items: [

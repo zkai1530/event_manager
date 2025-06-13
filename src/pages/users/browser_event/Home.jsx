@@ -327,9 +327,10 @@ export default function HomePage() {
                     </span>
                   )} */}
                   <button
-                    onClick={(e) =>
-                      handleHeartClick(e, event.imageUrl, event.eventId)
-                    }
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleHeartClick(e, event.imageUrl, event.eventId);
+                    }}
                     className="bg-opacity-80 hover:bg-opacity-100 absolute top-3 right-3 rounded-full bg-white p-1.5 text-gray-600 transition-colors hover:scale-110 hover:text-red-500"
                   >
                     <Heart className="h-5 w-5" />
@@ -407,9 +408,10 @@ export default function HomePage() {
                         </span>
                       )} */}
                       <button
-                        onClick={(e) =>
-                          handleHeartClick(e, event.imageUrl, event.eventId)
-                        }
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleHeartClick(e, event.imageUrl, event.eventId);
+                        }}
                         className="bg-opacity-80 hover:bg-opacity-100 absolute top-3 right-3 rounded-full bg-white p-1.5 text-gray-600 transition-colors hover:scale-110 hover:text-red-500"
                       >
                         <Heart className="h-5 w-5" />
@@ -432,7 +434,7 @@ export default function HomePage() {
                       </div> */}
                       <div className="flex items-center justify-between">
                         <span className="font-bold text-blue-600">
-                          {FormatPrice(event.minPrice)}đ
+                          {FormatPrice(event.minPrice)}
                         </span>
                         <button className="rounded bg-blue-100 px-3 py-1 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-600 hover:text-white">
                           Chi tiết
@@ -519,9 +521,10 @@ export default function HomePage() {
                         </span>
                       )}
                       <button
-                        onClick={(e) =>
-                          handleHeartClick(e, event.imageUrl, event.eventId)
-                        }
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleHeartClick(e, event.imageUrl, event.eventId);
+                        }}
                         className="bg-opacity-80 hover:bg-opacity-100 absolute top-3 right-3 rounded-full bg-white p-1.5 text-gray-600 transition-colors hover:scale-110 hover:text-red-500"
                       >
                         <Heart className="h-5 w-5" />
@@ -540,7 +543,7 @@ export default function HomePage() {
                       </div>
                       <div className="flex items-center justify-between">
                         <span className="font-bold text-blue-600">
-                          {FormatPrice(event.minPrice)}đ
+                          {FormatPrice(event.minPrice)}
                         </span>
                         <button className="rounded bg-blue-100 px-3 py-1 text-sm font-medium text-blue-600 transition-colors hover:bg-blue-600 hover:text-white">
                           Chi tiết

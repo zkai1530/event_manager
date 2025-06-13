@@ -334,7 +334,12 @@ const EventDetails = () => {
                 <div className="flex w-full flex-col">
                   <div className="mb-2 flex items-center space-x-3">
                     <FaMapMarkerAlt size={22} className="text-white" />
-                    <p className="text-main text-sm font-bold">{`${eventData.eventLocation.address}, ${eventData.eventLocation.city}, ${eventData.eventLocation.country}`}</p>
+                    <p className="text-main text-sm font-bold">
+                      {`${eventData.eventLocation.address}`}
+                      {eventData.eventLocation.city !== "Unknown" &&
+                        `, ${eventData.eventLocation.city}`}
+                      , {eventData.eventLocation.country}
+                    </p>
                   </div>
                   <div className="flex items-center space-x-3">
                     <MdTimer size={20} className="text-white" />
@@ -715,6 +720,9 @@ const EventDetails = () => {
                           name: ticket.name,
                           price: ticket.price,
                           saleEnd: ticket.saleEnd,
+                          sold: ticket.sold,
+                          availableQuantity: ticket.availableQuantity, 
+                          reservedQuantity: ticket.reservedQuantity, 
                           discounts: ticket.discounts,
                         }),
                       ),
@@ -736,10 +744,7 @@ const EventDetails = () => {
             <div className="border-main-bold flex-grow border-t-4"></div>
           </div>
 
-          <RecommendEvent
-            userId="09b744fa-11d9-4ef0-9b10-f8e4289734f9"
-            eventId={null}
-          />
+          <RecommendEvent eventId={eventId} userId={null} />
 
           <div className="my-10 flex items-center">
             <div className="border-main-bold flex-grow border-t-4"></div>
@@ -750,8 +755,8 @@ const EventDetails = () => {
           </div>
 
           <RecommendEvent
-            eventId={eventId}
-            userId={null}
+            userId="09b744fa-11d9-4ef0-9b10-f8e4289734f9"
+            eventId={null}
           />
         </div>
       )}

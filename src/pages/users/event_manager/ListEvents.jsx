@@ -1,7 +1,13 @@
 import Loading from "@/components/ui/Loading";
 import { useEffect, useState } from "react";
+import { AiFillEdit } from "react-icons/ai";
+import { FaBan } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
-import { getEventListInfoByUser } from "services/user/eventService";
+import {
+  deleteEvent,
+  getEventListInfoByUser,
+} from "services/user/eventService";
+import Swal from "sweetalert2";
 import { formatSchedule } from "utils/formatSchedule";
 
 const ListEvents = () => {
@@ -19,9 +25,9 @@ const ListEvents = () => {
     return status === "all" ? "all" : status;
   });
 
-  useEffect(() => {
+  const loadEventsData = async () => {
     setIsLoading(true);
-    getEventListInfoByUser(token, page, timeFilter) 
+    getEventListInfoByUser(token, page, timeFilter)
       .then((data) => {
         setEvents(data.content);
         setTotalPages(data.totalPages);
@@ -33,13 +39,86 @@ const ListEvents = () => {
       .finally(() => {
         setIsLoading(false);
       });
+  };
+
+  useEffect(() => {
+    loadEventsData();
   }, [token, page, timeFilter]);
   console.log("aa", events);
+
+  const handleDeleteEvent = async (eventId, eventName) => {
+    const result = await Swal.fire({
+      title: "Xác nhận xóa",
+      text: `Bạn có chắc chắn muốn xóa sự kiện "${eventName}"?`,
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Xóa",
+      cancelButtonText: "Hủy",
+      confirmButtonColor: "#e74c3c",
+    });
+
+    if (result.isConfirmed) {
+      try {
+        setIsLoading(true);
+        const data = await deleteEvent(eventId, token);
+        if (data.message === "Delete event was successfully!") {
+          Swal.fire({
+            title: "Xóa sự kiện thành công!",
+            text: `Sự kiện "${eventName}" đã được xóa.`,
+            icon: "success",
+          });
+
+          await loadEventsData();
+        } else {
+          Swal.fire({
+            title: "Lỗi!",
+            text: `Xóa sự kiện không thành công!`,
+            icon: "error",
+          });
+        }
+      } catch (error) {
+        console.error("Delete event error", error);
+        if (
+          error.response.data?.data.includes(
+            "This event has tickets that have already been sold for the schedule on",
+          )
+        ) {
+          const message = error.response.data.data;
+
+          // Dùng regex để tách ngày, giờ
+          const match = message.match(
+            /Schedule on (\d{4}-\d{2}-\d{2}) starting at (\d{2}:\d{2})/,
+          );
+
+          let msg = "Không thể xoá vì sự kiện này đã có người mua vé.";
+          // if (match) {
+          //   const [_, dateStr, timeStr] = match;
+          //   const [year, month, day] = dateStr.split("-");
+          //   msg = `Không thể gỡ lịch trình ngày ${day}-${month}-${year} bắt đầu lúc ${timeStr} vì đã có người dùng mua vé này.`;
+          // }
+
+          Swal.fire({
+            title: "Lỗi!",
+            text: msg,
+            icon: "error",
+          });
+        } else {
+          Swal.fire({
+            title: "Lỗi!",
+            text: `Xóa sự kiện không thành công!`,
+            icon: "error",
+          });
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    }
+  };
 
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <h1 className="font-logo mb-4 text-6xl font-[900] text-main-bold">
+      <h1 className="font-logo text-main-bold mb-4 text-6xl font-[900]">
         Events
       </h1>
 
@@ -67,7 +146,7 @@ const ListEvents = () => {
               ></path>
             </svg>
           </div>
-          <button className="flex items-center space-x-2 rounded-lg bg-blue-600 px-4 py-2 text-white">
+          {/* <button className="flex items-center space-x-2 rounded-lg bg-blue-600 px-4 py-2 text-white">
             <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
               <path d="M4 4h12v12H4z" />
               <path
@@ -94,7 +173,7 @@ const ListEvents = () => {
               />
             </svg>
             <span>Dạng lịch</span>
-          </button>
+          </button> */}
           <div className="">
             <select
               value={timeFilter}
@@ -111,13 +190,10 @@ const ListEvents = () => {
             </select>
           </div>
         </div>
-        <button className="rounded-lg bg-orange-600 px-4 py-2 text-white">
-          Tạo sự kiện
-        </button>
       </div>
 
       {/* List Events */}
-      <div className="flex flex-col">
+      <div className="-mt-10 flex flex-col">
         <div className="-m-1.5 overflow-x-auto">
           <div className="inline-block min-w-full p-1.5 align-middle">
             <div className="overflow-visible">
@@ -146,7 +222,7 @@ const ListEvents = () => {
                       scope="col"
                       className="w-[15%] px-6 py-3 text-end text-xs font-medium text-white uppercase"
                     >
-                      Action
+                      Thao tác
                     </th>
                   </tr>
                 </thead>
@@ -201,12 +277,25 @@ const ListEvents = () => {
                           <td className="px-6 py-4 text-sm whitespace-nowrap text-gray-800">
                             {event.isPublished ? "Đã ra mắt" : "Phác thảo"}
                           </td>
-                          <td className="px-6 py-4 text-end text-sm font-medium whitespace-nowrap">
+                          <td className="space-x-2 text-end text-sm font-medium">
                             <button
                               type="button"
-                              className="inline-flex items-center gap-x-2 rounded-lg border border-transparent text-sm font-semibold text-blue-600 hover:text-blue-800"
+                              // onClick={() => {
+                              //   handlePromotionSelect(promotion);
+                              //   setIsOpen(true);
+                              // }}
+                              className="cursor-pointer rounded-sm bg-blue-100 p-2"
                             >
-                              Edit
+                              <AiFillEdit size={18} className="text-blue-500" />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteEvent(event.eventId, event.name);
+                              }}
+                              className="cursor-pointer rounded-sm bg-red-100 p-2"
+                            >
+                              <FaBan size={18} className="text-red-500" />
                             </button>
                           </td>
                         </tr>

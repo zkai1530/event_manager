@@ -28,8 +28,10 @@ export const searchUser = async (token, keyword, page) => {
 };
 
 export const blockUser = async (token, userId) => {
+  console.log(token)
+  console.log(userId)
   try {
-    const response = await axios.patch(`user/block/${userId}`, {
+    const response = await axios.patch(`user/block/${userId}`, {},{
       headers: { Authorization: `Bearer ${token}` },
     });
     return response.data;
@@ -41,10 +43,10 @@ export const blockUser = async (token, userId) => {
 
 export const unblockUser = async (token, userId) => {
   try {
-    const response = await axios.patch(`user/unblock/${userId}`, {
+    const response = await axios.patch(`user/unblock/${userId}`, {}, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    return response.data.data;
+    return response.data;
   } catch (error) {
     console.error("unblockUser", error.response?.data || error.message);
     throw error;

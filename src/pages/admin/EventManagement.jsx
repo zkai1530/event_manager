@@ -151,7 +151,7 @@ const EventManagement = () => {
     <div className="">
       <div className="mb-8">
         <header className="bg-main p-4 text-white shadow-md">
-          <h1 className="text-2xl font-bold">Dashboard Quản Trị Viên</h1>
+          <h1 className="text-2xl font-bold uppercase">Quản lý sự kiện</h1>
         </header>
       </div>
       <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">

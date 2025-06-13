@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { FaFilter } from "react-icons/fa";
+import { DateRangePicker } from "rsuite";
+import "rsuite/dist/rsuite-no-reset.min.css";
 
 const SearchFilter = ({ onApply }) => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
@@ -8,8 +10,7 @@ const SearchFilter = ({ onApply }) => {
   const [customLocationValue, setCustomLocationValue] = useState("");
   const [price, setPrice] = useState("not_free"); // Mặc định không miễn phí
   const [eventStatus, setEventStatus] = useState("all"); // Mặc định Tất cả sự kiện
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [dateRange, setDateRange] = useState([null, null]);
 
   const toggleFilter = (e) => {
     e.preventDefault();
@@ -31,18 +32,30 @@ const SearchFilter = ({ onApply }) => {
     setEventStatus(e.target.value);
   };
 
-  const handleStartDateChange = (e) => {
-    setStartDate(e.target.value);
-  };
-
-  const handleEndDateChange = (e) => {
-    setEndDate(e.target.value);
+  const handleDateRangeChange = (value) => {
+    console.log("handleDateRangeChange:", value);
+    setDateRange(value || [null, null]);
   };
 
   const applyFilters = () => {
+    console.log("dateRange before apply:", dateRange);
+    const formatDateToLocal = (date) => {
+      if (!date) return "";
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    };
+
+    const startDate = dateRange[0] ? formatDateToLocal(dateRange[0]) : "";
+    const endDate = dateRange[1] ? formatDateToLocal(dateRange[1]) : "";
+
+    console.log("Start Date:", startDate);
+    console.log("End Date:", endDate);
+
     const filterData = {
       location: isCustomLocation ? customLocationValue : location,
-      free: price === "free", // Trả về true/false
+      free: price === "free",
       eventStatus,
       startDate,
       endDate,
@@ -57,8 +70,7 @@ const SearchFilter = ({ onApply }) => {
     setCustomLocationValue("");
     setPrice("not_free");
     setEventStatus("all");
-    setStartDate("");
-    setEndDate("");
+    setDateRange([null, null]);
   };
 
   return (
@@ -75,7 +87,7 @@ const SearchFilter = ({ onApply }) => {
           </div>
         </button>
         {isFilterOpen && (
-          <div className="absolute right-0 z-10 mt-2 w-100 rounded-lg bg-white p-4 shadow-2xl">
+          <div className="absolute right-0 z-10 mt-2 w-100 overflow-x-hidden rounded-lg bg-white p-4 shadow-2xl">
             <div className="mb-1 flex items-center justify-between">
               <h3 className="text-lg font-semibold">Vị trí</h3>
               <button onClick={toggleFilter}>
@@ -178,17 +190,27 @@ const SearchFilter = ({ onApply }) => {
 
             <h3 className="mt-1 mb-2 text-lg font-semibold">Khoảng ngày</h3>
             <div className="space-y-2">
-              <input
-                type="date"
-                value={startDate}
-                onChange={handleStartDateChange}
-                className="focus:ring-main w-full rounded-lg border px-4 py-1 outline-none focus:border-none focus:ring-2"
-              />
-              <input
-                type="date"
-                value={endDate}
-                onChange={handleEndDateChange}
-                className="focus:ring-main w-full rounded-lg border px-4 py-1 outline-none focus:border-none focus:ring-2"
+              <DateRangePicker
+                onChange={(value) => {
+                  console.log("DateRangePicker selected:", value);
+                  handleDateRangeChange(value);
+                }}
+                format="dd/MM/yyyy"
+                placeholder="Chọn khoảng ngày"
+                showOneCalendar={false}
+                ranges={[]}
+                className="w-full"
+                placement="auto"
+                onOpen={() => {
+                  setTimeout(() => {
+                    const popup = document.querySelector(".rs-picker-popup");
+                    if (popup) {
+                      popup.style.left = "400px";
+                      popup.style.top = "180px";
+                      popup.style.zIndex = "9999";
+                    }
+                  }, 50); 
+                }}
               />
             </div>
 
