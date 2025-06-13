@@ -98,15 +98,15 @@ public class DiscountServiceImpl implements DiscountService {
             }
         }
 
-        for (Ticket ticket : tickets) {
-            LocalDateTime saleEnd = ticket.getSaleEnd();
-            if (request.getDiscountEnd() != null && saleEnd != null && !request.getDiscountEnd().isBefore(saleEnd)
-                    && !request.getDiscountEnd().isEqual(saleEnd)) {
-                throw new IllegalArgumentException(
-                        "Discount end time is invalid for ticket " + ticket.getName() + " with sale end at "
-                                + saleEnd);
-            }
-        }
+        // for (Ticket ticket : tickets) {
+        //     LocalDateTime saleEnd = ticket.getSaleEnd();
+        //     if (request.getDiscountEnd() != null && saleEnd != null && !request.getDiscountEnd().isBefore(saleEnd)
+        //             && !request.getDiscountEnd().isEqual(saleEnd)) {
+        //         throw new IllegalArgumentException(
+        //                 "Discount end time is invalid for ticket " + ticket.getName() + " with sale end at "
+        //                         + saleEnd);
+        //     }
+        // }
 
         log.info("type" + request.getDiscountType());
         // add discount to ticket 
@@ -172,17 +172,17 @@ public class DiscountServiceImpl implements DiscountService {
             }
         }
 
-        if (request.getDiscountEnd() != null) {
-            for (Ticket ticket : ticketsRequest) {
-                LocalDateTime saleEnd = ticket.getSaleEnd();
-                if (saleEnd != null && !request.getDiscountEnd().isBefore(saleEnd)
-                        && !request.getDiscountEnd().isEqual(saleEnd)) {
-                    throw new IllegalArgumentException(
-                            "Discount end time is invalid for ticket " + ticket.getTicketId() + " with sale end at "
-                                    + saleEnd);
-                }
-            }
-        }
+        // if (request.getDiscountEnd() != null) {
+        //     for (Ticket ticket : ticketsRequest) {
+        //         LocalDateTime saleEnd = ticket.getSaleEnd();
+        //         if (saleEnd != null && !request.getDiscountEnd().isBefore(saleEnd)
+        //                 && !request.getDiscountEnd().isEqual(saleEnd)) {
+        //             throw new IllegalArgumentException(
+        //                     "Discount end time is invalid for ticket " + ticket.getTicketId() + " with sale end at "
+        //                             + saleEnd);
+        //         }
+        //     }
+        // }
 
         // update Discount 
 

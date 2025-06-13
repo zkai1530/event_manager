@@ -50,6 +50,20 @@ public class TicketServiceImpl implements TicketService {
             throw new IllegalArgumentException("One or many schedules invalid!");
         }
 
+        // Check if saleStart is before the earliest schedule start
+        if (request.getSaleStart() != null) {
+            LocalDateTime minScheduleStart = schedules.stream()
+                    .map(schedule -> LocalDateTime.of(schedule.getScheduleDate(), schedule.getStartTime()))
+                    .min(LocalDateTime::compareTo)
+                    .orElseThrow(() -> new IllegalArgumentException("No schedules provided"));
+                    
+            if (!request.getSaleStart().isBefore(minScheduleStart)) {
+                throw new IllegalArgumentException(
+                        "Sale start time is invalid for schedule on " + minScheduleStart.toLocalDate() +
+                                " starting at " + minScheduleStart.toLocalTime());
+            }
+        }
+
         // Check if the user is the owner of the event
         for (EventSchedule schedule : schedules) {
             String eventOwnerId = schedule.getEvent().getUser().getUserId();
@@ -64,13 +78,13 @@ public class TicketServiceImpl implements TicketService {
             }
 
             // check endTime is before scheduleDate of event
-            LocalDate scheduleDate = schedule.getScheduleDate();
-            LocalTime startTime = schedule.getStartTime();
-            LocalDateTime scheduleStart = LocalDateTime.of(scheduleDate, startTime);
-            if (!request.getSaleEnd().isBefore(scheduleStart)) {
-                throw new IllegalArgumentException(
-                        "Sale end time is invalid for schedule on " + scheduleDate + " starting at " + startTime);
-            }
+            // LocalDate scheduleDate = schedule.getScheduleDate();
+            // LocalTime startTime = schedule.getStartTime();
+            // LocalDateTime scheduleStart = LocalDateTime.of(scheduleDate, startTime);
+            // if (!request.getSaleEnd().isBefore(scheduleStart)) {
+            //     throw new IllegalArgumentException(
+            //             "Sale end time is invalid for schedule on " + scheduleDate + " starting at " + startTime);
+            // }
         }
 
         Ticket ticket = Ticket.builder()
@@ -139,15 +153,31 @@ public class TicketServiceImpl implements TicketService {
             }
         }
 
-        if (request.getSaleEnd() != null) {
-            for (EventSchedule schedule : schedulesRequest) {
-                LocalDate scheduleDate = schedule.getScheduleDate();
-                LocalTime startTime = schedule.getStartTime();
-                LocalDateTime scheduleStart = LocalDateTime.of(scheduleDate, startTime);
-                if (!request.getSaleEnd().isBefore(scheduleStart)) {
-                    throw new IllegalArgumentException(
-                            "Sale end time is invalid for schedule on " + scheduleDate + " starting at " + startTime);
-                }
+        // if (request.getSaleEnd() != null) {
+        // for (EventSchedule schedule : schedulesRequest) {
+        // LocalDate scheduleDate = schedule.getScheduleDate();
+        // LocalTime startTime = schedule.getStartTime();
+        // LocalDateTime scheduleStart = LocalDateTime.of(scheduleDate, startTime);
+        // if (!request.getSaleEnd().isBefore(scheduleStart)) {
+        // throw new IllegalArgumentException(
+        // "Sale end time is invalid for schedule on " + scheduleDate + " starting at "
+        // + startTime);
+        // }
+        // }
+        // }
+
+        // Check if saleStart is before the earliest schedule start
+        if (request.getSaleStart() != null) {
+            // Find the earliest schedule start time
+            LocalDateTime minScheduleStart = schedulesRequest.stream()
+                    .map(schedule -> LocalDateTime.of(schedule.getScheduleDate(), schedule.getStartTime()))
+                    .min(LocalDateTime::compareTo)
+                    .orElseThrow(() -> new IllegalArgumentException("No schedules provided"));
+
+            if (!request.getSaleStart().isBefore(minScheduleStart)) {
+                throw new IllegalArgumentException(
+                        "Sale start time is invalid for schedule on " + minScheduleStart.toLocalDate() + " starting at "
+                                + minScheduleStart.toLocalTime());
             }
         }
 

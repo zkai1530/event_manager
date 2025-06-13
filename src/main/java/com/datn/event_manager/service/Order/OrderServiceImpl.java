@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -378,6 +379,7 @@ public class OrderServiceImpl implements OrderService {
         BigDecimal totalPrice = BigDecimal.ZERO;
         List<OrderTicket> orderTickets = new ArrayList<>();
         Set<Long> usedDiscountIds = new HashSet<>();
+        List<Pair<TicketSchedule, Integer>> schedulesToReserve = new ArrayList<>();
 
         for (TicketItem ticketItem : orderRequest.getTickets()) {
             Ticket ticket = ticketRepository.findById(ticketItem.getTicketId())
@@ -397,8 +399,9 @@ public class OrderServiceImpl implements OrderService {
                 throw new AppException(ErrorCode.TICKET_QUANTITY_EXCEEDS_AVAILABLE);
             }
 
-            ticketSchedule.setReservedQuantity(ticketSchedule.getReservedQuantity() + ticketItem.getQuantity());
-            ticketScheduleRepository.save(ticketSchedule);
+            // ticketSchedule.setReservedQuantity(ticketSchedule.getReservedQuantity() + ticketItem.getQuantity());
+            // ticketScheduleRepository.save(ticketSchedule);
+            schedulesToReserve.add(Pair.of(ticketSchedule, ticketItem.getQuantity()));
 
             BigDecimal ticketPrice = ticket.getPrice();
 
@@ -467,6 +470,13 @@ public class OrderServiceImpl implements OrderService {
 
             orderTickets.add(orderTicket);
         }
+
+        for (Pair<TicketSchedule, Integer> pair : schedulesToReserve) {
+            TicketSchedule ts = pair.getLeft();
+            Integer qty = pair.getRight();
+            ts.setReservedQuantity(ts.getReservedQuantity() + qty);
+        }
+        ticketScheduleRepository.saveAll(schedulesToReserve.stream().map(Pair::getLeft).toList());
 
         Order order = Order.builder()
                 .user(user)
