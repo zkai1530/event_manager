@@ -82,7 +82,10 @@ public interface EventRepository extends JpaRepository<Event, Long> {
                         Pageable pageable);
 
         // use for get event by user
-        Page<Event> findAllPagedByUser(User user, Pageable pageable);
+        // Page<Event> findAllPagedByUser(User user, Pageable pageable);
+
+        @Query("SELECT e FROM Event e WHERE e.user = :user")
+        List<Event> findAllByUser(@Param("user") User user);
 
         // @Query("SELECT DISTINCT e FROM Event e " +
         // "LEFT JOIN FETCH e.schedules s " +

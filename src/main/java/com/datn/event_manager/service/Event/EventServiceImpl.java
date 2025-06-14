@@ -451,15 +451,13 @@ public class EventServiceImpl implements EventService {
     @Override
     public Page<EventByUserResponse> getEventsByUser(String timeFilter, Pageable pageable) {
         User user = authenticationService.getUserFromToken();
+        String newTimeFilter = (timeFilter == null || timeFilter.trim().isEmpty()) ? "all" : timeFilter.toLowerCase();
+        LocalDateTime now = LocalDateTime.now(ZoneId.of("Asia/Ho_Chi_Minh"));
 
-        final String newTimeFilter = (timeFilter == null || timeFilter.trim().isEmpty()) ? "all"
-                : timeFilter.toLowerCase();
-        LocalDateTime now = LocalDateTime.now();
+        List<Event> allEvents = eventRepository.findAllByUser(user);
+        log.info("User {}: Found {} total events", user.getUserId(), allEvents.size());
 
-        Page<Event> events = eventRepository.findAllPagedByUser(user, pageable);
-
-        // Lọc dựa trên timeFilter và recurring schedules
-        List<Event> filteredEvents = events.getContent().stream()
+        List<Event> filteredEvents = allEvents.stream()
                 .filter(event -> {
                     if (event.getSchedules() == null || event.getSchedules().isEmpty()) {
                         return "upcoming".equals(newTimeFilter) || "all".equals(newTimeFilter);
@@ -476,14 +474,20 @@ public class EventServiceImpl implements EventService {
                         return eventTimes.stream().anyMatch(time -> time.isAfter(now));
                     } else if ("past".equals(newTimeFilter)) {
                         return eventTimes.stream().allMatch(time -> time.isBefore(now));
-                    } else { // all
+                    } else {
                         return true;
                     }
                 })
                 .collect(Collectors.toList());
+        log.info("User {}: Filtered {} events for timeFilter {}", user.getUserId(), filteredEvents.size(), newTimeFilter);
 
-        // event when filtered
-        List<EventByUserResponse> responses = filteredEvents.stream()
+        int pageSize = pageable.getPageSize();
+        int pageNumber = pageable.getPageNumber();
+        int start = pageNumber * pageSize;
+        int end = Math.min(start + pageSize, filteredEvents.size());
+        List<Event> pagedEvents = filteredEvents.subList(start, end);
+
+        List<EventByUserResponse> responses = pagedEvents.stream()
                 .map(event -> {
                     int totalTicketsSold = eventRepository.getTotalTicketsSold(event.getEventId());
                     EventByUserResponse response = eventMapper.toEventByUserResponse(event);
@@ -492,7 +496,7 @@ public class EventServiceImpl implements EventService {
                 })
                 .collect(Collectors.toList());
 
-        return new PageImpl<>(responses, pageable, events.getTotalElements());
+        return new PageImpl<>(responses, pageable, filteredEvents.size());
     }
 
     @Override
