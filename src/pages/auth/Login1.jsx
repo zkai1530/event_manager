@@ -14,7 +14,10 @@ const Login1 = () => {
   const navigate = useNavigate();
 
   const handleGoogleLogin = () => {
-    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=1080231574783-oa36iru2q2ibfi659npnui31allll63n.apps.googleusercontent.com&redirect_uri=http://localhost:5173/callback&scope=email profile`;
+    const redirectUri = `${window.location.origin}/callback`;
+    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=1080231574783-oa36iru2q2ibfi659npnui31allll63n.apps.googleusercontent.com&redirect_uri=${encodeURIComponent(
+      redirectUri,
+    )}&scope=email profile`;
     window.location.href = googleAuthUrl;
   };
 

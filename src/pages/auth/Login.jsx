@@ -6,9 +6,11 @@ import { Link, useNavigate } from "react-router-dom";
 const Login = () => {
   const inputRef = useRef(null);
   const handleGoogleLogin = () => {
-    // URL Google OAuth to take code
-    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=1080231574783-oa36iru2q2ibfi659npnui31allll63n.apps.googleusercontent.com&redirect_uri=http://localhost:5173/callback&scope=email profile`;
-    window.location.href = googleAuthUrl;
+    const redirectUri = `${window.location.origin}/callback`;
+        const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?response_type=code&client_id=1080231574783-oa36iru2q2ibfi659npnui31allll63n.apps.googleusercontent.com&redirect_uri=${encodeURIComponent(
+          redirectUri,
+        )}&scope=email profile`;
+        window.location.href = googleAuthUrl;
   };
 
   // when callback saved the code, callback -> login (call loginWithGoogle from authContext (saved token in localStorage)) -> navigate /home
