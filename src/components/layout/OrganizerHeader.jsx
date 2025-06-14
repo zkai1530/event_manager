@@ -1,12 +1,25 @@
-import { useRef, useState } from "react";
+import { useAuth } from "@/context/AuthContext";
+import { getUserInfo } from "@/services/user/userService";
+import { useEffect, useRef, useState } from "react";
 import {FaPlus, FaRegHeart } from "react-icons/fa";
 import { GrNotification } from "react-icons/gr";
 import { Link, useNavigate } from "react-router-dom";
 
 const OrganizerHeader = () => {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const { logout } = useAuth();
   const userInfoRef = useRef(null);
   const navigate = useNavigate();
+  const token = localStorage.getItem("token");
+  const [avatar, setAvatar] = useState(null);
+
+  useEffect(() => {
+    if (!avatar && token) {
+      getUserInfo(token)
+        .then((data) => setAvatar(data.avatarUrl))
+        .catch((error) => console.error("getUserInfo", error));
+    }
+  }, [token]);
 
   const toggleDropdown = () => {
     setDropdownOpen((prev) => !prev);
@@ -15,7 +28,7 @@ const OrganizerHeader = () => {
   const dropdownItems = [
     { id: 1, label: "Khám phá sự kiện", link: "/" },
     { id: 2, label: "Tài khoản", link: "/settings" },
-    { id: 3, label: "Đăng xuất", link: "/logout" },
+    { id: 3, label: "Đăng xuất", link: "#", onClick: () => logout() },
   ];
 
   return (
@@ -67,8 +80,16 @@ const OrganizerHeader = () => {
             onClick={toggleDropdown}
             ref={userInfoRef}
           >
-            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-300">
-              <span className="text-white">K</span>
+            <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-gray-300">
+              {avatar ? (
+                <img
+                  src={avatar}
+                  alt="User Avatar"
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <span className="text-white">K</span>
+              )}
             </div>
             <span className="text-textDark hidden lg:block">Tài khoản</span>
 
@@ -77,12 +98,21 @@ const OrganizerHeader = () => {
                 <ul className="py-1">
                   {dropdownItems.map((item) => (
                     <li key={item.id}>
-                      <Link
-                        to={item.link}
-                        className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
-                      >
-                        {item.label}
-                      </Link>
+                      {item.onClick ? (
+                        <button
+                          onClick={item.onClick}
+                          className="block w-full cursor-pointer px-4 py-2 text-left text-gray-700 hover:bg-gray-100"
+                        >
+                          {item.label}
+                        </button>
+                      ) : (
+                        <Link
+                          to={item.link}
+                          className="block px-4 py-2 text-gray-700 hover:bg-gray-100"
+                        >
+                          {item.label}
+                        </Link>
+                      )}
                     </li>
                   ))}
                 </ul>

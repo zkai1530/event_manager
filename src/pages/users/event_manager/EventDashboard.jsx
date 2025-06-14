@@ -156,9 +156,17 @@ const EventDashboard = () => {
   const daysToDisplay = getDaysToDisplay();
   const selectedSchedules = getSchedulesForDate(selectedDate);
   const tableData = getTableData(selectedSchedules);
-  const allPast = daysToDisplay.every(
-    (day) => new Date(day.date) < currentDate,
-  );
+  const allPast = daysToDisplay.every((day) => {
+    const schedulesForDay = eventData.schedules.filter(
+      (schedule) => schedule.scheduleDate === day.date,
+    );
+    return schedulesForDay.every((schedule) => {
+      const endDateTime = new Date(
+        `${schedule.scheduleDate}T${schedule.endTime}`,
+      );
+      return endDateTime < currentDate;
+    });
+  });
 
   return (
     <div className="p-4">

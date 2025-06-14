@@ -157,7 +157,7 @@ const CreateTicket = () => {
         });
       } else if (
         error.response.data?.data.includes(
-          "Sale end time is invalid for schedule on",
+          "Sale start time is invalid for schedule on",
         )
       ) {
         const message = error.response.data.data;
@@ -473,13 +473,23 @@ const CreateTicket = () => {
               <div className="mb-2 text-lg font-bold">
                 {FormatPrice(ticket.price)}
               </div>
-              <p className="text-sm text-green-600">
-                ● On Sale
-                <span className="ml-3 text-gray-500">
-                  Kết thúc mở bán vào
-                  <span> {formatDateTime(ticket.saleEnd)}</span>
-                </span>
-              </p>
+              {ticket.saleEnd && new Date(ticket.saleEnd) > new Date() ? (
+                <p className="text-sm text-green-600">
+                  ● Mở bán
+                  <span className="ml-3 text-gray-500">
+                    Kết thúc mở bán vào
+                    <span> {formatDateTime(ticket.saleEnd)}</span>
+                  </span>
+                </p>
+              ) : (
+                <p className="text-sm text-red-600">
+                  ● Hết hạn
+                  <span className="ml-3 text-gray-500">
+                    Kết thúc mở bán vào
+                    <span> {formatDateTime(ticket.saleEnd)}</span>
+                  </span>
+                </p>
+              )}
             </div>
 
             {/* right */}

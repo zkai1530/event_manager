@@ -457,7 +457,7 @@ const EventDetails = () => {
                     <p className="mb-4 text-sm text-gray-600">
                       {selectedSchedule ? (
                         <>
-                          Bắt đầu vào{" "}
+                          Diễn ra vào{" "}
                           {
                             formatDate(selectedSchedule.scheduleDate).split(
                               ",",
