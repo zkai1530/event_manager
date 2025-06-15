@@ -54,12 +54,12 @@ public class UserController {
 
     @GetMapping("/me")
     public ResponseEntity<APIResponse> getUserInfo() {
-        return ResponseEntity.ok(new APIResponse(Message.RESOURCE_FOUND, userService.getUserInfo()));
+        return ResponseEntity.ok(new APIResponse(Message.RESOURCE_FOUND, userService.getUserProfileInfo()));
     }
 
     @PutMapping("/me")
-    public ResponseEntity<APIResponse> updateUserInfo(@RequestBody UserUpdateRequest request) {
-        return ResponseEntity.ok(new APIResponse(Message.SUCCESS_REQUEST, userService.updateUserInfo(request)));
+    public ResponseEntity<APIResponse> updateUserProfileInfo(@RequestBody UserUpdateRequest request) {
+        return ResponseEntity.ok(new APIResponse(Message.SUCCESS_REQUEST, userService.updateUserProfileInfo(request)));
     }
 
     @GetMapping("/search")

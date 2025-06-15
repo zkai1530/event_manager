@@ -3,14 +3,17 @@ package com.datn.event_manager.service.User;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import com.datn.event_manager.dto.request.AuthenticationRequest;
+import com.datn.event_manager.dto.request.BankAccountRequest;
 import com.datn.event_manager.dto.request.UserUpdateRequest;
 import com.datn.event_manager.dto.response.UserManageResponse;
+import com.datn.event_manager.dto.response.UserProfileResponse;
 import com.datn.event_manager.dto.response.UserResponse;
 import com.datn.event_manager.entity.Role;
 import com.datn.event_manager.entity.User;
@@ -24,10 +27,12 @@ import com.datn.event_manager.repository.RoleRepository;
 import com.datn.event_manager.repository.TicketScheduleRepository;
 import com.datn.event_manager.repository.UserRepository;
 import com.datn.event_manager.service.Authentication.AuthenticationService;
+import com.datn.event_manager.service.BankAccount.BankAccountService;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
@@ -38,11 +43,16 @@ public class UserServiceImpl implements UserService {
     UserRepository userRepository;
     RoleRepository roleRepository;
     AuthenticationService authenticationService;
+    BankAccountService bankAccountService;
     TicketScheduleRepository ticketScheduleRepository;
     OrderRepository orderRepository;
     EventRepository eventRepository;
     UserMapper userMapper;
     PasswordEncoder passwordEncoder;
+
+    @NonFinal
+    @Value("${bank.secret-key}")
+    String bankSecretKey;
 
     @Override
     public UserResponse createUser(AuthenticationRequest userRequest) {
@@ -102,7 +112,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponse updateUserInfo(UserUpdateRequest request) {
+    public UserProfileResponse updateUserProfileInfo(UserUpdateRequest request) {
         User user = authenticationService.getUserFromToken();
 
         user.setName(request.getName() != null ? request.getName() : user.getName());
@@ -112,7 +122,27 @@ public class UserServiceImpl implements UserService {
 
         userRepository.save(user);
 
-        return userMapper.toUserResponse(user);
+        // bankAccount
+        if (request.getAccountNumber() != null && request.getAccountName() != null &&
+            request.getBankName() != null && request.getBankShortName() != null) {
+            BankAccountRequest bankRequest = new BankAccountRequest();
+            bankRequest.setAccountNumber(request.getAccountNumber());
+            bankRequest.setAccountName(request.getAccountName());
+            bankRequest.setBankName(request.getBankName());
+            bankRequest.setBankShortName(request.getBankShortName());
+
+            try {
+                if (user.getBankAccount() == null) {
+                    bankAccountService.createBankAccount(bankRequest);
+                } else {
+                    bankAccountService.updateBankAccount(bankRequest);
+                }
+            } catch (Exception e) {
+                throw new AppException(ErrorCode.BANK_ACCOUNT_UPDATE_FAILED);
+            }
+        }
+
+        return userMapper.tUserProfileResponse(user, bankSecretKey);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -160,5 +190,12 @@ public class UserServiceImpl implements UserService {
         }
         user.setIsActive(true);
         userRepository.save(user);
+    }
+
+    @Override
+    public UserProfileResponse getUserProfileInfo() {
+        User user = authenticationService.getUserFromToken();
+
+        return userMapper.tUserProfileResponse(user, bankSecretKey);
     }
 }

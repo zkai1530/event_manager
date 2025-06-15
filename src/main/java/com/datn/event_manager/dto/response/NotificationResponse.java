@@ -15,10 +15,11 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class NotificationResponse {
-    private Long notificationId;
-    private String userId;
-    private Integer eventId;
-    private String message;
-    private Boolean isRead;
-    private LocalDateTime createdAt;
+    Long notificationId;
+    String userId;
+    Integer eventId;
+    String imageUrl;
+    String message;
+    Boolean isRead;
+    LocalDateTime createdAt;
 }

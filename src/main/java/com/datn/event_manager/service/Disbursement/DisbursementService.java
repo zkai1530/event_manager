@@ -1,5 +1,6 @@
 package com.datn.event_manager.service.Disbursement;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -12,7 +13,7 @@ import com.datn.event_manager.dto.response.ScheduleDisbursementResponse;
 public interface DisbursementService {
     List<ScheduleDisbursementResponse> getUndisbursedSchedules(Long eventId);
 
-    void disbursed(Long scheduleId);
+    void disbursed(Long scheduleId, BigDecimal disbursedAmount);
 
     Page<DisbursementEligibleEventResponse> getEligibleDisbursementEvents(Pageable pageable);
 }

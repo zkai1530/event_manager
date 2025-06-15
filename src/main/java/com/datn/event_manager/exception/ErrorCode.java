@@ -47,6 +47,7 @@ public enum ErrorCode {
     NOT_FOLLOWING("You are not following this user", HttpStatus.BAD_REQUEST),
     USER_ALREADY_HAS_BANK_ACCOUNT("User already has bank account!", HttpStatus.CONFLICT),
     USER_HAS_NO_BANK_ACCOUNT("User has no bank account!", HttpStatus.NOT_FOUND),
+    BANK_ACCOUNT_UPDATE_FAILED("Bank Account update failed!", HttpStatus.BAD_REQUEST),
     REASON_NOT_FOUND("Reason not found!", HttpStatus.NOT_FOUND),
     ALREADY_COMPLAINED("You have already submitted a complaint for this order.", HttpStatus.BAD_REQUEST),
     ALREADY_DISBURSED("This event has already been disbursed.", HttpStatus.BAD_REQUEST);

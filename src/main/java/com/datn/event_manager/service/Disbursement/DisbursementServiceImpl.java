@@ -1,12 +1,16 @@
 package com.datn.event_manager.service.Disbursement;
 
 import java.math.BigDecimal;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
-import org.mapstruct.ap.internal.util.Message;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,6 +32,7 @@ import com.datn.event_manager.repository.ComplaintRepository;
 import com.datn.event_manager.repository.EventRepository;
 import com.datn.event_manager.repository.EventScheduleRepository;
 import com.datn.event_manager.repository.OrderRepository;
+import com.datn.event_manager.service.Notification.NotificationService;
 
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
@@ -42,6 +47,7 @@ public class DisbursementServiceImpl implements DisbursementService {
     ComplaintRepository complaintRepository;
     OrderRepository orderRepository;
     EventRepository eventRepository;
+    NotificationService notificationService;
     EventMapper eventMapper;
 
     @NonFinal
@@ -132,14 +138,38 @@ public class DisbursementServiceImpl implements DisbursementService {
 
     @PreAuthorize("hasRole('ADMIN')")
     @Override
-    public void disbursed(Long scheduleId) {
+    public void disbursed(Long scheduleId, BigDecimal disbursedAmount) {
         EventSchedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new AppException(ErrorCode.SCHEDULE_NOT_FOUND));
-        if (schedule.getIsDisbursed() == true) {
-                throw new AppException(ErrorCode.ALREADY_DISBURSED);
+        if (schedule.getIsDisbursed()) {
+            throw new AppException(ErrorCode.ALREADY_DISBURSED);
         }
+        // if (disbursedAmount == null || disbursedAmount.compareTo(BigDecimal.ZERO) <= 0) {
+        //     throw new AppException(ErrorCode.INVALID_DISBURSEMENT_AMOUNT);
+        // }
+
+        schedule.setDisbursedAmount(disbursedAmount);
+        schedule.setDisbursedDate(LocalDateTime.now());
         schedule.setIsDisbursed(true);
         scheduleRepository.save(schedule);
+
+        // Tạo thông báo cho người dùng
+        String userId = schedule.getEvent().getUser().getUserId();
+        Long eventId = schedule.getEvent().getEventId();
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+        String formattedDate = schedule.getScheduleDate().format(formatter);
+
+        DecimalFormat decimalFormat = new DecimalFormat("#,###", new DecimalFormatSymbols(Locale.forLanguageTag("vi-VN")));
+        String formattedAmount = decimalFormat.format(disbursedAmount);
+
+        String message = String.format(
+                        "Đã giải ngân cho sự kiện \"%s\" ngày %s bắt đầu lúc %s với số tiền %s VND. Vui lòng kiểm tra tài khoản và liên hệ support@eventify.com trong 7 ngày nếu có sai sót.",
+                        schedule.getEvent().getName(),
+                        formattedDate,
+                        schedule.getStartTime(),
+                        formattedAmount);
+        notificationService.createNotification(userId, eventId, message);
     }
 
    

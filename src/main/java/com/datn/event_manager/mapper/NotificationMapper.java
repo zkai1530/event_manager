@@ -10,6 +10,7 @@ import com.datn.event_manager.entity.Notification;
 public interface NotificationMapper {
 
     @Mapping(target = "eventId", source = "event.eventId")
+    @Mapping(target = "imageUrl", source = "event.imageUrl")
     @Mapping(target = "userId", source = "user.userId")
     NotificationResponse toNotificationResponse(Notification notification);
 }

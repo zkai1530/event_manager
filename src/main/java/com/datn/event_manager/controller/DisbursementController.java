@@ -1,5 +1,6 @@
 package com.datn.event_manager.controller;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -10,11 +11,14 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.datn.event_manager.dto.request.DisbursementRequest;
 import com.datn.event_manager.dto.response.APIResponse;
 import com.datn.event_manager.dto.response.Message;
 import com.datn.event_manager.dto.response.ScheduleDisbursementResponse;
@@ -42,9 +46,9 @@ public class DisbursementController {
                 .ok(new APIResponse(Message.RESOURCE_FOUND, disbursementService.getUndisbursedSchedules(eventId)));
     }
 
-    @PutMapping("/{scheduleId}/confirm")
-    public ResponseEntity<APIResponse> disbursed(@PathVariable Long scheduleId) {
-        disbursementService.disbursed(scheduleId);
+    @PostMapping("/confirm")
+    public ResponseEntity<APIResponse> disbursed(@RequestBody DisbursementRequest request) {
+        disbursementService.disbursed(request.getScheduleId(), request.getDisbursedAmount());
         return ResponseEntity
                 .ok(new APIResponse(Message.CONFIRM_DISBURSED, null));
     }

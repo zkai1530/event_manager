@@ -8,6 +8,7 @@ import org.springframework.data.domain.Pageable;
 import com.datn.event_manager.dto.request.AuthenticationRequest;
 import com.datn.event_manager.dto.request.UserUpdateRequest;
 import com.datn.event_manager.dto.response.UserManageResponse;
+import com.datn.event_manager.dto.response.UserProfileResponse;
 import com.datn.event_manager.dto.response.UserResponse;
 
 public interface UserService {
@@ -19,11 +20,13 @@ public interface UserService {
 
     public UserResponse getUserInfo();
 
-    public UserResponse updateUserInfo(UserUpdateRequest request);
-
     public Page<UserManageResponse> searchUserByNameOrEmail(String keyword, Pageable pageable);
-
+    
     public void blockUser(String userId);
-
+    
     public void unblockUser(String userId);
+    
+    public UserProfileResponse getUserProfileInfo();
+    
+    public UserProfileResponse updateUserProfileInfo(UserUpdateRequest request);
 }

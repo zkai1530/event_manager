@@ -1,6 +1,8 @@
 package com.datn.event_manager.entity;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 
@@ -38,14 +40,20 @@ public class EventSchedule {
     @Column(name = "schedule_date", nullable = false)
     LocalDate scheduleDate; // the day the event take place
 
-    @Column(nullable = false)
-    Boolean isDisbursed = false;
-
     @Column(name = "start_time", nullable = false)
     LocalTime startTime;
 
     @Column(name = "end_time", nullable = false)
     LocalTime endTime;
+
+    @Column(nullable = false)
+    Boolean isDisbursed = false;
+
+    @Column(name = "disbursed_amount")
+    BigDecimal disbursedAmount;
+
+    @Column(name = "disbursed_date")
+    LocalDateTime disbursedDate;
 
     // @ManyToOne(fetch = FetchType.EAGER)
     @ManyToOne(fetch = FetchType.LAZY)

@@ -1,5 +1,7 @@
 package com.datn.event_manager.dto.request;
 
+import java.math.BigDecimal;
+
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -12,13 +14,7 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class UserUpdateRequest {
-    String name;
-    String phoneNumber;
-    String avatarUrl;
-    String location;
-    String accountNumber;
-    String accountName;
-    String bankName;
-    String bankShortName;
+public class DisbursementRequest {
+    Long scheduleId;
+    BigDecimal disbursedAmount;
 }

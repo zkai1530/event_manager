@@ -1,4 +1,6 @@
-package com.datn.event_manager.dto.request;
+package com.datn.event_manager.dto.response;
+
+import com.datn.event_manager.entity.User.UserMode;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -12,10 +14,12 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class UserUpdateRequest {
+public class UserProfileResponse {
+    String userId;
+    String email;
     String name;
-    String phoneNumber;
     String avatarUrl;
+    String phoneNumber;
     String location;
     String accountNumber;
     String accountName;
