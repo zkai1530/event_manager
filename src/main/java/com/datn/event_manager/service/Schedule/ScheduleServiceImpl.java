@@ -152,7 +152,7 @@ public class ScheduleServiceImpl implements ScheduleService {
     }
 
     @Override
-    public void updateSchedule(Long scheduleId, ScheduleItem newSchedule) {
+public void updateSchedule(Long scheduleId, ScheduleItem newSchedule) {
         User user = authenticationService.getUserFromToken();
         EventSchedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new AppException(ErrorCode.SCHEDULE_NOT_FOUND));
