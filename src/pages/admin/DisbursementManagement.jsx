@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+import { useEffect, useRef, useState } from "react";
 import Loading from "@/components/ui/Loading";
 import {
   getEligibleDisbursementEvents,
@@ -8,7 +7,10 @@ import {
 import { FaCheckCircle, FaExclamationTriangle } from "react-icons/fa";
 import { FormatPrice } from "@/utils/formatPrice";
 import { IoMdClose } from "react-icons/io";
+import Pagination from "@/components/ui/Pagination";
+import { useLocation, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
+import { disbursed } from "@/services/admin/disbursementService";
 
 const DisbursementManagement = () => {
   const [events, setEvents] = useState([]);
@@ -19,21 +21,37 @@ const DisbursementManagement = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [qrData, setQrData] = useState(null);
   const [isImageLoading, setIsImageLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const tableRef = useRef(null);
+  const location = useLocation();
+  const navigate = useNavigate();
+
   const token = localStorage.getItem("token");
 
   // Fetch danh sách sự kiện đủ điều kiện giải ngân
   useEffect(() => {
-    setIsLoading(true);
-    getEligibleDisbursementEvents(token)
-      .then((data) => {
-        const eventData = data?.content || [];
-        setEvents(eventData);
-      })
-      .catch((err) =>
-        console.error("getEligibleDisbursementEvents: ", err.response.data),
-      )
-      .finally(() => setIsLoading(false));
-  }, [token]);
+    const params = new URLSearchParams(location.search);
+    const pageFromUrl = parseInt(params.get("page") || "1", 10) - 1;
+
+    const fetchEvents = async () => {
+      setIsLoading(true);
+      try {
+        const data = await getEligibleDisbursementEvents(token, pageFromUrl);
+        setEvents(data?.content || []);
+        setTotalPages(data?.totalPages || 0);
+        setCurrentPage(pageFromUrl);
+      } catch (err) {
+        console.error("getEligibleDisbursementEvents: ", err.response?.data);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (token) {
+      fetchEvents();
+    }
+  }, [token, location.search]);
 
   // Fetch danh sách lịch trình khi click vào sự kiện
   const fetchSchedules = async (eventId) => {
@@ -66,12 +84,13 @@ const DisbursementManagement = () => {
     const bankId = event.bankShortName.toLowerCase();
     const accountNo = event.accountNumber;
     const accountName = event.accountName;
-    const amount = schedule.totalPrice;
+    const amount = schedule.totalPrice * 0.9;
     const addInfo = "Admin giải ngân";
 
     const qrUrl = `https://img.vietqr.io/image/${bankId}-${accountNo}-compact2.jpg?amount=${amount}&addInfo=${encodeURIComponent(addInfo)}&accountName=${encodeURIComponent(accountName)}`;
 
     setQrData({ qrUrl, amount, addInfo, accountName });
+    setModalSchedule(schedule);
     setIsImageLoading(true);
     setIsModalOpen(true);
   };
@@ -86,7 +105,9 @@ const DisbursementManagement = () => {
     setModalSchedule(modalSchedule ? null : schedule);
   };
 
-  const handleConfirmDisbursement = () => {
+  const handleConfirmDisbursement = async () => {
+    if (!modalSchedule) return;
+
     Swal.fire({
       title: "Xác nhận đã giải ngân?",
       text: "Bạn sẽ không thể hoàn tác hành động này!",
@@ -96,17 +117,49 @@ const DisbursementManagement = () => {
       cancelButtonColor: "#d33",
       confirmButtonText: "Xác nhận!",
       cancelButtonText: "Hủy",
-    }).then((result) => {
+    }).then(async (result) => {
       if (result.isConfirmed) {
-        Swal.fire({
-          title: "Deleted!",
-          text: "Your file has been deleted.",
-          icon: "success",
-        });
-        setIsModalOpen(false);
+        try {
+          const data = {
+            scheduleId: modalSchedule.scheduleId,
+            disbursedAmount: modalSchedule.totalPrice * 0.9,
+          };
+          console.log("dôran", data)
+          const response = await disbursed(data, token);
+          if (response.message === "Disbursement confirmed successfully!") {
+            Swal.fire({
+              title: "Thành công!",
+              text: "Xác nhận giải ngân thành công!",
+              icon: "success",
+            });
+            setIsModalOpen(false);
+            setModalSchedule(null);
+            // Refresh danh sách sự kiện
+            const params = new URLSearchParams(location.search);
+            const pageFromUrl = parseInt(params.get("page") || "1", 10) - 1;
+            const data = await getEligibleDisbursementEvents(
+              token,
+              pageFromUrl,
+            );
+            setEvents(data?.content || []);
+            setTotalPages(data?.totalPages || 0);
+            setSchedules({}); // Reset schedules để load lại khi mở
+            setExpandedEventId(null);
+          }
+        } catch (error) {
+          Swal.fire({
+            title: "Lỗi!",
+            text: "Xác nhận giải ngân thất bại!",
+            icon: "error",
+          });
+        }
       }
     });
-    
+  };
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+    navigate(`?page=${newPage + 1}`);
   };
 
   return (
@@ -282,6 +335,11 @@ const DisbursementManagement = () => {
               )}
           </div>
         ))}
+      </div>
+
+      {/* Pagination  */}
+      <div className="mt-8">
+        <Pagination totalPages={totalPages} onPageChange={handlePageChange} />
       </div>
 
       {/* Modal */}

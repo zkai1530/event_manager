@@ -1,8 +1,8 @@
 import axios from "../customize_axios";
-export const getEligibleDisbursementEvents = async (token) => {
+export const getEligibleDisbursementEvents = async (token, page) => {
   try {
     const response = await axios.get(
-      "/disbursement/events/eligible-disbursement",
+      `/disbursement/events/eligible-disbursement?page=${page}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -32,6 +32,20 @@ export const getUndisbursementSchedulesOfEvent = async (eventId, token) => {
       "getEligibleDisbursementEvents",
       error.response?.data || error.message,
     );
+    throw error;
+  }
+};
+
+export const disbursed = async (data, token) => {
+  try {
+    const response = await axios.post(`/disbursement/confirm`, data, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("disbursed", error.response?.data || error.message);
     throw error;
   }
 };

@@ -74,6 +74,20 @@ export const getUserInfo = async (token) => {
   }
 };
 
+export const updateUserInfo = async (token, data) => {
+  try {
+    const response = await axios.put("/user/me", data, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data.data;
+  } catch (error) {
+    console.error("updateUserInfo", error);
+    throw error;
+  }
+};
+
 export const followUser = async (userId, token) => {
   console.log(token);
   try {

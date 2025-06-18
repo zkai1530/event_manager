@@ -19,6 +19,7 @@ import TicketSelectionModal from "components/modal/TicketSelectionModal";
 import Loading from "@/components/ui/Loading";
 import {
   followUser,
+  getUserInfo,
   isFollowUser,
   unfollowUser,
 } from "@/services/user/userService";
@@ -27,6 +28,7 @@ import RecommendEvent from "@/components/ui/RecommendEvent";
 
 const EventDetails = () => {
   const [eventData, setEventData] = useState(null);
+  const [userId, setUserId] = useState(null);
   const [selectedSchedule, setSelectedSchedule] = useState(null);
   const [openFAQStates, setOpenFAQStates] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -42,6 +44,21 @@ const EventDetails = () => {
       behavior: "smooth",
     });
   }, [eventId]);
+
+  useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        if (token) {
+          const userInfo = await getUserInfo(token);
+          setUserId(userInfo.userId);
+        }
+      } catch (error) {
+        console.error("fetchUserInfo:", error);
+      }
+    };
+
+    fetchUserInfo();
+  }, [token]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -721,8 +738,8 @@ const EventDetails = () => {
                           price: ticket.price,
                           saleEnd: ticket.saleEnd,
                           sold: ticket.sold,
-                          availableQuantity: ticket.availableQuantity, 
-                          reservedQuantity: ticket.reservedQuantity, 
+                          availableQuantity: ticket.availableQuantity,
+                          reservedQuantity: ticket.reservedQuantity,
                           discounts: ticket.discounts,
                         }),
                       ),
@@ -754,10 +771,7 @@ const EventDetails = () => {
             <div className="border-main-bold flex-grow border-t-4"></div>
           </div>
 
-          <RecommendEvent
-            userId="09b744fa-11d9-4ef0-9b10-f8e4289734f9"
-            eventId={null}
-          />
+          <RecommendEvent userId={userId} eventId={null} />
         </div>
       )}
       <Loading isLoading={isLoading} />
