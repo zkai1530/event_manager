@@ -270,6 +270,8 @@ public class TicketServiceImpl implements TicketService {
                         .availableQuantity(request.getAvailableQuantity() != null ? request.getAvailableQuantity()
                                 : ticket.getAvailableQuantity())
                         .sold(0)
+                        .checkedInCount(0)
+                        .reservedQuantity(0)
                         .build();
                 currentTicketSchedules.add(ticketSchedule);
             }
