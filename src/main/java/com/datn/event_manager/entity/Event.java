@@ -57,6 +57,9 @@ public class Event {
     @OneToOne(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
     EventLocation eventLocation;
 
+    @Column(name = "has_seat_map")
+    Boolean hasSeatMap = false;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     EventType eventType;
@@ -96,5 +99,8 @@ public class Event {
 
     @OneToMany(mappedBy = "event", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     List<FAQ> faqs;
+
+    @OneToOne(mappedBy = "event", cascade = CascadeType.ALL, orphanRemoval = true)
+    VenueMap venueMap;
 }
 

@@ -100,6 +100,7 @@ public class EventServiceImpl implements EventService {
                 .eventType(eventRequest.getEventType())
                 .isPublished(false)
                 .isSuspended(false)
+                .hasSeatMap(eventRequest.getHasSeatMap())
                 .createdAt(LocalDateTime.now())
                 .build();
         eventRepository.save(event);
@@ -315,6 +316,7 @@ public class EventServiceImpl implements EventService {
                         .scheduleDate(request.getEventDate())
                         .startTime(request.getStartTime())
                         .endTime(request.getEndTime())
+                        .isDisbursed(false)
                         .build();
 
                 eventScheduleRepository.save(eventSchedule);

@@ -69,6 +69,15 @@ public class DisbursementServiceImpl implements DisbursementService {
         List<EventSchedule> schedules = scheduleRepository.findUndisbursedSchedulesByEventId(currentDate, eventId);
 
         return schedules.stream()
+                .filter(schedule -> {
+                        List<TicketSchedule> ticketSchedules = schedule.getTicketSchedules() != null
+                                        ? schedule.getTicketSchedules()
+                                        : Collections.emptyList();
+                        long soldTickets = ticketSchedules.stream()
+                                        .mapToLong(TicketSchedule::getSold)
+                                        .sum();
+                        return soldTickets > 0; 
+                })
                 .map(schedule -> {
                     Long scheduleId = schedule.getScheduleId();
 

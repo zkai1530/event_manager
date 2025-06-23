@@ -31,4 +31,6 @@ public class EventRequest {
     LocalDate eventDate; // day
     LocalTime startTime;
     LocalTime endTime;
+
+    Boolean hasSeatMap;
 }

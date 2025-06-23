@@ -1,12 +1,13 @@
 package com.datn.event_manager.entity;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -26,33 +27,36 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE) 
+@FieldDefaults(level = AccessLevel.PRIVATE)
 @Entity
-@Table(name = "order_ticket") 
-public class OrderTicket {
+@Table(name = "seat")
+public class Seat {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "order_ticket_id")
-    Long orderTicketId;
+    @Column(name = "seat_id")
+    Long seatId;
 
-    @Column(name = "quantity", nullable = false)
-    Integer quantity; // number of each ticket on order
+    @Column(name = "row_label")
+    String rowLabel;
 
-    @Column(name = "price_at_purchase", nullable = false)
-    Double priceAtPurchase;
+    @Column(name = "seat_label")
+    String seatLabel;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status")
+    SeatStatus status = SeatStatus.AVAILABLE;
+
+    @Column(name = "created_at")
+    LocalDateTime createdAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id", nullable = false)
-    Order order;
+    @JoinColumn(name = "section_id")
+    Section section;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "ticket_id", nullable = false)
-    Ticket ticket;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "discount_id", nullable = true)
-    private Discount discount;
-
-    @OneToMany(mappedBy = "orderTicket", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "seat", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     List<OrderTicketSeat> orderTicketSeats;
+
+    public enum SeatStatus {
+        AVAILABLE, SOLD, RESERVED
+    }
 }
