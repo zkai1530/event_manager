@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
+import com.datn.event_manager.dto.request.SeatMapRequest.SeatRequest;
 import com.datn.event_manager.dto.request.SeatMapRequest.SectionRequest;
 import com.datn.event_manager.dto.request.SeatMapRequest.VenueMapRequest;
 import com.datn.event_manager.dto.response.seatmap.VenueMapResponse;
@@ -46,7 +47,6 @@ public class VenueMapServiceImpl implements VenueMapService {
         Event event = eventRepository.findById(request.getEventId())
                 .orElseThrow(() -> new IllegalArgumentException("Invalid event ID"));
 
-        
         User user = authenticationService.getUserFromToken();
         if (!event.getUser().getUserId().equals(user.getUserId())) {
             throw new AppException(ErrorCode.UNAUTHORIZED);
@@ -117,17 +117,14 @@ public class VenueMapServiceImpl implements VenueMapService {
     @Override
     @Transactional
     public VenueMapResponse updateVenueMap(Long venueMapId, VenueMapRequest request) {
-        // Kiểm tra VenueMap tồn tại
         VenueMap venueMap = venueMapRepository.findById(venueMapId)
-                .orElseThrow(() -> new IllegalArgumentException("VenueMap not found"));
+                .orElseThrow(() -> new AppException(ErrorCode.VENUEMAP_NOT_FOUND));
 
-        // Kiểm tra quyền sở hữu
         User user = authenticationService.getUserFromToken();
         if (!venueMap.getEvent().getUser().getUserId().equals(user.getUserId())) {
             throw new AppException(ErrorCode.UNAUTHORIZED);
         }
 
-        // Kiểm tra event chưa published
         if (venueMap.getEvent().getIsPublished()) {
             throw new AppException(ErrorCode.EVENT_ALREADY_PUBLISHED);
         }
@@ -157,10 +154,14 @@ public class VenueMapServiceImpl implements VenueMapService {
 
         // Cập nhật hoặc thêm sections
         for (var sectionReq : request.getSections()) {
-            int expectedSeats = sectionReq.getTotalRows() * sectionReq.getSeatsPerRow();
-            if (sectionReq.getSeats() == null || sectionReq.getSeats().size() != expectedSeats) {
+            // Kiểm tra số ghế hợp lệ
+            int expectedSeatsMax = sectionReq.getTotalRows() * sectionReq.getSeatsPerRow();
+            if (sectionReq.getSeats() == null || sectionReq.getSeats().isEmpty()) {
+                throw new IllegalArgumentException("Section " + sectionReq.getName() + " must have at least one seat");
+            }
+            if (sectionReq.getSeats().size() > expectedSeatsMax) {
                 throw new IllegalArgumentException("Number of seats in section " + sectionReq.getName() +
-                        " must be " + expectedSeats);
+                        " exceeds " + expectedSeatsMax);
             }
 
             Section section;
@@ -184,30 +185,36 @@ public class VenueMapServiceImpl implements VenueMapService {
                     section.setSeats(new ArrayList<>());
                 }
 
-                // So sánh seats cũ và mới
-                Set<String> newSeatKeys = sectionReq.getSeats().stream()
-                        .map(seatReq -> seatReq.getRowLabel() + ":" + seatReq.getSeatLabel())
-                        .collect(Collectors.toSet());
+                // Lấy danh sách seats hiện tại
+                List<Seat> currentSeats = new ArrayList<>(section.getSeats());
 
-                // Xóa seats không còn trong request
-                section.getSeats()
-                        .removeIf(seat -> !newSeatKeys.contains(seat.getRowLabel() + ":" + seat.getSeatLabel()));
-
-                // Thêm seats mới
-                List<Seat> currentSeats = section.getSeats();
-                List<Seat> seatsToAdd = sectionReq.getSeats().stream()
-                        .filter(seatReq -> currentSeats.stream()
-                                .noneMatch(seat -> seat.getRowLabel().equals(seatReq.getRowLabel()) &&
-                                        seat.getSeatLabel().equals(seatReq.getSeatLabel())))
-                        .map(seatReq -> Seat.builder()
+                // Cập nhật hoặc thêm seats dựa trên thứ tự
+                List<SeatRequest> newSeats = sectionReq.getSeats();
+                for (int i = 0; i < newSeats.size(); i++) {
+                    SeatRequest seatReq = newSeats.get(i);
+                    if (i < currentSeats.size()) {
+                        // Cập nhật seat hiện có
+                        Seat seat = currentSeats.get(i);
+                        seat.setRowLabel(seatReq.getRowLabel());
+                        seat.setSeatLabel(seatReq.getSeatLabel());
+                        // Giữ nguyên status, createdAt, seatId
+                    } else {
+                        // Thêm seat mới
+                        Seat newSeat = Seat.builder()
                                 .section(section)
                                 .rowLabel(seatReq.getRowLabel())
                                 .seatLabel(seatReq.getSeatLabel())
                                 .status(SeatStatus.AVAILABLE)
                                 .createdAt(LocalDateTime.now())
-                                .build())
-                        .toList();
-                section.getSeats().addAll(seatsToAdd);
+                                .build();
+                        section.getSeats().add(newSeat);
+                    }
+                }
+
+                // Xóa seats thừa nếu danh sách mới ngắn hơn
+                if (newSeats.size() < currentSeats.size()) {
+                    section.getSeats().subList(newSeats.size(), currentSeats.size()).clear();
+                }
             } else {
                 // Tạo section mới
                 section = venueMapMapper.toSectionEntity(sectionReq);
@@ -232,7 +239,6 @@ public class VenueMapServiceImpl implements VenueMapService {
             }
         }
 
-        // Lưu VenueMap
         venueMapRepository.save(venueMap);
 
         // Đảm bảo has_seat_map
@@ -246,17 +252,14 @@ public class VenueMapServiceImpl implements VenueMapService {
     @Override
     @Transactional
     public void deleteVenueMap(Long venueMapId) {
-        // Kiểm tra VenueMap tồn tại
         VenueMap venueMap = venueMapRepository.findById(venueMapId)
                 .orElseThrow(() -> new IllegalArgumentException("VenueMap not found"));
 
-        // Kiểm tra quyền sở hữu
         User user = authenticationService.getUserFromToken();
         if (!venueMap.getEvent().getUser().getUserId().equals(user.getUserId())) {
             throw new AppException(ErrorCode.UNAUTHORIZED);
         }
 
-        // Kiểm tra event chưa published
         if (venueMap.getEvent().getIsPublished()) {
             throw new AppException(ErrorCode.EVENT_ALREADY_PUBLISHED);
         }
@@ -268,5 +271,19 @@ public class VenueMapServiceImpl implements VenueMapService {
 
         // Xóa VenueMap (cascade xóa sections và seats)
         venueMapRepository.delete(venueMap);
+    }
+
+    @Override
+    public VenueMapResponse getVenueMap(Long venueMapId) {
+        User user = authenticationService.getUserFromToken();
+
+        VenueMap venueMap = venueMapRepository.findById(venueMapId)
+                .orElseThrow(() -> new AppException(ErrorCode.VENUEMAP_NOT_FOUND));
+
+        if (!user.getUserId().equals(venueMap.getEvent().getUser().getUserId())) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        };
+     
+        return venueMapMapper.toResponse(venueMap);
     }
 }

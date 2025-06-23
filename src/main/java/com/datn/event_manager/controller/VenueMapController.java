@@ -2,6 +2,7 @@ package com.datn.event_manager.controller;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -30,19 +31,25 @@ public class VenueMapController {
     @PostMapping
     public ResponseEntity<APIResponse> createVenueMap(@RequestBody VenueMapRequest request) {
         venueMapService.createVenueMap(request);
-        return ResponseEntity.ok(new APIResponse(Message.SIGNUP_SUCCESS, null));
+        return ResponseEntity.ok(new APIResponse(Message.RESOURCE_FOUND, null));
     }
 
     @PutMapping("/{venueMapId}")
     public ResponseEntity<APIResponse> updateVenueMap(
             @PathVariable Long venueMapId,
             @RequestBody VenueMapRequest request) {
-        return ResponseEntity.ok(new APIResponse(Message.SIGNUP_SUCCESS,venueMapService.updateVenueMap(venueMapId, request)));
+        return ResponseEntity
+                .ok(new APIResponse(Message.RESOURCE_FOUND, venueMapService.updateVenueMap(venueMapId, request)));
     }
 
     @DeleteMapping("/{venueMapId}")
     public ResponseEntity<APIResponse> deleteVenueMap(@PathVariable Long venueMapId) {
         venueMapService.deleteVenueMap(venueMapId);
-        return ResponseEntity.ok(new APIResponse(Message.SIGNUP_SUCCESS, null));
+        return ResponseEntity.ok(new APIResponse(Message.RESOURCE_FOUND, null));
+    }
+
+    @GetMapping("/{venueMapId}")
+    public ResponseEntity<APIResponse> getVenueMap(@PathVariable Long venueMapId) {
+        return ResponseEntity.ok(new APIResponse(Message.RESOURCE_FOUND, venueMapService.getVenueMap(venueMapId)));
     }
 }

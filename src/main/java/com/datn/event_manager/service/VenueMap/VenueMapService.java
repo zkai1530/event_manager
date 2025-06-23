@@ -9,4 +9,6 @@ public interface VenueMapService {
     public VenueMapResponse updateVenueMap(Long venueMapId, VenueMapRequest request);
 
     public void deleteVenueMap(Long venueMapId);
+
+    public VenueMapResponse getVenueMap(Long venueMapId);
 }

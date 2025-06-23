@@ -1,7 +1,5 @@
 package com.datn.event_manager.dto.response.seatmap;
 
-import java.util.List;
-
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,14 +12,9 @@ import lombok.experimental.FieldDefaults;
 @NoArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class SectionResponse {
-    Long sectionId;
-    String name;
-    Integer totalRows;
-    Integer seatsPerRow;
-    Double positionX;
-    Double positionY;
-    Double rotation;
-    Double theaterCurve;
-    List<SeatResponse> seats;
+public class SeatResponse {
+    Long seatId;
+    String rowLabel;
+    String seatLabel;
+    String status;
 }

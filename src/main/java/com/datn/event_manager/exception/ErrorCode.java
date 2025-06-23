@@ -50,6 +50,7 @@ public enum ErrorCode {
     BANK_ACCOUNT_UPDATE_FAILED("Bank Account update failed!", HttpStatus.BAD_REQUEST),
     REASON_NOT_FOUND("Reason not found!", HttpStatus.NOT_FOUND),
     ALREADY_COMPLAINED("You have already submitted a complaint for this order.", HttpStatus.BAD_REQUEST),
+    VENUEMAP_NOT_FOUND("Venue map not found!", HttpStatus.NOT_FOUND),
     ALREADY_DISBURSED("This event has already been disbursed.", HttpStatus.BAD_REQUEST);
 
     ErrorCode(String message, HttpStatusCode httpStatusCode) {

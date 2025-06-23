@@ -5,6 +5,7 @@ import org.mapstruct.Mapping;
 
 import com.datn.event_manager.dto.request.SeatMapRequest.SectionRequest;
 import com.datn.event_manager.dto.request.SeatMapRequest.VenueMapRequest;
+import com.datn.event_manager.dto.response.seatmap.SectionResponse;
 import com.datn.event_manager.dto.response.seatmap.VenueMapResponse;
 import com.datn.event_manager.entity.Section;
 import com.datn.event_manager.entity.VenueMap;
@@ -24,4 +25,6 @@ public interface VenueMapMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "ticket", ignore = true)
     Section toSectionEntity(SectionRequest request);
+
+    SectionResponse toSectionResponse(Section section);
 }
