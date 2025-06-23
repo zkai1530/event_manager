@@ -24,7 +24,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-export function NavUser({ user }) {
+export function NavUser({ user, logout }) {
   const { isMobile } = useSidebar();
 
   return (
@@ -72,7 +72,7 @@ export function NavUser({ user }) {
                 <BadgeCheck />
                 Account
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={logout}>
                 <LogOut />
                 Log out
               </DropdownMenuItem>

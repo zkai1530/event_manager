@@ -26,6 +26,8 @@ import {
 } from "@/services/user/eventService";
 import { FormatPrice } from "@/utils/formatPrice";
 import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
+import { addFavorite } from "@/services/user/favoriteService";
 
 // Dữ liệu mẫu
 const featuredEvents = [
@@ -143,7 +145,7 @@ export default function HomePage() {
     );
   };
 
-  const handleHeartClick = (event, imageSrc, eventId) => {
+  const handleHeartClick = async (event, imageSrc, eventId) => {
     const heartIcon = document.querySelector(".FaRegHeart");
     if (!heartIcon) return;
 
@@ -174,6 +176,40 @@ export default function HomePage() {
       imgClone.style.opacity = "0";
       imgClone.ontransitionend = () => imgClone.remove();
     }, 10);
+
+    try {
+      const response = await addFavorite(eventId, token);
+      console.log("addFavorite response:", response); // Debug
+      if (response.message === "Add favorite was successfully!") {
+        Swal.fire({
+          icon: "success",
+          title: "Thành công",
+          text: "Thêm sự kiện vào yêu thích thành công!",
+          timer: 2000,
+          showConfirmButton: false,
+        });
+      }
+    } catch (error) {
+      console.error("addFavorite error:", error);
+      if (
+        error.response.data?.message ===
+        "Event already added to your favorites!"
+      ) {
+        Swal.fire({
+          icon: "info",
+          title: "Thông báo",
+          text: "Sự kiện đã được thêm vào yêu thích!",
+          timer: 2000,
+          showConfirmButton: false,
+        });
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Lỗi",
+          text: "Không thể thêm sự kiện vào yêu thích!",
+        });
+      }
+    }
   };
 
   // const { ref: popularRef, inView: popularInView } = useInView({
@@ -268,9 +304,9 @@ export default function HomePage() {
             <h2 className="text-2xl font-bold text-gray-800">
               Khám phá theo danh mục
             </h2>
-            <button className="flex items-center font-medium text-blue-600 hover:text-blue-800">
+            {/* <button className="flex items-center font-medium text-blue-600 hover:text-blue-800">
               Xem tất cả <ArrowRight className="ml-1 h-4 w-4" />
-            </button>
+            </button> */}
           </div>
 
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-8">
@@ -286,9 +322,9 @@ export default function HomePage() {
                 <h3 className="mb-1 font-medium text-gray-800 group-hover:text-blue-600">
                   {category.name}
                 </h3>
-                <p className="text-xs text-gray-500">
+                {/* <p className="text-xs text-gray-500">
                   {category.count} sự kiện
-                </p>
+                </p> */}
               </button>
             ))}
           </div>
@@ -372,9 +408,9 @@ export default function HomePage() {
             <h2 className="animate__animated animate__fadeIn text-2xl font-bold text-gray-800">
               Sự kiện xu hướng
             </h2>
-            <button className="flex items-center font-medium text-blue-600 hover:text-blue-800">
+            {/* <button className="flex items-center font-medium text-blue-600 hover:text-blue-800">
               Xem tất cả <ArrowRight className="ml-1 h-4 w-4" />
-            </button>
+            </button> */}
           </div>
 
           <div ref={trendingRef}>
@@ -456,11 +492,11 @@ export default function HomePage() {
             <h2 className="text-2xl font-bold text-gray-800">
               Sự kiện tuần này
             </h2>
-            <div className="flex space-x-2">
+            {/* <div className="flex space-x-2">
               <button className="font-medium text-gray-500 hover:text-gray-800">
                 <Filter className="mr-1 inline h-4 w-4" /> Lọc
               </button>
-            </div>
+            </div> */}
           </div>
 
           {/* Tabs */}
@@ -559,13 +595,13 @@ export default function HomePage() {
       </section>
 
       {/* Thành phố phổ biến */}
-      <section className="bg-gray-50 py-12">
-        <div className="container mx-auto px-4">
-          <h2 className="mb-8 text-2xl font-bold text-gray-800">
+      {/* <section className="bg-gray-50 py-12">
+        <div className="container mx-auto px-4"> */}
+          {/* <h2 className="mb-8 text-2xl font-bold text-gray-800">
             Thành phố phổ biến
-          </h2>
+          </h2> */}
 
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
+          {/* <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
             {cities.map((city) => (
               <button
                 key={city.id}
@@ -577,9 +613,9 @@ export default function HomePage() {
                 <p className="text-xs text-gray-500">{city.count} sự kiện</p>
               </button>
             ))}
-          </div>
-        </div>
-      </section>
+          </div> */}
+        {/* </div>
+      </section> */}
 
       {/* Feature cards */}
       <section className="bg-white py-12">

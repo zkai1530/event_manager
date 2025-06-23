@@ -189,6 +189,8 @@ const CreateSchedule = () => {
           title: "Thêm lịch trình thành công!",
           text: `Lịch trình của bạn đã được thêm!.`,
           icon: "success",
+        }).then(() => {
+          window.location.reload();
         });
 
         // Gọi lại getEventInfoById để cập nhật danh sách schedules
@@ -644,9 +646,9 @@ const CreateSchedule = () => {
                               </div>
 
                               <div className="flex space-x-2">
-                                <button className="mt-1 cursor-pointer font-medium text-blue-600">
+                                {/* <button className="mt-1 cursor-pointer font-medium text-blue-600">
                                   Sửa thông tin
-                                </button>
+                                </button> */}
                                 <button
                                   onClick={(e) => {
                                     e.stopPropagation();

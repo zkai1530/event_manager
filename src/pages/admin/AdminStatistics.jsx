@@ -123,9 +123,9 @@ const AdminStatistics = () => {
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <header className="bg-[#11e0b1] p-4 text-white shadow-md">
+      {/* <header className="bg-[#11e0b1] p-4 text-white shadow-md">
         <h1 className="text-2xl font-bold">Dashboard Quản Trị Viên</h1>
-      </header>
+      </header> */}
 
       <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
         {/* Chart radar reason complaint */}

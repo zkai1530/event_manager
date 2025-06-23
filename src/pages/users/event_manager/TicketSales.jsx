@@ -174,7 +174,7 @@ const TicketSalesPage = () => {
                       <td className="py-2 text-left font-medium text-gray-900">
                         {order.orderId}
                       </td>
-                      <td className="flex py-2 text-left pl-2">
+                      <td className="flex py-2 pl-2 text-left">
                         <img
                           src={
                             order.avatarUrl || "https://via.placeholder.com/30"
@@ -203,7 +203,7 @@ const TicketSalesPage = () => {
                           .join(", ") || "N/A"}
                       </td>
                       <td className="py-2 text-center font-semibold text-gray-900">
-                      {FormatPrice(order.orderTickets[0]?.priceAtPurchase)}
+                        {FormatPrice(order.orderTickets[0]?.priceAtPurchase)}
                       </td>
                       <td className="py-2 text-center">
                         {order.isCheckedIn ? (

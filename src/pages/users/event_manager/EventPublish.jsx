@@ -429,10 +429,10 @@ const EventPublish = () => {
                         ),
                       ),
                     )}{" "}
-                    <div className="ml-8 flex items-center">
+                    {/* <div className="ml-8 flex items-center">
                       <MdOutlineReduceCapacity />
                       <span>{eventInfo.capacity}</span>
-                    </div>
+                    </div> */}
                   </div>
                 </div>
               </div>

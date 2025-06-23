@@ -90,6 +90,7 @@ const ComplaintManagement = () => {
       year: "numeric",
       month: "short",
       day: "numeric",
+      timeZone: "UTC",
     });
   };
 
@@ -219,7 +220,7 @@ const ComplaintManagement = () => {
               {/* Stats */}
               <div className="flex items-center justify-end text-sm">
                 <span className="text-gray-600">
-                  Hiển thị{" "}
+                  {/* Hiển thị */}
                   <span className="font-semibold">
                     {filteredComplaints.length}
                   </span>{" "}
@@ -341,7 +342,7 @@ const ComplaintManagement = () => {
                           </td>
                           <td className="px-3 py-3 text-sm whitespace-normal text-gray-500">
                             <div className="flex flex-col space-y-1">
-                              <div className="flex items-center">
+                              {/* <div className="flex items-center">
                                 <span
                                   className={`mr-1 h-2 w-2 rounded-full ${
                                     complaint.order_refunded
@@ -350,7 +351,7 @@ const ComplaintManagement = () => {
                                   }`}
                                 ></span>
                                 <span>Đơn hàng</span>
-                              </div>
+                              </div> */}
                               <div className="flex items-center">
                                 <span
                                   className={`mr-1 h-2 w-2 rounded-full ${
@@ -566,10 +567,10 @@ const ComplaintManagement = () => {
                           </p>
                         </div>
                         <div>
-                          <p className="text-sm font-medium text-gray-500">
+                          {/* <p className="text-sm font-medium text-gray-500">
                             Hoàn tiền
-                          </p>
-                          <div className="mt-1 flex flex-col space-y-1">
+                          </p> */}
+                          {/* <div className="mt-1 flex flex-col space-y-1">
                             <div className="flex items-center">
                               <span
                                 className={`mr-1 h-2 w-2 rounded-full ${selectedComplaint.order_refunded ? "bg-green-500" : "bg-gray-300"}`}
@@ -590,7 +591,7 @@ const ComplaintManagement = () => {
                                   : "Chưa hoàn tiền sự kiện"}
                               </span>
                             </div>
-                          </div>
+                          </div> */}
                         </div>
                       </div>
                     </div>
@@ -622,7 +623,7 @@ const ComplaintManagement = () => {
                             className="inline-flex items-center rounded-md border border-transparent bg-green-600 px-3 py-2 text-sm leading-4 font-medium text-white shadow-sm hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 focus:outline-none"
                           >
                             <Check size={16} className="mr-1" />
-                            Chấp nhận & giải quyết
+                            Chấp nhận
                           </button>
                           <button
                             onClick={() =>
@@ -634,9 +635,9 @@ const ComplaintManagement = () => {
                             className="inline-flex items-center rounded-md border border-transparent bg-red-600 px-3 py-2 text-sm leading-4 font-medium text-white shadow-sm hover:bg-red-700 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-none"
                           >
                             <X size={16} className="mr-1" />
-                            Bác bỏ
+                            Không chấp nhận
                           </button>
-                          {!selectedComplaint.order_refunded && (
+                          {/* {!selectedComplaint.order_refunded && (
                             <button
                               onClick={() =>
                                 handleResolveComplaint(
@@ -663,7 +664,7 @@ const ComplaintManagement = () => {
                               <ArrowDown size={16} className="mr-1" />
                               Hoàn tiền sự kiện
                             </button>
-                          )}
+                          )} */}
                         </div>
                       </div>
                     )}

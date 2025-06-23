@@ -72,6 +72,7 @@ const FavoriteEvent = () => {
       hour: "numeric",
       minute: "numeric",
       hour12: true,
+      timeZone: "UTC",
     });
   };
 
@@ -150,7 +151,12 @@ const FavoriteEvent = () => {
                 <p className="text-sm text-orange-500">
                   {formatEventDate(event.nearestSchedule)}
                 </p>
-                <p className="text-sm text-gray-600">{`${event.eventLocation.address},  ${event.eventLocation.city}, ${event.eventLocation.country}`}</p>
+                <p className="text-sm text-gray-600">
+                  {`${event.eventLocation.address}`}
+                  {event.eventLocation.city !== "Unknown" &&
+                    `, ${event.eventLocation.city}`}
+                  , {event.eventLocation.country}
+                </p>
                 {event.cheapestTicketPrice && (
                   <p className="text-main font-bold">
                     Từ {FormatPrice(event.cheapestTicketPrice)}

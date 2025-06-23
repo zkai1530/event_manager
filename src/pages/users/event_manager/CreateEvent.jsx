@@ -445,7 +445,7 @@ const CreateEvent = () => {
                 <input
                   type="text"
                   {...register("name", {
-                    required: "Name is required",
+                    required: "Tên sự kiện là bắt buộc",
                   })}
                   className={`mb-2 w-full rounded-lg border border-gray-500 px-4 py-2 outline-none ${errors.name ? "border-2 border-red-500" : "focus:ring-main focus:border-none focus:ring-2"} `}
                   placeholder="Tên sự kiện"
@@ -469,7 +469,7 @@ const CreateEvent = () => {
                 <input
                   type="text"
                   {...register("summary", {
-                    required: "Summary is required",
+                    required: "Tóm tắt là bắt buộc",
                   })}
                   className={`mb-2 w-full rounded-lg border border-gray-500 px-4 py-2 outline-none ${errors.summary ? "border-2 border-red-500" : "focus:ring-main focus:border-none focus:ring-2"} `}
                   placeholder="Tóm tắt sơ lược"
@@ -544,7 +544,7 @@ const CreateEvent = () => {
               <input
                 type="text"
                 {...register("country", {
-                  required: "Country is required",
+                  required: "Đất nước là bắt buộc",
                 })}
                 className={`mb-2 w-full rounded-lg border border-gray-500 px-4 py-2 outline-none ${errors.country ? "border-2 border-red-500" : "focus:ring-main focus:border-none focus:ring-2"} `}
                 placeholder="Đất nước"
@@ -570,7 +570,7 @@ const CreateEvent = () => {
                   <input
                     type="text"
                     {...register("city", {
-                      required: "City is required",
+                      required: "Thành phố là bắt buộc",
                     })}
                     className={`mb-2 w-full rounded-lg border border-gray-500 px-4 py-2 outline-none ${errors.city ? "border-2 border-red-500" : "focus:ring-main focus:border-none focus:ring-2"}`}
                     placeholder="Thành phố"
@@ -592,7 +592,7 @@ const CreateEvent = () => {
                   <input
                     type="text"
                     {...register("address", {
-                      required: "Address is required",
+                      required: "Địa chỉ là bắt buộc",
                     })}
                     className={`mb-2 w-full rounded-lg border border-gray-500 px-4 py-2 outline-none ${errors.address ? "border-2 border-red-500" : "focus:ring-main focus:border-none focus:ring-2"}`}
                     placeholder="Địa chỉ"
@@ -614,7 +614,7 @@ const CreateEvent = () => {
                   <input
                     type="text"
                     {...register("postalCode", {
-                      required: "postal Code is required",
+                      required: "Mã bưu chính là bắt buộc",
                       pattern: {
                         value: /^\d+$/,
                         message: "postal Code must contain only numbers",
@@ -793,7 +793,7 @@ const CreateEvent = () => {
                     <input
                       type="date"
                       {...register("eventDate", {
-                        required: "Schedule date is required",
+                        required: "Ngày diễn ra là bắt buộc",
                         validate: {
                           isFuture: (value) =>
                             value > new Date().toISOString().split("T")[0] ||
@@ -820,7 +820,7 @@ const CreateEvent = () => {
                     <input
                       type="time"
                       {...register("startTime", {
-                        required: "Start time is required",
+                        required: "Giờ bắt đầu là bắt buộc",
                       })}
                       className={`mb-2 w-full rounded-lg border border-gray-500 px-4 py-2 outline-none ${errors.startTime ? "border-2 border-red-500" : "focus:ring-main focus:border-none focus:ring-2"}`}
                       placeholder="Giờ bắt đầu"
@@ -842,7 +842,7 @@ const CreateEvent = () => {
                     <input
                       type="time"
                       {...register("endTime", {
-                        required: "End time is required",
+                        required: "Giờ kết thúc là bắt buộc",
                         validate: {
                           afterStart: (value) =>
                             !getValues("startTime") ||
@@ -962,7 +962,7 @@ const CreateEvent = () => {
                   <input
                     type="text"
                     {...register(`faqs.${index}.question`, {
-                      required: "Question is required",
+                      required: "Câu hỏi là bắt buộc",
                     })}
                     className={`mb-2 w-full rounded-lg border px-4 py-2 outline-none ${
                       errors.faqs?.[index]?.question
@@ -983,7 +983,7 @@ const CreateEvent = () => {
                   <textarea
                     rows={3}
                     {...register(`faqs.${index}.answer`, {
-                      required: "Answer is required",
+                      required: "Câu trả lời là bắt buộc",
                     })}
                     className={`mb-2 w-full rounded-lg border px-4 py-2 outline-none ${
                       errors.faqs?.[index]?.answer

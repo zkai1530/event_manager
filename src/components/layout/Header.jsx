@@ -30,6 +30,7 @@ const Header = () => {
 
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     if (locations.pathname === "/search") {
@@ -70,12 +71,27 @@ const Header = () => {
     try {
       const data = await getAllNotiByUser(token);
       setNotifications(data);
+      setUnreadCount(data.filter((notif) => !notif.isRead).length);
     } catch (error) {
       console.error("Error fetching notifications:", error);
     } finally {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (token && showNotifications) {
+      fetchNotifications();
+    }
+  }, [showNotifications, token]);
+
+  // Gọi định kỳ mỗi 30 giây
+  useEffect(() => {
+    if (!token) return;
+    fetchNotifications(); // Gọi lần đầu
+    const interval = setInterval(fetchNotifications, 30000); // 30 giây
+    return () => clearInterval(interval);
+  }, [token]);
 
   const handleReadNotification = async (notiId) => {
     try {
@@ -179,7 +195,7 @@ const Header = () => {
             </span>
           </Link>
           {/* Notifications Link */}
-          <div
+          {/* <div
             className="hover:text-primary relative flex cursor-pointer flex-col items-center"
             onClick={(e) => {
               e.preventDefault();
@@ -244,6 +260,76 @@ const Header = () => {
                 )}
               </div>
             )}
+          </div> */}
+          <div
+            className="hover:text-primary relative flex cursor-pointer flex-col items-center"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setShowNotifications((prev) => !prev);
+            }}
+          >
+            <GrNotification size={18} className="text-gray-800" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-2 -right-0 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-xs text-white">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
+            <span className="text-[10px] font-semibold text-gray-500 sm:text-xs">
+              Thông báo
+            </span>
+            {showNotifications && (
+              <div
+                className="absolute top-full right-0 z-10 mt-2 max-h-96 w-120 overflow-y-auto rounded-lg bg-white p-2 shadow-lg"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {isLoading ? (
+                  <div className="flex justify-center p-4">
+                    <Loading1 isLoading={isLoading} />
+                  </div>
+                ) : notifications.length === 0 ? (
+                  <div className="p-4 text-center text-sm text-gray-600">
+                    Không có thông báo
+                  </div>
+                ) : (
+                  notifications.map((notif, index) => (
+                    <div
+                      key={notif.notificationId}
+                      className={`mb-2 flex items-center rounded-md p-2 ${
+                        !notif.isRead ? "bg-gray-100" : "bg-white"
+                      }`}
+                      onClick={() => {
+                        if (!notif.isRead) {
+                          handleReadNotification(notif.notificationId);
+                        }
+                      }}
+                    >
+                      <img
+                        src={notif.imageUrl}
+                        alt="Event"
+                        className="mr-2 h-12 w-12 rounded-md object-cover"
+                      />
+                      <div className="flex-1">
+                        <p className="text-sm text-gray-800">{notif.message}</p>
+                      </div>
+                      {!notif.isRead ? (
+                        <span className="bg-main-bold ml-2 h-2 w-2 rounded-full"></span>
+                      ) : (
+                        <button
+                          className="ml-2 text-gray-500 hover:text-red-500"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteNotification(notif.notificationId);
+                          }}
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
           </div>
           {/* User Info */}
           <div className="relative flex cursor-pointer" ref={userInfoRef}>
@@ -278,7 +364,7 @@ const Header = () => {
                       {item.onClick ? (
                         <button
                           onClick={item.onClick}
-                          className="block w-full px-4 py-2 text-left text-gray-700 hover:bg-gray-100 cursor-pointer"
+                          className="block w-full cursor-pointer px-4 py-2 text-left text-gray-700 hover:bg-gray-100"
                         >
                           {item.label}
                         </button>

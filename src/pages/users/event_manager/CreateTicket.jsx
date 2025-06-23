@@ -203,6 +203,12 @@ const CreateTicket = () => {
           text: msg,
           icon: "error",
         });
+      } else if (error.response.data?.data === "No schedules provided") {
+        Swal.fire({
+          title: "Lỗi!",
+          text: `Vui lòng chọn lịch trình cho vé!`,
+          icon: "error",
+        });
       } else {
         Swal.fire({
           title: "Lỗi!",

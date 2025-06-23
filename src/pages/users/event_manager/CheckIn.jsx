@@ -87,17 +87,17 @@ function CheckIn() {
           title: "Check-in Thành Công!",
           html: `
             <div style="text-align: left; font-size: 16px;">
-              <p><strong>Order ID:</strong> ${ticketData.orderId}</p>
-              <p><strong>Event:</strong> ${ticketData.eventName}</p>
-              <p><strong>Date:</strong> ${ticketData.scheduleDate}</p>
-              <p><strong>Time:</strong> ${ticketData.startTime} - ${ticketData.endTime}</p>
-              <p><strong>Total Quantity:</strong> ${ticketData.totalQuantity}</p>
-              <h3 style="margin-top: 10px;">Tickets:</h3>
+              <p><strong>Mã đơn hàng:</strong> ${ticketData.orderId}</p>
+              <p><strong>Sự kiện:</strong> ${ticketData.eventName}</p>
+              <p><strong>Ngày diễn ra:</strong> ${ticketData.scheduleDate}</p>
+              <p><strong>Khoảng thời gian:</strong> ${ticketData.startTime} - ${ticketData.endTime}</p>
+              <p><strong>Tổng số lượng vé:</strong> ${ticketData.totalQuantity}</p>
+              <h3 style="margin-top: 10px;">Thông tin vé:</h3>
               <ul>
                 ${ticketData.orderTickets
                   .map(
                     (ticket) =>
-                      `<li>${ticket.ticketName} (Qty: ${ticket.quantity})</li>`,
+                      `<li>${ticket.ticketName} - x${ticket.quantity}</li>`,
                   )
                   .join("")}
               </ul>
@@ -175,11 +175,11 @@ function CheckIn() {
             </button>
           </div>
         )}
-        {cameraError && (
+        {/* {cameraError && (
           <div className="mt-4 rounded bg-red-100 p-4 text-red-600">
             <pre className="max-h-40 overflow-auto text-sm">{cameraError}</pre>
           </div>
-        )}
+        )} */}
       </div>
     </div>
   );

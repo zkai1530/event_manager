@@ -23,28 +23,27 @@ const UserManagement = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   // Fetch users
+  const fetchUsers = async () => {
+    setIsLoading(true);
+    try {
+      const response = searchText
+        ? await searchUser(token, searchText, page - 1)
+        : await getAllUsers(token, page - 1);
+
+      setUsers(response.content);
+      setTotalPages(response.totalPages);
+    } catch (error) {
+      console.error("fetchUsers ", error.response.data);
+      Swal.fire({
+        title: "Lỗi!",
+        text: "Không thể tải danh sách người dùng.",
+        icon: "error",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
   useEffect(() => {
-    const fetchUsers = async () => {
-      setIsLoading(true);
-      try {
-        const response = searchText
-          ? await searchUser(token, searchText, page - 1)
-          : await getAllUsers(token, page - 1);
-
-        setUsers(response.content);
-        setTotalPages(response.totalPages);
-      } catch (error) {
-        console.error("fetchUsers ", error.response.data);
-        Swal.fire({
-          title: "Lỗi!",
-          text: "Không thể tải danh sách người dùng.",
-          icon: "error",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
     fetchUsers();
   }, [page, searchText, refresh]);
 
@@ -70,6 +69,7 @@ const UserManagement = () => {
             text: `Đã chặn ${user.email}.`,
             icon: "success",
           });
+          await fetchUsers()
           setRefresh((prev) => !prev);
         }
       } catch (error) {

@@ -1,7 +1,9 @@
 import Loading from "@/components/ui/Loading";
+import { tr } from "date-fns/locale";
 import { useEffect, useState } from "react";
 import { AiFillEdit } from "react-icons/ai";
-import { FaBan } from "react-icons/fa";
+import { FaBan, FaReceipt } from "react-icons/fa";
+import { MdEventBusy } from "react-icons/md";
 import { useNavigate } from "react-router-dom";
 import {
   deleteEvent,
@@ -125,7 +127,7 @@ const ListEvents = () => {
       {/* Search and Buttons */}
       <div className="mb-15 flex items-center justify-between">
         <div className="flex space-x-3">
-          <div className="relative">
+          {/* <div className="relative">
             <input
               type="text"
               placeholder="Tìm kiếm sự kiện"
@@ -145,7 +147,7 @@ const ListEvents = () => {
                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
               ></path>
             </svg>
-          </div>
+          </div> */}
           {/* <button className="flex items-center space-x-2 rounded-lg bg-blue-600 px-4 py-2 text-white">
             <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
               <path d="M4 4h12v12H4z" />
@@ -227,7 +229,7 @@ const ListEvents = () => {
                   </tr>
                 </thead>
                 <tbody className="cursor-pointer divide-y divide-gray-200">
-                  {events.length > 0 &&
+                  {events.length > 0 ? (
                     events.map((event) => {
                       let scheduleString = null;
                       if (event.eventType === "SINGLE") {
@@ -300,7 +302,17 @@ const ListEvents = () => {
                           </td>
                         </tr>
                       );
-                    })}
+                    })
+                  ) : (
+                    <tr>
+                      <td colSpan={4} className="text-center">
+                        <div className="flex flex-col items-center py-10 text-gray-500">
+                          <MdEventBusy className="mb-3 h-12 w-12" />
+                          <p>Bạn hiện không có sự kiện nào.</p>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>

@@ -47,6 +47,7 @@ import {
 import Loading1 from "@/components/ui/Loading1";
 import { FormatPrice } from "@/utils/formatPrice";
 import { formatRevenue } from "@/utils/formatRevenue";
+import AdminStatistics from "./AdminStatistics";
 
 const Dashboard = () => {
   const token = localStorage.getItem("token");
@@ -220,6 +221,7 @@ const Dashboard = () => {
       year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
+      timeZone: "UTC",
     });
   };
 
@@ -596,6 +598,10 @@ const Dashboard = () => {
             </div>
           </CardFooter>
         </Card>
+      </div>
+
+      <div>
+        <AdminStatistics/>
       </div>
 
       <div className="mt-8 mb-8 rounded-lg bg-white p-6 shadow">

@@ -1,6 +1,9 @@
 import Login1 from "@/pages/auth/Login1";
 import AccountSettings from "@/pages/users/browser_event/AccountManagement";
 import BankAccountForm from "@/pages/users/event_manager/EventPublish";
+import SeatMap3 from "@/pages/users/event_manager/SeatMap3";
+import SeatMap6 from "@/pages/users/event_manager/SeatMap6";
+import VenueMapViewer from "@/pages/users/event_manager/VenueMapViewer";
 import UserLayout from "layout/UserLayout";
 import Callback from "pages/auth/Callback";
 import Login from "pages/auth/Login";
@@ -24,6 +27,9 @@ const PublicRoutes = () => {
         <Route path="/details/:slug" element={<EventDetails />} />
         <Route path="/test" element={<BankAccountForm />} />
         <Route path="/test1" element={<AccountSettings />} />
+        <Route path="/seatmap3" element={<SeatMap3 />} />
+        <Route path="/seatmap6" element={<SeatMap6 />} />
+        <Route path="/viewer" element={<VenueMapViewer />} />
       </Route>
     </Routes>
   );

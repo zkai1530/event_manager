@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/sidebar";
 import { useState, useEffect } from "react";
 import { NavUser } from "./nav-user";
+import { useAuth } from "@/context/AuthContext";
 
 // Menu items.
 const data = {
@@ -53,16 +54,17 @@ const data = {
       url: "/admin/complaint-management",
       icon: MessageCircleWarning,
     },
-    {
-      title: "Thống kê",
-      url: "/admin/statistics",
-      icon: ChartNoAxesCombined,
-    },
+    // {
+    //   title: "Thống kê",
+    //   url: "/admin/statistics",
+    //   icon: ChartNoAxesCombined,
+    // },
   ],
 };
 
 export function AppSidebar() {
   const [activeItem, setActiveItem] = useState(window.location.pathname);
+  const { logout } = useAuth();
 
   useEffect(() => {
     setActiveItem(window.location.pathname);
@@ -79,7 +81,7 @@ export function AppSidebar() {
                 <SidebarMenuItem className="" key={item.title}>
                   <SidebarMenuButton
                     tooltip={item.title}
-                    className={`${  
+                    className={`${
                       activeItem === item.url
                         ? "bg-main text-white"
                         : "text-gray-700"
@@ -98,7 +100,7 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="">
-        <NavUser user={data.user} />
+        <NavUser user={data.user} logout={logout} />
       </SidebarFooter>
     </Sidebar>
   );
