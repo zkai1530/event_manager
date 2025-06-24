@@ -144,6 +144,7 @@ public class EventServiceImpl implements EventService {
                     .scheduleDate(eventRequest.getEventDate())
                     .startTime(eventRequest.getStartTime())
                     .endTime(eventRequest.getEndTime())
+                    .isDisbursed(false)
                     .build();
 
             eventScheduleRepository.save(eventSchedule);
@@ -416,18 +417,6 @@ public class EventServiceImpl implements EventService {
         }
 
         return eventMapper.toEventResponse(event);
-    }
-
-    private int getTotalSoldTickets(Event event) {
-        int totalSold = 0;
-        List<EventSchedule> schedules = eventScheduleRepository.findAllByEvent(event);
-        for (EventSchedule schedule : schedules) {
-            List<TicketSchedule> ticketSchedules = ticketScheduleRepository.findBySchedule(schedule);
-            for (TicketSchedule ticketSchedule : ticketSchedules) {
-                totalSold += ticketSchedule.getSold();
-            }
-        }
-        return totalSold;
     }
 
     // @Override

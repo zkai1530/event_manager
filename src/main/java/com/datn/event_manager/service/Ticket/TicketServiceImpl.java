@@ -13,9 +13,11 @@ import com.datn.event_manager.dto.request.TicketRequest;
 import com.datn.event_manager.dto.response.TicketResponse;
 import com.datn.event_manager.entity.Event;
 import com.datn.event_manager.entity.EventSchedule;
+import com.datn.event_manager.entity.Section;
 import com.datn.event_manager.entity.Ticket;
 import com.datn.event_manager.entity.TicketSchedule;
 import com.datn.event_manager.entity.User;
+import com.datn.event_manager.entity.VenueMap;
 import com.datn.event_manager.exception.AppException;
 import com.datn.event_manager.exception.ErrorCode;
 import com.datn.event_manager.mapper.TicketMapper;
@@ -35,6 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 public class TicketServiceImpl implements TicketService {
     TicketRepository ticketRepository;
     TicketScheduleRepository ticketScheduleRepository;
+    SectionRepository sectionRepository;
     EventScheduleRepository scheduleRepository;
     EventRepository eventRepository;
     AuthenticationService authenticationService;
@@ -56,7 +59,7 @@ public class TicketServiceImpl implements TicketService {
                     .map(schedule -> LocalDateTime.of(schedule.getScheduleDate(), schedule.getStartTime()))
                     .min(LocalDateTime::compareTo)
                     .orElseThrow(() -> new IllegalArgumentException("No schedules provided"));
-                    
+
             if (!request.getSaleStart().isBefore(minScheduleStart)) {
                 throw new IllegalArgumentException(
                         "Sale start time is invalid for schedule on " + minScheduleStart.toLocalDate() +
@@ -65,6 +68,7 @@ public class TicketServiceImpl implements TicketService {
         }
 
         // Check if the user is the owner of the event
+        Event event = null;
         for (EventSchedule schedule : schedules) {
             String eventOwnerId = schedule.getEvent().getUser().getUserId();
 
@@ -77,21 +81,53 @@ public class TicketServiceImpl implements TicketService {
                 throw new AppException(ErrorCode.EVENT_ALREADY_PUBLISHED);
             }
 
-            // check endTime is before scheduleDate of event
-            // LocalDate scheduleDate = schedule.getScheduleDate();
-            // LocalTime startTime = schedule.getStartTime();
-            // LocalDateTime scheduleStart = LocalDateTime.of(scheduleDate, startTime);
-            // if (!request.getSaleEnd().isBefore(scheduleStart)) {
-            //     throw new IllegalArgumentException(
-            //             "Sale end time is invalid for schedule on " + scheduleDate + " starting at " + startTime);
-            // }
+            event = schedule.getEvent();
+        }
+
+        // calc availableQuantity and check sections if provided
+        Integer availableQuantity;
+        List<Section> sections = new ArrayList<>();
+        if (request.getSectionIds() != null && !request.getSectionIds().isEmpty()) {
+            if (event == null || !Boolean.TRUE.equals(event.getHasSeatMap())) {
+                throw new IllegalArgumentException("Event does not have a seat map!");
+            }
+
+            sections = sectionRepository.findAllById(request.getSectionIds());
+            if (sections.size() != request.getSectionIds().size()) {
+                throw new IllegalArgumentException("One or many sections invalid!");
+            }
+
+            VenueMap venueMap = event.getVenueMap();
+            if (venueMap == null) {
+                throw new IllegalArgumentException("No venue map found for this event!");
+            }
+            for (Section section : sections) {
+                if (!section.getVenueMap().getVenueMapId().equals(venueMap.getVenueMapId())) {
+                    throw new IllegalArgumentException("Section does not belong to this event's venue map!");
+                }
+
+                if (section.getTicket() != null) {
+                    throw new IllegalArgumentException(
+                            "Section " + section.getName() + " is already assigned to another ticket!");
+                }
+            }
+
+            availableQuantity = sections.stream()
+                    .mapToInt(section -> section.getSeats().size())
+                    .sum();
+
+        } else {
+            if (request.getAvailableQuantity() == null || request.getAvailableQuantity() <= 0) {
+                throw new IllegalArgumentException("Available quantity must be provided and positive!");
+            }
+            availableQuantity = request.getAvailableQuantity();
         }
 
         Ticket ticket = Ticket.builder()
                 .name(request.getName())
                 .description(request.getDescription())
                 .price(request.getPrice())
-                .availableQuantity(request.getAvailableQuantity())
+                .availableQuantity(availableQuantity)
                 .sold(0)
                 .saleStart(request.getSaleStart())
                 .saleEnd(request.getSaleEnd())
@@ -104,12 +140,18 @@ public class TicketServiceImpl implements TicketService {
                         .schedule(schedule)
                         .checkedInCount(0)
                         .reservedQuantity(0)
-                        .availableQuantity(request.getAvailableQuantity())
+                        .availableQuantity(availableQuantity)
                         .sold(0)
                         .build())
                 .toList();
 
         ticket.setTicketSchedules(ticketSchedules);
+
+        if (!sections.isEmpty()) {
+            sections.forEach(section -> section.setTicket(ticket));
+            ticket.setSections(sections);
+        }
+
         ticketRepository.save(ticket);
     }
 
@@ -130,12 +172,14 @@ public class TicketServiceImpl implements TicketService {
         }
 
         // Check if the user is the owner of the event
+        Event event = null;
         for (EventSchedule schedule : schedulesRequest) {
             String eventOwnerId = schedule.getEvent().getUser().getUserId();
 
             if (!eventOwnerId.equals(user.getUserId())) {
                 throw new AppException(ErrorCode.UNAUTHORIZED);
             }
+            event = schedule.getEvent();
         }
 
         // check if the event is published, can't edit information
@@ -178,6 +222,47 @@ public class TicketServiceImpl implements TicketService {
                 throw new IllegalArgumentException(
                         "Sale start time is invalid for schedule on " + minScheduleStart.toLocalDate() + " starting at "
                                 + minScheduleStart.toLocalTime());
+            }
+        }
+
+        Integer availableQuantity = null;
+        List<Section> sections = new ArrayList<>();
+        if (request.getSectionIds() != null && !request.getSectionIds().isEmpty()) {
+            if (event == null || !Boolean.TRUE.equals(event.getHasSeatMap())) {
+                throw new IllegalArgumentException("Event does not have a seat map!");
+            }
+
+            sections = sectionRepository.findAllById(request.getSectionIds());
+            if (sections.size() != request.getSectionIds().size()) {
+                throw new IllegalArgumentException("One or many sections invalid!");
+            }
+
+            VenueMap venueMap = event.getVenueMap();
+            if (venueMap == null) {
+                throw new IllegalArgumentException("No venue map found for this event!");
+            }
+            for (Section section : sections) {
+                if (!section.getVenueMap().getVenueMapId().equals(venueMap.getVenueMapId())) {
+                    throw new IllegalArgumentException("Section does not belong to this event's venue map!");
+                }
+            }
+
+            availableQuantity = sections.stream()
+                    .mapToInt(section -> section.getSeats().size())
+                    .sum();
+
+            for (Section section : sections) {
+                if (section.getTicket() != null && !section.getTicket().getTicketId().equals(ticketId)) {
+                    throw new IllegalArgumentException(
+                            "Section " + section.getName() + " is already assigned to another ticket!");
+                }
+            }
+        } else {
+            if (request.getAvailableQuantity() != null) {
+                if (request.getAvailableQuantity() <= 0) {
+                    throw new IllegalArgumentException("Available quantity must be positive!");
+                }
+                availableQuantity = request.getAvailableQuantity();
             }
         }
 
@@ -226,18 +311,32 @@ public class TicketServiceImpl implements TicketService {
             ticket.setDescription(request.getDescription());
         if (request.getPrice() != null)
             ticket.setPrice(request.getPrice());
-        if (request.getAvailableQuantity() != null)
-            ticket.setAvailableQuantity(request.getAvailableQuantity());
+        if (availableQuantity != null)
+            ticket.setAvailableQuantity(availableQuantity);
         if (request.getSaleStart() != null)
             ticket.setSaleStart(request.getSaleStart());
         if (request.getSaleEnd() != null)
             ticket.setSaleEnd(request.getSaleEnd());
         ticket.setSold(0);
 
+        if (request.getSectionIds() != null) {
+            List<Section> currentSections = ticket.getSections();
+            currentSections.forEach(section -> {
+                if (!request.getSectionIds().contains(section.getSectionId())) {
+                    section.setTicket(null); 
+                }
+            });
+            ticket.getSections().clear(); // Xóa collection cũ
+            sections.forEach(section -> {
+                section.setTicket(ticket);
+                ticket.getSections().add(section); // Thêm section vào collection hiện tại
+            });
+        }
+
         // Update availableQuantity for existing TicketSchedules
-        if (request.getAvailableQuantity() != null) {
+        if (availableQuantity != null) {
             for (TicketSchedule currentTicketSchedule : currentTicketSchedules) {
-                currentTicketSchedule.setAvailableQuantity(request.getAvailableQuantity());
+                currentTicketSchedule.setAvailableQuantity(availableQuantity);
                 // ticketScheduleRepository.save(currentTicketSchedule);
             }
 
@@ -267,8 +366,8 @@ public class TicketServiceImpl implements TicketService {
                 TicketSchedule ticketSchedule = TicketSchedule.builder()
                         .ticket(ticket)
                         .schedule(schedule)
-                        .availableQuantity(request.getAvailableQuantity() != null ? request.getAvailableQuantity()
-                                : ticket.getAvailableQuantity())
+                        .availableQuantity(
+                                availableQuantity != null ? availableQuantity : ticket.getAvailableQuantity())
                         .sold(0)
                         .checkedInCount(0)
                         .reservedQuantity(0)
@@ -282,6 +381,7 @@ public class TicketServiceImpl implements TicketService {
     }
 
     @Override
+    @Transactional
     public void deleteTicket(Long ticketId) {
         User user = authenticationService.getUserFromToken();
 
@@ -310,6 +410,10 @@ public class TicketServiceImpl implements TicketService {
                         "Schedule on " + date + " starting at " + time +
                                 " has already been purchased for ticket " + ticket.getTicketId());
             }
+        }
+
+        if (!ticket.getSections().isEmpty()) {
+            ticket.getSections().forEach(section -> section.setTicket(null));
         }
 
         ticketRepository.delete(ticket);

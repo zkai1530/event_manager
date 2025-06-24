@@ -28,10 +28,12 @@ public class EventResponse {
     int capacity;
     String slug;
     EventType eventType; // Single, recurring
+    Boolean hasSeatMap;
     Boolean isPublished;
     EventLocationResponse eventLocation;
     List<EventScheduleResponse> schedules;
     List<FAQResponse> faqs;
     Long categoryId;
     Long themeId;
+    Long venueMapId;
 }

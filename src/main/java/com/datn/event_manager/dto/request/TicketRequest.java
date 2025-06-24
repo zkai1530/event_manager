@@ -24,4 +24,5 @@ public class TicketRequest {
     LocalDateTime saleStart;
     LocalDateTime saleEnd;
     List<Long> scheduleIds;
+    List<Long> sectionIds;
 }
