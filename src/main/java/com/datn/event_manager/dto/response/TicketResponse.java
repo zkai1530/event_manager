@@ -27,4 +27,5 @@ public class TicketResponse {
     LocalDateTime saleStart;
     LocalDateTime saleEnd;
     List<DiscountResponse> discounts;
+    List<Long> sectionIds;
 }

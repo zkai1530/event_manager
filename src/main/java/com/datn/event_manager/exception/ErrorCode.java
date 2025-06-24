@@ -51,6 +51,8 @@ public enum ErrorCode {
     REASON_NOT_FOUND("Reason not found!", HttpStatus.NOT_FOUND),
     ALREADY_COMPLAINED("You have already submitted a complaint for this order.", HttpStatus.BAD_REQUEST),
     VENUEMAP_NOT_FOUND("Venue map not found!", HttpStatus.NOT_FOUND),
+    SEAT_NOT_FOUND("Seat not found!", HttpStatus.NOT_FOUND),
+    SEAT_NOT_AVAILABLE("Seat not available!", HttpStatus.BAD_REQUEST),
     ALREADY_DISBURSED("This event has already been disbursed.", HttpStatus.BAD_REQUEST);
 
     ErrorCode(String message, HttpStatusCode httpStatusCode) {

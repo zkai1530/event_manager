@@ -1,6 +1,7 @@
 package com.datn.event_manager.service.Payment;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -11,6 +12,9 @@ import org.springframework.stereotype.Service;
 import com.datn.event_manager.entity.Discount;
 import com.datn.event_manager.entity.Order;
 import com.datn.event_manager.entity.OrderTicket;
+import com.datn.event_manager.entity.OrderTicketSeat;
+import com.datn.event_manager.entity.Seat;
+import com.datn.event_manager.entity.Seat.SeatStatus;
 import com.datn.event_manager.entity.Ticket;
 import com.datn.event_manager.entity.TicketSchedule;
 import com.datn.event_manager.entity.Order.OrderStatus;
@@ -19,7 +23,7 @@ import com.datn.event_manager.exception.AppException;
 import com.datn.event_manager.exception.ErrorCode;
 import com.datn.event_manager.repository.DiscountRepository;
 import com.datn.event_manager.repository.OrderRepository;
-import com.datn.event_manager.repository.TicketRepository;
+import com.datn.event_manager.repository.SeatRepository;
 import com.datn.event_manager.repository.TicketScheduleRepository;
 import com.datn.event_manager.service.PayOS.PayOSService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -40,7 +44,7 @@ import vn.payos.type.WebhookData;
 public class PaymentServiceImpl implements PaymentService {
     PayOSService payOSService;
     OrderRepository orderRepository;
-    TicketRepository ticketRepository;
+    SeatRepository seatRepository;
     TicketScheduleRepository ticketScheduleRepository;
     DiscountRepository discountRepository;
 
@@ -112,6 +116,13 @@ public class PaymentServiceImpl implements PaymentService {
 
             if (orderTicket.getDiscount() != null) {
                 usedDiscountIds.add(orderTicket.getDiscount().getDiscountId());
+            }
+
+            List<OrderTicketSeat> orderTicketSeats = orderTicket.getOrderTicketSeats();
+            for (OrderTicketSeat ots : orderTicketSeats) {
+                Seat seat = ots.getSeat();
+                seat.setStatus(SeatStatus.SOLD);
+                seatRepository.save(seat);
             }
         }
 

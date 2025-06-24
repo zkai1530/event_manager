@@ -8,8 +8,10 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -21,6 +23,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import com.datn.event_manager.configuration.PayOSConfig;
+import com.datn.event_manager.controller.UserController;
 import com.datn.event_manager.dto.request.CheckInRequest;
 import com.datn.event_manager.dto.request.OrderRequest;
 import com.datn.event_manager.dto.request.TicketItem;
@@ -33,15 +36,20 @@ import com.datn.event_manager.dto.response.ticketsales.OrderResponse1;
 import com.datn.event_manager.dto.response.ticketsales.PagedOrderResponse;
 import com.datn.event_manager.dto.response.ticketsales.TicketScheduleResponse;
 import com.datn.event_manager.entity.Discount;
+import com.datn.event_manager.entity.Event;
 import com.datn.event_manager.entity.EventSchedule;
 import com.datn.event_manager.entity.Order;
 import com.datn.event_manager.entity.OrderTicket;
+import com.datn.event_manager.entity.OrderTicketSeat;
+import com.datn.event_manager.entity.Seat;
+import com.datn.event_manager.entity.Seat.SeatStatus;
 import com.datn.event_manager.entity.Ticket;
 import com.datn.event_manager.entity.TicketSchedule;
 import com.datn.event_manager.entity.User;
 import com.datn.event_manager.entity.Order.OrderStatus;
 import com.datn.event_manager.entity.Order.PaymentStatus;
 import com.datn.event_manager.enums.DiscountType;
+import com.datn.event_manager.enums.EventType;
 import com.datn.event_manager.exception.AppException;
 import com.datn.event_manager.exception.ErrorCode;
 import com.datn.event_manager.mapper.MyTicketMapper;
@@ -51,6 +59,8 @@ import com.datn.event_manager.repository.ComplaintRepository;
 import com.datn.event_manager.repository.DiscountRepository;
 import com.datn.event_manager.repository.EventScheduleRepository;
 import com.datn.event_manager.repository.OrderRepository;
+import com.datn.event_manager.repository.OrderTicketSeatRepository;
+import com.datn.event_manager.repository.SeatRepository;
 import com.datn.event_manager.repository.TicketDiscountRepository;
 import com.datn.event_manager.repository.TicketRepository;
 import com.datn.event_manager.repository.TicketScheduleRepository;
@@ -73,6 +83,8 @@ import vn.payos.type.PaymentData;
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class OrderServiceImpl implements OrderService {
+
+    private final UserController userController;
     AuthenticationService authenticationService;
     EventScheduleRepository scheduleRepository;
     TicketRepository ticketRepository;
@@ -81,6 +93,8 @@ public class OrderServiceImpl implements OrderService {
     TicketScheduleRepository ticketScheduleRepository;
     EventScheduleRepository eventScheduleRepository;
     ComplaintRepository complaintRepository;
+    SeatRepository seatRepository;
+    OrderTicketSeatRepository orderTicketSeatRepository;
     OrderMapper orderMapper;
     OrderRepository orderRepository;
     PayOSConfig payOSConfig;
@@ -351,7 +365,7 @@ public class OrderServiceImpl implements OrderService {
         if (!user.getUserId().equals(order.getUser().getUserId())) {
             throw new AppException(ErrorCode.UNAUTHORIZED);
         }
-        
+
         return orderMapper.toSuccessOrderResponse(order);
     }
 
@@ -362,7 +376,7 @@ public class OrderServiceImpl implements OrderService {
         Order order = orderRepository.findOrderByOrderId(orderId)
                 .orElseThrow(() -> new AppException(ErrorCode.ORDER_NOT_FOUND));
 
-        // Check if the user is the owner of the order 
+        // Check if the user is the owner of the order
         if (!user.getUserId().equals(order.getUser().getUserId())) {
             throw new AppException(ErrorCode.UNAUTHORIZED);
         }
@@ -371,15 +385,23 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional(rollbackOn = Exception.class)
     public OrderReservationResponse reserveOrder(OrderRequest orderRequest) throws Exception {
         User user = authenticationService.getUserFromToken();
+
         EventSchedule eventSchedule = scheduleRepository.findById(orderRequest.getScheduleId())
                 .orElseThrow(() -> new AppException(ErrorCode.SCHEDULE_NOT_FOUND));
+
+        Event event = eventSchedule.getEvent();
+        boolean hasSeatMap = event.getHasSeatMap() != null && event.getHasSeatMap()
+                && event.getEventType() == EventType.SINGLE;
 
         BigDecimal totalPrice = BigDecimal.ZERO;
         List<OrderTicket> orderTickets = new ArrayList<>();
         Set<Long> usedDiscountIds = new HashSet<>();
         List<Pair<TicketSchedule, Integer>> schedulesToReserve = new ArrayList<>();
+        Map<Long, OrderTicket> ticketIdToOrderTicket = new HashMap<>();
+        List<OrderTicketSeat> orderTicketSeats = new ArrayList<>();
 
         for (TicketItem ticketItem : orderRequest.getTickets()) {
             Ticket ticket = ticketRepository.findById(ticketItem.getTicketId())
@@ -394,14 +416,56 @@ public class OrderServiceImpl implements OrderService {
                     .findFirst()
                     .orElseThrow(() -> new AppException(ErrorCode.SCHEDULE_NOT_FOUND));
 
-            if (ticketItem.getQuantity() > ticketSchedule.getAvailableQuantity() - ticketSchedule.getSold()
-                    - ticketSchedule.getReservedQuantity()) {
-                throw new AppException(ErrorCode.TICKET_QUANTITY_EXCEEDS_AVAILABLE);
+            int quantity;
+            List<Long> seatIds = ticketItem.getSeatIds();
+
+            // Xử lý trường hợp có seat
+            if (hasSeatMap && seatIds != null && !seatIds.isEmpty()) {
+                if (ticketItem.getQuantity() == null) {
+                    throw new IllegalArgumentException("Quantity is required even for events with seat map");
+                }
+                quantity = ticketItem.getQuantity();
+
+                if (seatIds.size() != quantity) {
+                    throw new IllegalArgumentException("Quantity must match the number of seatIds");
+                }
+
+                // Kiểm tra ghế
+                log.info("Fetching seats for seatIds: {}", seatIds);
+                List<Seat> seats = seatRepository.findAllById(seatIds);
+                if (seats.size() != seatIds.size()) {
+                    throw new AppException(ErrorCode.SEAT_NOT_FOUND);
+                }
+
+                for (Seat seat : seats) {
+                    if (seat.getStatus() != SeatStatus.AVAILABLE) {
+                        throw new AppException(ErrorCode.SEAT_NOT_AVAILABLE);
+                    }
+                    if (!seat.getSection().getTicket().getTicketId().equals(ticket.getTicketId())) {
+                        throw new IllegalArgumentException("Seat does not belong to the specified ticket");
+                    }
+                }
+
+                // Đặt trước ghế
+                log.info("Reserving seats: {}", seatIds);
+                for (Seat seat : seats) {
+                    seat.setStatus(SeatStatus.RESERVED);
+                }
+                seatRepository.saveAll(seats);
+                log.info("Seats reserved successfully");
+            } else {
+                if (ticketItem.getQuantity() == null || ticketItem.getQuantity() <= 0) {
+                    throw new IllegalArgumentException("Quantity must be provided for events without seat map");
+                }
+                quantity = ticketItem.getQuantity();
+
+                if (quantity > ticketSchedule.getAvailableQuantity() - ticketSchedule.getSold()
+                        - ticketSchedule.getReservedQuantity()) {
+                    throw new AppException(ErrorCode.TICKET_QUANTITY_EXCEEDS_AVAILABLE);
+                }
             }
 
-            // ticketSchedule.setReservedQuantity(ticketSchedule.getReservedQuantity() + ticketItem.getQuantity());
-            // ticketScheduleRepository.save(ticketSchedule);
-            schedulesToReserve.add(Pair.of(ticketSchedule, ticketItem.getQuantity()));
+            schedulesToReserve.add(Pair.of(ticketSchedule, quantity));
 
             BigDecimal ticketPrice = ticket.getPrice();
 
@@ -459,14 +523,30 @@ public class OrderServiceImpl implements OrderService {
                 }
             }
 
-            totalPrice = totalPrice.add(ticketPrice.multiply(BigDecimal.valueOf(ticketItem.getQuantity())));
+            totalPrice = totalPrice.add(ticketPrice.multiply(BigDecimal.valueOf(quantity)));
 
             OrderTicket orderTicket = OrderTicket.builder()
                     .ticket(ticket)
                     .discount(!discounts.isEmpty() ? discounts.get(0) : null)
                     .priceAtPurchase(ticketPrice.doubleValue())
-                    .quantity(ticketItem.getQuantity())
+                    .quantity(quantity)
                     .build();
+
+            // Lưu OrderTicket vào map
+            ticketIdToOrderTicket.put(ticket.getTicketId(), orderTicket);
+
+            // Liên kết ghế với OrderTicket nếu có seatIds
+            if (hasSeatMap && seatIds != null && !seatIds.isEmpty()) {
+                for (Long seatId : seatIds) {
+                    OrderTicketSeat orderTicketSeat = OrderTicketSeat.builder()
+                            .orderTicket(orderTicket)
+                            .seat(seatRepository.getReferenceById(seatId))
+                            .createdAt(LocalDateTime.now())
+                            .build();
+                    orderTicketSeats.add(orderTicketSeat);
+                }
+                orderTicket.setOrderTicketSeats(new ArrayList<>(orderTicketSeats));
+            }
 
             orderTickets.add(orderTicket);
         }
@@ -493,9 +573,13 @@ public class OrderServiceImpl implements OrderService {
         orderTickets.forEach(ot -> ot.setOrder(order));
         orderRepository.save(order);
 
+        // Lưu OrderTicketSeat
+        if (!orderTicketSeats.isEmpty()) {
+            orderTicketSeatRepository.saveAll(orderTicketSeats);
+        }
+
         return new OrderReservationResponse(order.getOrderId(), order.getReservationTime());
     }
-
     @Override
     @Transactional
     public String createPaymentLink(Long orderId) throws Exception {
@@ -579,6 +663,14 @@ public class OrderServiceImpl implements OrderService {
             throw new AppException(ErrorCode.ORDER_NOT_PENDING);
         }
 
+        // reset seat status
+        List<OrderTicketSeat> orderTicketSeats = orderTicketSeatRepository.findByOrderTicketIn(order.getOrderTickets());
+        for (OrderTicketSeat ots : orderTicketSeats) {
+            Seat seat = ots.getSeat();
+            seat.setStatus(SeatStatus.AVAILABLE);
+            seatRepository.save(seat);
+        }
+
         // Reset reservedQuantity
         for (OrderTicket ot : order.getOrderTickets()) {
             TicketSchedule ts = ot.getTicket().getTicketSchedules().stream()
@@ -590,6 +682,7 @@ public class OrderServiceImpl implements OrderService {
         }
 
         order.setStatus(OrderStatus.CANCELED);
+        order.setPaymentStatus(PaymentStatus.FAILED);
         orderRepository.save(order);
     }
 

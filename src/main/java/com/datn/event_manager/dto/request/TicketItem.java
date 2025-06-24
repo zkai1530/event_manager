@@ -18,4 +18,5 @@ public class TicketItem {
     Long ticketId;
     Integer quantity;
     List<Long> discountIds;
+    List<Long> seatIds;
 }
