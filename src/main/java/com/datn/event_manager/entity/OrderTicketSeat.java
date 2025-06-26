@@ -36,7 +36,7 @@ public class OrderTicketSeat {
     OrderTicket orderTicket;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "seat_id", unique = true)
+    @JoinColumn(name = "seat_id")
     Seat seat;
 
     @Column(name = "created_at")
