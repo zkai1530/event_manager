@@ -280,9 +280,9 @@ public class VenueMapServiceImpl implements VenueMapService {
         VenueMap venueMap = venueMapRepository.findById(venueMapId)
                 .orElseThrow(() -> new AppException(ErrorCode.VENUEMAP_NOT_FOUND));
 
-        if (!user.getUserId().equals(venueMap.getEvent().getUser().getUserId())) {
-            throw new AppException(ErrorCode.UNAUTHORIZED);
-        };
+        // if (!user.getUserId().equals(venueMap.getEvent().getUser().getUserId())) {
+        //     throw new AppException(ErrorCode.UNAUTHORIZED);
+        // };
      
         return venueMapMapper.toResponse(venueMap);
     }
